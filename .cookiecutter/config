@@ -1,0 +1,5 @@
+# Change these at your peril:
+export PROJECT_NAME=project_name
+export REPO_NAME=dap_prinz_green_jobs
+export DESCRIPTION=A suite of job advert level green measures
+export PROJECT_OPENNESS=public
