@@ -2,6 +2,14 @@
 
 ## Occupational Green Measures
 
+Run
+
+```
+python dap_prinz_green_jobs/pipeline/measures/occupation_measures.py
+```
+
+to find which job adverts are for occupations which are green or not.
+
 ### Datasets
 
 - `indexsocextv5updated.xlsx`: A dataset of the SOC codes for each job title can be found on the ONS website [here](https://www.ons.gov.uk/methodology/classificationsandstandards/standardoccupationalclassificationsoc/standardoccupationalclassificationsocextensionproject). A download of the "SOC 2020 6-digit index (2.7 MB xlsx)" downloaded as of 25/04/23 was uploaded to S3 (`s3://prinz-green-jobs/inputs/data/occupation_data/ons/indexsocextv5updated.xlsx`).
