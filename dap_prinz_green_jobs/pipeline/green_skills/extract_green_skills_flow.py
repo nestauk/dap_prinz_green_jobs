@@ -49,7 +49,7 @@ class GreenSkillsFlow(FlowSpec):
         default="/Users/india.kerlenesta/opt/anaconda3/envs/dap_prinz_green_jobs/lib/python3.8/site-packages/ojd_daps_skills",
     )
     chunk_size = Parameter(
-        "chunk_size", help="size of chunks to split job adverts into", default=10
+        "chunk_size", help="size of chunks to split job adverts into", default=5000
     )
 
     @step
