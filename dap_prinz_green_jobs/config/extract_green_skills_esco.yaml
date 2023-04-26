@@ -3,7 +3,7 @@ taxonomy_name: "green_esco"
 taxonomy_path: "outputs/data/skill_ner_mapping/green_esco_data_formatted.csv"
 clean_job_ads: True
 min_multiskill_length: 75
-taxonomy_embedding_file_name: ""
+taxonomy_embedding_file_name: "outputs/data/skill_ner_mapping/green_esco_embeddings.json"
 prev_skill_matches_file_name: ""
 hard_labelled_skills_file_name: ""
 hier_name_mapper_file_name: ""
