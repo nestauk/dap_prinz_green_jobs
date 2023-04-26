@@ -7,7 +7,7 @@ skills onto a custom green skills taxonomy.
 
 (with default parameters):
 
-python dap_prinz_green_jobs/pipeline/ojo_application/green_skills/extract_green_skills_flow.py run --extract_skills_library_path "PATH/TO/YOUR/LIBRARY-PACKAGE"
+python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_skills_flow.py run --extract_skills_library_path "PATH/TO/YOUR/LIBRARY-PACKAGE"
 """
 from metaflow import FlowSpec, S3, step, Parameter
 from dap_prinz_green_jobs.getters.data_getters import (
