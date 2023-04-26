@@ -6,6 +6,9 @@ from typing import Optional
 
 import yaml
 
+BUCKET_NAME = "prinz-green-jobs"
+OJO_BUCKET_NAME = "open-jobs-lake"
+
 
 def get_yaml_config(file_path: Path) -> Optional[dict]:
     """Fetch yaml config and return as dict if it exists."""
