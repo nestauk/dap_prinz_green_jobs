@@ -14,6 +14,7 @@ from dap_prinz_green_jobs.getters.data_getters import (
     get_s3_resource,
     load_s3_data,
     save_to_s3,
+    save_json_dict,
 )
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, get_yaml_config, logger
 
@@ -32,7 +33,7 @@ class GreenSkillsFlow(FlowSpec):
     using the custom config file.
     """
 
-    production = Parameter("production", help="Run in production?", default=True)
+    production = Parameter("production", help="Run in production?", default=False)
     config_name = Parameter(
         "config_name",
         help="Name of the config file to use",
@@ -90,6 +91,18 @@ class GreenSkillsFlow(FlowSpec):
         )
         formatted_esco_green_skills.to_csv(
             f"{self.extract_skills_library_path}_data/{custom_config['taxonomy_path']}"
+        )
+
+        esco_green_skill_embeddings_path = os.path.join(
+            "outputs/data/green_skill_lists",
+            custom_config["taxonomy_embedding_file_name"].split("/")[-1],
+        )
+        esco_green_skill_embeddings = load_s3_data(
+            s3, BUCKET_NAME, esco_green_skill_embeddings_path
+        )
+        save_json_dict(
+            esco_green_skill_embeddings,
+            f"{self.extract_skills_library_path}_data/{custom_config['taxonomy_embedding_file_name']}",
         )
 
         # load ExtractSkills class with custom config

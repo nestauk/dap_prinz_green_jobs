@@ -39,7 +39,9 @@ if __name__ == "__main__":
         "skill_ner_mapping", "green_skill_lists"
     )
 
-    embedding_path = config["taxonomy_embedding_file_name"]
+    embedding_path = config["taxonomy_embedding_file_name"].replace(
+        "skill_ner_mapping", "green_skill_lists"
+    )
 
     # load formatted taxonomy path
     formatted_taxonomy = load_s3_data(s3, BUCKET_NAME, formatted_taxonomy_path)

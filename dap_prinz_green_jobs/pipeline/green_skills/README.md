@@ -14,6 +14,10 @@ To format the ESCO green skills taxonomy, run the following:
 
 `python dap_prinz_green_jobs/pipeline/green_skills/green_esco_formatting.py`
 
+As a one off, to embed the taxonomy so the extract green skills flow is faster:
+
+`python dap_prinz_green_jobs/pipeline/green_skills/green_taxonomy_embedding.py --config_name "extract_green_skills_esco.yaml"`
+
 ## Extract Green Skills Pipeline
 
 To extract skills and map them onto ESCO's green skills taxonomy, you can run the following flow:
@@ -22,4 +26,4 @@ To extract skills and map them onto ESCO's green skills taxonomy, you can run th
 
 The flow takes a number of parameters that will need to be changed, depending on where in your system the `ojd-daps-skills` library is.
 
-Namely, you will need to change `extract_skills_library_path` to accomodate for moving the custom config file and the formatted green skills list to the relevant location.
+Namely, you will need to change `extract_skills_library_path` to accomodate for moving the custom config file, the formatted green skills list and the green taxonomy embeddings to the relevant location.
