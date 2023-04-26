@@ -10,7 +10,7 @@ import boto3
 from decimal import Decimal
 import numpy
 
-from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
+from dap_prinz_green_jobs import PROJECT_DIR, logger
 
 
 class CustomJsonEncoder(json.JSONEncoder):
