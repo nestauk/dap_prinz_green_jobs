@@ -21,5 +21,5 @@ As a one off, to embed the taxonomy so the extract green skills flow in `ojo_app
 To add the custom config file, formatted skills taxonomy and taxonomy embeddings to the relevant location in the `ojd-daps-skills` library location:
 
 ```
-python dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py --config_name "extract_green_skills_esco" --extract_skills_library_path path/to/your/ojd_daps_skills/library
+python dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py --config_name "extract_green_skills_esco"
 ```

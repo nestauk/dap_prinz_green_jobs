@@ -7,7 +7,6 @@ from dap_prinz_green_jobs import (
     BUCKET_NAME,
     OJO_BUCKET_NAME,
     logger,
-    get_yaml_config,
     PROJECT_DIR,
 )
 
@@ -18,20 +17,23 @@ from dap_prinz_green_jobs.getters.data_getters import (
 )
 import pandas as pd
 
-CONFIG = get_yaml_config(PROJECT_DIR / "dap_prinz_green_jobs/config/base.yaml")
 s3 = get_s3_resource()
 
 if __name__ == "__main__":
     # download esco green skills list
     logger.info("downloading esco green skills taxonomy")
     esco_green_skills = load_s3_data(
-        s3, BUCKET_NAME, CONFIG["esco_green_skills_path"]
+        s3,
+        BUCKET_NAME,
+        "inputs/data/green_skill_lists/esco/greenSkillsCollection_en.csv",
     ).assign(id=lambda x: x["conceptUri"].str.split("/").str[-1])
 
     # download formatted esco skills list
     logger.info("formatting esco green skills taxonomy")
     formatted_esco_skills = load_s3_data(
-        s3, OJO_BUCKET_NAME, CONFIG["formatted_esco_skills_path"]
+        s3,
+        OJO_BUCKET_NAME,
+        "escoe_extension/outputs/data/skill_ner_mapping/esco_data_formatted.csv",
     )
 
     formatted_green_esco_skills = (
@@ -45,5 +47,5 @@ if __name__ == "__main__":
         s3,
         BUCKET_NAME,
         formatted_green_esco_skills,
-        CONFIG["formatted_esco_green_skills_path"],
+        "outputs/data/green_skill_lists/green_esco_data_formatted.csv",
     )

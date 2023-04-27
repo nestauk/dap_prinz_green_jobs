@@ -1,3 +1,0 @@
-esco_green_skills_path: "inputs/data/green_skill_lists/esco/greenSkillsCollection_en.csv"
-formatted_esco_skills_path: "escoe_extension/outputs/data/skill_ner_mapping/esco_data_formatted.csv"
-formatted_esco_green_skills_path: "outputs/data/green_skill_lists/green_esco_data_formatted.csv"
