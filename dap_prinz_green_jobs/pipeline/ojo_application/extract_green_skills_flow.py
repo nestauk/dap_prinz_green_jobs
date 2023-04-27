@@ -18,11 +18,6 @@ from dap_prinz_green_jobs.getters.data_getters import (
 )
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, get_yaml_config, logger
 
-from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
-    ExtractSkills,
-)  # import the module
-
-
 s3 = get_s3_resource()
 
 
@@ -44,11 +39,6 @@ class GreenSkillsFlow(FlowSpec):
         help="s3 path to the job advert sample",
         default="outputs/data/job_ads/job_ads_sample.csv",
     )
-    extract_skills_library_path = Parameter(
-        "extract_skills_library_path",
-        help="library path to add custom files to",
-        default="/Users/india.kerlenesta/opt/anaconda3/envs/dap_prinz_green_jobs/lib/python3.8/site-packages/ojd_daps_skills",
-    )
     chunk_size = Parameter(
         "chunk_size", help="size of chunks to split job adverts into", default=5000
     )
@@ -58,52 +48,18 @@ class GreenSkillsFlow(FlowSpec):
         """
         Starts the flow.
         """
-        self.next(self.add_custom_config)
+        self.next(self.load_skills_extractor)
 
     @step
-    def add_custom_config(self):
+    def load_skills_extractor(self):
         """
-        Instantiates the ExtractSkills class with a custom config file.
+        Instantiates the ExtractSkills class.
+
+        NOTE: if you are running it with a custom config, you will need to have run customise_skills_extractor.py first
         """
-        import shutil
-        import os
-
-        logger.info(
-            "adding custom config and data files to relevent ojd-daps-skills library folder..."
-        )
-        custom_config = get_yaml_config(
-            PROJECT_DIR / f"dap_prinz_green_jobs/config/{self.config_name}.yaml"
-        )
-
-        # copy the custom config file to the extract skills location
-        shutil.copy(
-            PROJECT_DIR / f"dap_prinz_green_jobs/config/{self.config_name}.yaml",
-            f"{self.extract_skills_library_path}/config/{self.config_name}.yaml",
-        )
-
-        # move custom formatted esco green skills to extract skills location
-        custom_green_skills_path = os.path.join(
-            "outputs/data/green_skill_lists",
-            custom_config["taxonomy_path"].split("/")[-1],
-        )
-        formatted_esco_green_skills = load_s3_data(
-            s3, BUCKET_NAME, custom_green_skills_path
-        )
-        formatted_esco_green_skills.to_csv(
-            f"{self.extract_skills_library_path}_data/{custom_config['taxonomy_path']}"
-        )
-
-        esco_green_skill_embeddings_path = os.path.join(
-            "outputs/data/green_skill_lists",
-            custom_config["taxonomy_embedding_file_name"].split("/")[-1],
-        )
-        esco_green_skill_embeddings = load_s3_data(
-            s3, BUCKET_NAME, esco_green_skill_embeddings_path
-        )
-        save_json_dict(
-            esco_green_skill_embeddings,
-            f"{self.extract_skills_library_path}_data/{custom_config['taxonomy_embedding_file_name']}",
-        )
+        from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
+            ExtractSkills,
+        )  # import the module
 
         # load ExtractSkills class with custom config
         logger.info("instantiating Extract Skills class with custom config...")
