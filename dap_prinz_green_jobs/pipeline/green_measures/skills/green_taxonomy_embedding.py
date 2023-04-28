@@ -10,14 +10,11 @@ from dap_prinz_green_jobs import PROJECT_DIR, get_yaml_config, BUCKET_NAME
 from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,
     load_s3_data,
-    get_s3_resource,
 )
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
 
 from argparse import ArgumentParser
 import numpy as np
-
-s3 = get_s3_resource()
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -44,7 +41,7 @@ if __name__ == "__main__":
     )
 
     # load formatted taxonomy path
-    formatted_taxonomy = load_s3_data(s3, BUCKET_NAME, formatted_taxonomy_path)
+    formatted_taxonomy = load_s3_data(BUCKET_NAME, formatted_taxonomy_path)
 
     # instantiate bert model
     bert_model = BertVectorizer(verbose=True, multi_process=True).fit()
@@ -60,4 +57,4 @@ if __name__ == "__main__":
     )
 
     # save to s3
-    save_to_s3(s3, BUCKET_NAME, taxonomy_skills_embeddings_dict, embedding_path)
+    save_to_s3(BUCKET_NAME, taxonomy_skills_embeddings_dict, embedding_path)

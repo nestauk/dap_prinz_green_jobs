@@ -10,7 +10,6 @@ skills onto a custom green skills taxonomy.
 python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_skills.py
 """
 from dap_prinz_green_jobs.getters.data_getters import (
-    get_s3_resource,
     save_to_s3,
 )
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
@@ -25,7 +24,6 @@ from dap_prinz_green_jobs.getters.ojo import get_ojo_sample
 from datetime import datetime as date
 import argparse
 
-s3 = get_s3_resource()
 batch_size = 5000
 
 
@@ -98,13 +96,11 @@ if __name__ == "__main__":
     if args.production:
         logger.info("saving extracted skills to s3...")
         save_to_s3(
-            s3,
             BUCKET_NAME,
             ojo_sample_skill_spans,
             f"outputs/data/green_skills/{date_stamp}_{args.config_name}_skill_spans.json",
         )
         save_to_s3(
-            s3,
             BUCKET_NAME,
             ojo_sample_green_skills,
             f"outputs/data/green_skills/{date_stamp}_{args.config_name}_matched_skills.json",
