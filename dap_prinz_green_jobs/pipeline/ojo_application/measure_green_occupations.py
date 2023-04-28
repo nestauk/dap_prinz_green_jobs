@@ -1,33 +1,22 @@
 """
-Occupational green measures for a dataset of job adverts
+Create a dataset of green occupations for the sample of OJO data
 """
 
 import pandas as pd
 
-from dap_prinz_green_jobs.pipeline.measures.occupation_measures_utils import *
-
-
-def load_ojo_data() -> pd.DataFrame():
-    """
-    Load the OJO dataset with job title
-    """
-
-    ojo_data_orig = pd.read_csv(
-        "s3://open-jobs-lake/escoe_extension/outputs/data/model_application_data/raw_job_adverts_sample.csv"
-    )
-    ojo_data = ojo_data_orig.copy()
-    ojo_data.columns = ojo_data.iloc[0]
-    ojo_data.columns = ["job_id", "date", "title", "text"]
-
-    return ojo_data
-
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils import *
 
 if __name__ == "__main__":
-    ojo_data = load_ojo_data()
+    ojo_data = pd.read_csv(
+        "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv"
+    )
+
     jobtitle_soc_data = load_job_title_soc()
     green_soc_data = load_green_soc()
 
-    ojo_data["job_title_cleaned"] = ojo_data["title"].apply(clean_job_title)
+    ojo_data["job_title_cleaned"] = ojo_data["job_title_raw"].apply(
+        lambda x: clean_job_title(str(x))
+    )
 
     soc_2020_6_mapper = create_job_title_soc_mapper(
         jobtitle_soc_data, soc_column_name="soc_6_2020"
