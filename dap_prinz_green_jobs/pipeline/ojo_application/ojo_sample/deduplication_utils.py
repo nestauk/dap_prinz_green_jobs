@@ -13,8 +13,10 @@ from hashlib import md5
 
 from dap_prinz_green_jobs import logger
 
+import pandas as pd
 
-def short_hash(text):
+
+def short_hash(text: str) -> int:
     """Generate a unique short hash for this string - from ojd_daps"""
     hx_code = md5(text.encode()).hexdigest()
     int_code = int(hx_code, 16)
@@ -22,7 +24,9 @@ def short_hash(text):
     return int(short_code)
 
 
-def get_date_ranges(start, end, num_units=7, unit_type="days"):
+def get_date_ranges(
+    start: str, end: str, num_units: int = 7, unit_type: str = "days"
+) -> list:
     """
     Chunk up a range of dates into user specified units of time.
     Inputs:
@@ -56,7 +60,9 @@ def get_date_ranges(start, end, num_units=7, unit_type="days"):
     return list_ranges
 
 
-def create_date_chunks_mapper(first_date, last_date, num_units=7, unit_type="days"):
+def create_date_chunks_mapper(
+    first_date: str, last_date: str, num_units: int = 7, unit_type: str = "days"
+) -> dict:
     """
     Gets a dict of all dates in the range and which start date chunk they map to.
     e.g. if num_units=2 and unit_type="days"
@@ -97,13 +103,13 @@ def check_span(num_units, unit_type):
 
 
 def get_deduplicated_job_adverts(
-    job_adverts,
-    num_units=7,
-    unit_type="days",
-    id_col="id",
-    date_col="created",
-    job_loc_col="job_location_raw",
-    description_hash="description_hash",
+    job_adverts: pd.DataFrame(),
+    num_units: int = 7,
+    unit_type: str = "days",
+    id_col: str = "id",
+    date_col: str = "created",
+    job_loc_col: str = "job_location_raw",
+    description_hash: str = "description_hash",
 ):
     """
     Find the job ids of the deduplicated job adverts based on whether they had any

@@ -7,7 +7,7 @@ This directory contains scripts to generate samples of OJO data.
 To first find which job adverts in the OJO database are duplicates run:
 
 ```
-dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/deduplication.py
+python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/deduplication.py
 
 ```
 
