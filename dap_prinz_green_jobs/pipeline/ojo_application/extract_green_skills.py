@@ -26,41 +26,7 @@ from datetime import datetime as date
 import argparse
 
 s3 = get_s3_resource()
-batch_size = 5000
-
-
-def format_extracted_green_skills(
-    job_ids: List[str],
-    skills: List[Dict[str, list]],
-    matched_skills: List[Dict[str, list]],
-) -> Dict[int, dict]:
-    """Format matched skills to flag extracted skills that do not
-        otherwise match to the green skills taxonomy.
-
-    Args:
-        job_ids (List[str]): List of job advert ids
-        skills (List[Dict[str, list]]): List of dictionaries of extracted skills
-        matched_skills (List[Dict[str, list]]): List of dictionaries of mapped skills
-
-    Returns:
-        Dict[int, dict]: Dictionary of job advert ids and their extracted and mapped skills
-    """
-
-    formatted_green_skills_dict = {}
-    for i, (skill, green_skill) in enumerate(zip(skills, matched_skills)):
-        if green_skill != {}:
-            formatted_green_skills_dict[job_ids[i]] = green_skill
-        else:
-            if skill["SKILL"] != []:
-                formatted_green_skills_dict[job_ids[i]] = {
-                    "SKILL": [
-                        (sk, ("not a green skill", None)) for sk in skill["SKILL"]
-                    ]
-                }
-            else:
-                formatted_green_skills_dict[job_ids[i]] = {"SKILL": []}
-
-    return formatted_green_skills_dict
+batch_size = 100
 
 
 def chunks(data_dict: dict, chunk_size=100):
@@ -106,7 +72,7 @@ if __name__ == "__main__":
 
     # load job sample
     logger.info("loading ojo sample...")
-    ojo_data = get_ojo_sample()
+    ojo_data = get_ojo_sample()[:500]
 
     if not args.production:
         ojo_data = ojo_data.head(batch_size)
@@ -114,14 +80,16 @@ if __name__ == "__main__":
     job_adverts = dict(zip(ojo_data.job_id.to_list(), ojo_data.text.to_list()))
 
     logger.info("extracting green skills...")
+    ojo_sample_skill_spans = {}
     ojo_sample_green_skills = {}
     for batch_job_adverts in chunks(job_adverts, batch_size):
         batch_raw_skills = es.get_skills(batch_job_adverts.values())
         mapped_skills = es.map_skills(batch_raw_skills)
+        ojo_sample_skill_spans.update(
+            dict(zip(batch_job_adverts.keys(), batch_raw_skills))
+        )
         ojo_sample_green_skills.update(
-            format_extracted_green_skills(
-                list(batch_job_adverts.keys()), batch_raw_skills, mapped_skills
-            )
+            dict(zip(batch_job_adverts.keys(), mapped_skills))
         )
 
     # save extracted green skills to s3
@@ -132,6 +100,12 @@ if __name__ == "__main__":
         save_to_s3(
             s3,
             BUCKET_NAME,
+            ojo_sample_skill_spans,
+            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_skill_spans.json",
+        )
+        save_to_s3(
+            s3,
+            BUCKET_NAME,
             ojo_sample_green_skills,
-            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_job_adverts.json",
+            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_matched_skills.json",
         )
