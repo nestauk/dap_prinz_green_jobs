@@ -26,7 +26,7 @@ from datetime import datetime as date
 import argparse
 
 s3 = get_s3_resource()
-batch_size = 100
+batch_size = 5000
 
 
 def chunks(data_dict: dict, chunk_size=100):
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--production",
         type=bool,
-        default=True,
+        default=False,
         help="whether to run in production mode",
     )
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     # load job sample
     logger.info("loading ojo sample...")
-    ojo_data = get_ojo_sample()[:500]
+    ojo_data = get_ojo_sample()
 
     if not args.production:
         ojo_data = ojo_data.head(batch_size)
