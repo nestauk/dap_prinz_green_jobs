@@ -4,7 +4,6 @@ This script adds custom config files and formatted green skills list to the ojd-
 python dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py --config_name "extract_green_skills_esco"
 """
 from dap_prinz_green_jobs.getters.data_getters import (
-    get_s3_resource,
     load_s3_data,
     save_json_dict,
 )
@@ -16,7 +15,6 @@ from ojd_daps_skills.getters import download_public_data
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, get_yaml_config, logger
 import argparse
 
-s3 = get_s3_resource()
 
 parser = argparse.ArgumentParser(
     description="Add custom config and data files to ojd-daps-skills library folder",
@@ -56,7 +54,7 @@ if __name__ == "__main__":
         custom_config["taxonomy_path"].split("/")[-1],
     )
     formatted_esco_green_skills = load_s3_data(
-        s3, BUCKET_NAME, custom_green_skills_path
+        BUCKET_NAME, custom_green_skills_path
     )
     formatted_esco_green_skills.to_csv(
         f"{extract_skills_library_path}_data/{custom_config['taxonomy_path']}"
@@ -71,7 +69,7 @@ if __name__ == "__main__":
             custom_config["taxonomy_embedding_file_name"].split("/")[-1],
         )
         esco_green_skill_embeddings = load_s3_data(
-            s3, BUCKET_NAME, esco_green_skill_embeddings_path
+            BUCKET_NAME, esco_green_skill_embeddings_path
         )
         save_json_dict(
             esco_green_skill_embeddings,

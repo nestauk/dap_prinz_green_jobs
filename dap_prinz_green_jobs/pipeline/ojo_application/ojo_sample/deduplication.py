@@ -8,14 +8,12 @@ import pyarrow.parquet as pq
 
 from tqdm import tqdm
 
-from dap_prinz_green_jobs.getters.data_getters import save_to_s3, get_s3_resource
+from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
 from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.deduplication_utils import (
     short_hash,
     get_deduplicated_job_adverts,
 )
-
-s3 = get_s3_resource()
 
 num_units = config["ojo_deduplication_num_units"]
 unit_type = config["ojo_deduplication_unit_type"]
@@ -35,7 +33,7 @@ if __name__ == "__main__":
     for _, row in tqdm(descriptions.iterrows()):
         hash_dict[row["id"]] = short_hash(row["description"])
 
-    # save_to_s3(s3, 'open-jobs-lake', hash_dict, 'latest_output_tables/descriptions_hash.json')
+    # save_to_s3('open-jobs-lake', hash_dict, 'latest_output_tables/descriptions_hash.json')
 
     # Merge what's needed for the deduplication
     job_adverts = adverts_ojd_daps_extract[["id", "job_location_raw", "created"]]
@@ -62,7 +60,6 @@ if __name__ == "__main__":
     no_duplicates.reset_index(drop=True, inplace=True)
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         no_duplicates,
         f"outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids_{num_units}{unit_type}_chunks.csv",

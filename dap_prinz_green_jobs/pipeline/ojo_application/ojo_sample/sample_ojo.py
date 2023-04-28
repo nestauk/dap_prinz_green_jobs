@@ -8,7 +8,7 @@ import random
 
 import pandas as pd
 
-from dap_prinz_green_jobs.getters.data_getters import save_to_s3, get_s3_resource
+from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
 
 
@@ -33,7 +33,6 @@ if __name__ == "__main__":
     )
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         sample_ids,
         f"outputs/data/ojo_application/deduplicated_sample/sampled_job_ids.json",
@@ -51,7 +50,6 @@ if __name__ == "__main__":
     )
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         job_title_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/job_title_data_sample.csv",
@@ -65,7 +63,6 @@ if __name__ == "__main__":
     salaries_data_sample = filter_data(salaries_data, set(sample_ids), id_col_name="id")
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         salaries_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/salaries_data_sample.csv",
@@ -81,7 +78,6 @@ if __name__ == "__main__":
     )
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         locations_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/locations_data_sample.csv",
@@ -94,7 +90,6 @@ if __name__ == "__main__":
     skills_data_sample = filter_data(skills_data, set(sample_ids), id_col_name="id")
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         skills_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/skills_data_sample.csv",
@@ -122,7 +117,6 @@ if __name__ == "__main__":
     ojo_data_sample.reset_index(drop=True, inplace=True)
 
     save_to_s3(
-        s3,
         BUCKET_NAME,
         ojo_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv",

@@ -85,7 +85,9 @@ def get_s3_resource():
     return s3
 
 
-def save_to_s3(s3, bucket_name, output_var, output_file_dir):
+def save_to_s3(bucket_name, output_var, output_file_dir):
+    s3 = get_s3_resource()
+
     obj = s3.Object(bucket_name, output_file_dir)
 
     if fnmatch(output_file_dir, "*.csv"):
@@ -113,14 +115,15 @@ def load_s3_json(s3, bucket_name, file_name):
     return json.loads(file)
 
 
-def load_s3_data(s3, bucket_name, file_name):
+def load_s3_data(bucket_name, file_name):
     """
     Load data from S3 location.
 
-    s3: S3 boto3 resource
     bucket_name: The S3 bucket name
     file_name: S3 key to load
     """
+    s3 = get_s3_resource()
+
     obj = s3.Object(bucket_name, file_name)
     if fnmatch(file_name, "*.jsonl.gz"):
         with gzip.GzipFile(fileobj=obj.get()["Body"]) as file:
