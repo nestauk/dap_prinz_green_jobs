@@ -11,6 +11,7 @@ from dap_prinz_green_jobs.getters.data_getters import (
 import shutil
 import os
 import ojd_daps_skills
+from ojd_daps_skills.getters import download_public_data
 
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, get_yaml_config, logger
 import argparse
@@ -37,6 +38,8 @@ custom_config = get_yaml_config(
 )
 
 if __name__ == "__main__":
+    # download the public data
+    download_public_data.download()
     # copy the custom config file to the extract skills location
     logger.info("copying custom config file to extract skills location...")
     shutil.copy(

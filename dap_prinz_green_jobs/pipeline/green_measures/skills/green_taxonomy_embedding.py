@@ -1,7 +1,7 @@
 """
 This is a one-of script to embed a taxonomy of skills into a vector space.
 
-python dap_prinz_green_jobs/pipeline/ojo_application/green_skills/green_taxonomy_embedding.py --config_name extract_green_skills_esco
+python dap_prinz_green_jobs/pipeline/ojo_application/skills/green_taxonomy_embedding.py --config_name extract_green_skills_esco
 """
 import os
 import yaml

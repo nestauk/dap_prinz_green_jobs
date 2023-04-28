@@ -12,11 +12,11 @@ You will need to format the green skills list to be in a structure compatible wi
 
 To format the ESCO green skills taxonomy, run the following:
 
-`python dap_prinz_green_jobs/pipeline/green_skills/green_esco_formatting.py`
+`python dap_prinz_green_jobs/pipeline/skills/green_esco_formatting.py`
 
 As a one off, to embed the taxonomy so the extract green skills flow in `ojo_application` is faster:
 
-`python dap_prinz_green_jobs/pipeline/green_skills/green_taxonomy_embedding.py --config_name "extract_green_skills_esco"`
+`python dap_prinz_green_jobs/pipeline/skills/green_taxonomy_embedding.py --config_name "extract_green_skills_esco"`
 
 To add the custom config file, formatted skills taxonomy and taxonomy embeddings to the relevant location in the `ojd-daps-skills` library location:
 
