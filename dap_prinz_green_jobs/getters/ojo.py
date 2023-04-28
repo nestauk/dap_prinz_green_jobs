@@ -15,4 +15,8 @@ def get_ojo_sample() -> pd.DataFrame:
     Returns:
         pd.Dataframe: ojo sample data
     """
-    return load_s3_data(s3, BUCKET_NAME, "outputs/data/ojo_application/ojo_sample.csv")
+    return load_s3_data(
+        s3,
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv",
+    )
