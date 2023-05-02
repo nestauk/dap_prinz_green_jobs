@@ -17,6 +17,6 @@ To extract skills from a sample of OJO job adverts and map them onto ESCO's gree
 To see which OJO job adverts are for green occupations run:
 
 ```
-python dap_prinz_green_jobs/pipeline/ojo_application/measure_green_occupations.py
+python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_occupations.py
 
 ```

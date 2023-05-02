@@ -3,7 +3,7 @@
 The script
 
 ```
-python dap_prinz_green_jobs/pipeline/measures/occupation_measures_utils.py
+python dap_prinz_green_jobs/pipeline/green_measures/occupations/occupation_measures_utils.py
 ```
 
 contains functions needed to see whether occupations are green or not.
