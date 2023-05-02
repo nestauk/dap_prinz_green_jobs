@@ -10,7 +10,7 @@ import boto3
 from decimal import Decimal
 import numpy
 
-from dap_prinz_green_jobs import PROJECT_DIR, logger
+from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
 
 
 class CustomJsonEncoder(json.JSONEncoder):
@@ -171,7 +171,7 @@ def get_s3_data_paths(s3, bucket_name, root, file_types=["*.jsonl"]):
     return s3_keys
 
 
-def load_file(file_path, s3=True):
+def load_file(bucket_name, file_path, s3=True):
     """
     Load a file either from the repos s3 bucket or locally
     """
