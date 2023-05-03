@@ -16,31 +16,18 @@ from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
 
 from typing import List, Dict
 from tqdm import tqdm
-from itertools import islice
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
-from dap_prinz_green_jobs.getters.ojo import get_ojo_sample
+from dap_prinz_green_jobs.getters.ojo import get_ojo_skills_sample
+from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
+    format_skills,
+    chunks,
+)
 from datetime import datetime as date
 import argparse
 
 batch_size = 5000
-
-
-def chunks(data_dict: dict, chunk_size=100):
-    """Chunks data dictionary into batches of a specified chunk_size.
-
-    Args:
-        data_dict (_type_): dictionary of job adverts
-        chunk_size (int, optional): chunk size. Defaults to 100.
-
-    Yields:
-        _type_: job advert chunks
-    """
-    it = iter(data_dict)
-    for i in range(0, len(data_dict), chunk_size):
-        yield {k: data_dict[k] for k in islice(it, chunk_size)}
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -55,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--production",
         type=bool,
-        default=False,
+        default=True,
         help="whether to run in production mode",
     )
 
@@ -67,27 +54,52 @@ if __name__ == "__main__":
 
     es.load()
     es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
+    # set skill match threshold as 0 to get all skills (although get_top_comparisons sets skills threshold to 0.5 anyway)
+    es.taxonomy_info["match_thresholds_dict"]["skill_match_thresh"] = 0
 
     # load job sample
-    logger.info("loading ojo sample...")
-    ojo_data = get_ojo_sample()
-
+    logger.info("loading ojo skills sample...")
+    skills = get_ojo_skills_sample()
     if not args.production:
-        ojo_data = ojo_data.head(batch_size)
+        skills = skills.head(batch_size)
 
-    job_adverts = dict(zip(ojo_data.job_id.to_list(), ojo_data.text.to_list()))
+    skills_formatted_df = (
+        skills.groupby("id")
+        .skill_label.apply(list)
+        .reset_index()
+        .assign(skills_formatted=lambda x: x.skill_label.apply(format_skills))
+    )
+
+    skills_formatted_list = skills_formatted_df.skills_formatted.to_list()
+
+    job_id_to_formatted_raw_skills = dict(
+        zip(skills_formatted_df.id.to_list(), skills_formatted_list)
+    )
 
     logger.info("extracting green skills...")
-    ojo_sample_skill_spans = {}
-    ojo_sample_green_skills = {}
-    for batch_job_adverts in chunks(job_adverts, batch_size):
-        batch_raw_skills = es.get_skills(batch_job_adverts.values())
-        mapped_skills = es.map_skills(batch_raw_skills)
-        ojo_sample_skill_spans.update(
-            dict(zip(batch_job_adverts.keys(), batch_raw_skills))
+
+    ojo_sample_all_green_skills = {}
+    for batch_job_id_to_raw_skills in chunks(
+        job_id_to_formatted_raw_skills, batch_size
+    ):
+        job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(
+            {"predictions": batch_job_id_to_raw_skills}
         )
-        ojo_sample_green_skills.update(
-            dict(zip(batch_job_adverts.keys(), mapped_skills))
+        # to get the output with the top ten closest skills
+        mapped_skills = es.skill_mapper.map_skills(
+            es.taxonomy_skills,
+            skill_hashes,
+            es.taxonomy_info.get("num_hier_levels"),
+            es.taxonomy_info.get("skill_type_dict"),
+        )
+        matched_skills = []
+        for job_id, skill_info in job_skills.items():
+            job_skill_hashes = skill_info["skill_hashes"]
+            matched_skills.append(
+                [sk for sk in mapped_skills if sk["ojo_skill_id"] in job_skill_hashes]
+            )
+        ojo_sample_all_green_skills.update(
+            dict(zip(batch_job_id_to_raw_skills.keys(), matched_skills))
         )
 
     # save extracted green skills to s3
@@ -97,11 +109,6 @@ if __name__ == "__main__":
         logger.info("saving extracted skills to s3...")
         save_to_s3(
             BUCKET_NAME,
-            ojo_sample_skill_spans,
-            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_skill_spans.json",
-        )
-        save_to_s3(
-            BUCKET_NAME,
-            ojo_sample_green_skills,
-            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_matched_skills.json",
+            ojo_sample_all_green_skills,
+            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_all_matched_skills.json",
         )
