@@ -8,6 +8,7 @@ from urllib import parse
 from collections import Counter
 import json
 import openpyxl
+import random
 
 # Found using the most common words in CH data
 company_stop_words = set(
@@ -109,6 +110,10 @@ def clean_company_name(
     name = " ".join(words)
 
     return name
+
+
+def get_green_industry_measure(company_name):
+    return random.choice(["Green", "Not green"])
 
 
 # def map_company_name(
