@@ -19,8 +19,6 @@ def filter_data(data, filter_ids_set, id_col_name="id"):
 
 
 if __name__ == "__main__":
-    s3 = get_s3_resource()
-
     deduplicated_ids = pd.read_csv(config["ojo_deduplication_file"])
 
     # Sample job adverts
@@ -43,7 +41,10 @@ if __name__ == "__main__":
     logger.info("Creating and saving the job titles data sample")
 
     job_title_data = pd.read_parquet(config["ojo_s3_file_adverts_ojd_daps_extract"])
-    job_title_data = job_title_data.drop_duplicates()
+    # There are duplicate rows with different date formats
+    job_title_data = job_title_data.drop_duplicates(
+        subset=job_title_data.columns.difference(["created"])
+    )
 
     job_title_data_sample = filter_data(
         job_title_data, set(sample_ids), id_col_name="id"
@@ -58,6 +59,8 @@ if __name__ == "__main__":
     logger.info("Creating and saving the salaries data sample")
 
     salaries_data = pd.read_parquet(config["ojo_s3_file_salaries"])
+    # There are rows with NA in the min and max salary
+    salaries_data = salaries_data.dropna(subset=["min_annualised_salary"])
     salaries_data = salaries_data.drop_duplicates()
 
     salaries_data_sample = filter_data(salaries_data, set(sample_ids), id_col_name="id")
