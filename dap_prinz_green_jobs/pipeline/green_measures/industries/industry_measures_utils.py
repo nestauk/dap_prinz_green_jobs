@@ -50,6 +50,8 @@ def load_industry_ghg() -> pd.DataFrame():
     """Downloads a dataset of greenhouse gas emissions per SIC
     :return: A dataframe of SIC and greenhouse gas emissions
     :rtype: pd.DataFrame()
+
+    TO DO: clean this dataset - there are SIC codes in there like '20.12+20.2'
     """
     emissions_data = pd.read_excel(
         "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx",
@@ -58,6 +60,10 @@ def load_industry_ghg() -> pd.DataFrame():
     )
     emissions_data.reset_index(inplace=True)
     emissions_data = emissions_data.loc[list(range(0, 21)) + list(range(26, 156))]
+
+    emissions_data["Unnamed: 0"] = emissions_data["Unnamed: 0"].apply(
+        lambda x: x if isinstance(x, str) else "0" + str(x) if x < 10 else str(x)
+    )
 
     return emissions_data
 
@@ -116,6 +122,95 @@ def get_green_industry_measure(company_name):
     return random.choice(["Green", "Not green"])
 
 
+def clean_sic(sic_name):
+    if sic_name:
+        sic = str(sic_name.split(" - ")[0])
+        if len(sic) == 4:
+            return "0" + sic
+        else:
+            return sic
+    else:
+        return None
+
+
+def get_ghg_sic(sic, ghg_emissions_dict):
+    """
+    Could do more to find it, but I think it might be best to just clean the emissions data
+    """
+    if sic:
+        sic_2 = sic[0:2]  # 19
+        sic_3 = sic[0:2] + "." + sic[2]  # 19.1
+        sic_4 = sic[0:2] + "." + sic[2:4]  # 19.12
+        if sic_2 in ghg_emissions_dict:
+            return ghg_emissions_dict[sic_2]
+        elif sic_3 in ghg_emissions_dict:
+            return ghg_emissions_dict[sic_3]
+        elif sic_4 in ghg_emissions_dict:
+            return ghg_emissions_dict[sic_4]
+        else:
+            return None
+    else:
+        return None
+
+
+def get_ch_sic(companies_house_cleaned_in_ojo_dict: dict, cleaned_name: str) -> str:
+    """
+    Pick one SIC for each cleaned name using the Companies House data.
+    If there are multiple SICs given for a name then pick one randomly.
+
+    TO DO: Pick based off semantic similarity?
+
+    :param companies_house_cleaned_in_ojo_dict: The companies house data with cleaned
+            company name as the key and the various SIC codes given for this cleaned name
+            (as there can be multiple)
+    :type companies_house_cleaned_in_ojo_dict: dict
+
+    :param cleaned_name: The cleaned company name
+    :type cleaned_name: str
+
+    :return: A SIC or None
+    :rtype: str or None
+
+    """
+
+    companies_house_data = companies_house_cleaned_in_ojo_dict.get(cleaned_name)
+    if companies_house_data:
+        sic_options = [
+            c["SICCode.SicText_1"]
+            for c in companies_house_data
+            if c["SICCode.SicText_1"]
+        ]
+        random.seed(42)
+        return random.choice(sic_options)
+    else:
+        return None
+
+
+def process_companies_house(ojo_company_names_cleaned):
+    """
+    This can take a while
+    """
+
+    companies_house = load_companies_house()
+    companies_house["cleaned_name"] = companies_house["CompanyName"].map(
+        clean_company_name
+    )
+
+    companies_house_in_ojo = companies_house[
+        companies_house["cleaned_name"].isin(ojo_company_names_cleaned)
+    ]
+
+    # For each cleaned name collate all the SIC's given (dont bother saving null columns)
+    companies_house_cleaned_in_ojo_dict = {}
+    for cleaned_name, grouped_ch in companies_house_in_ojo.groupby("cleaned_name"):
+        grouped_ch.dropna(axis=1, inplace=True)
+        companies_house_cleaned_in_ojo_dict[cleaned_name] = grouped_ch[
+            grouped_ch.columns.difference(["cleaned_name"])
+        ].to_dict(orient="records")
+
+    return companies_house_cleaned_in_ojo_dict
+
+
 # def map_company_name(
 #     company_name: Union[str, List[str]],
 #     company_sics: pd.DataFrame()
@@ -133,34 +228,3 @@ def get_green_industry_measure(company_name):
 #         return soc_job_titles.get(job_title)
 #     else:
 #         return [soc_job_titles.get(title) for title in job_title]
-
-
-# ## TO DO IN OJO APPLICATION EVENTUALLY
-# if __name__ == '__main__':
-
-#     companies_house = load_companies_house()
-#     companies_house["cleaned_name"] = companies_house["CompanyName"].map(clean_company_name)
-
-
-#     from dap_prinz_green_jobs.getters.ojo import get_ojo_sample, get_ojo_job_title_sample, get_ojo_location_sample, get_ojo_salaries_sample, get_ojo_skills_sample
-
-#     ojo_data = get_ojo_sample()
-
-#     ojo_data_1 = get_ojo_job_title_sample()
-
-
-#     # # I dont think the sector/parent sector/knowledge domain match well to SIC
-#     # sic_data = load_sic()
-
-#     ## whilst I wait for compnay name to be added
-#     with open("/Users/elizabethgallagher/Code/liz_sandpit/prinz/data/20220622_sampled_job_ads.json") as f:
-#         ojo_data_2 = json.load(f)
-#     ojo_data_2 = pd.DataFrame(ojo_data_2).T
-#     ojo_data_2["id"] = ojo_data_2.index.astype(int)
-#     ojo_data_2.head(2)
-
-#     ojo_data_2["cleaned_name"] = ojo_data_2["company_raw"].map(clean_company_name)
-
-
-# name="perfect placement"
-# companies_house[companies_house['cleaned_name']==name]
