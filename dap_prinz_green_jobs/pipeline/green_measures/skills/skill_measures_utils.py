@@ -1,5 +1,6 @@
 from typing import List, Dict
 from itertools import islice
+from ojd_daps_skills.pipeline.extract_skills.extract_skills import ExtractSkills
 
 
 def chunks(data_dict: dict, chunk_size: int = 100):
@@ -32,3 +33,58 @@ def format_skills(skill_label: List[str]) -> Dict[str, List[str]]:
         return {"EXPERIENCE": [], "SKILL": skill_label, "MULTISKILL": []}
     else:
         return skill_label
+
+
+def get_green_skill_measures(
+    es: ExtractSkills,
+    raw_skills,
+    skill_hashes: Dict[int, str],
+    job_skills: Dict[str, Dict[str, int]],
+    skill_threshold: int = 0.5,
+) -> List[dict]:
+    """Extract green skills for job adverts.
+
+    Args:
+        es (ExtractSkills): instantiated ExtractSkills class
+        skill_hashes (Dict[int, str]): Dictionary of skill hashes and skill names
+        job_skills (Dict[str, Dict[str, int]]): dictionary of ids and extracted raw skills
+        skill_threshold (int, optional): skill semantic similarity. Defaults to 0.5.
+
+    Returns:
+        List[dict]: list of dictionaries of green skills
+    """
+
+    # to get the output with the top ten closest skills
+    mapped_skills = es.skill_mapper.map_skills(
+        es.taxonomy_skills,
+        skill_hashes,
+        es.taxonomy_info.get("num_hier_levels"),
+        es.taxonomy_info.get("skill_type_dict"),
+    )
+
+    matched_skills = []
+    for i, (_, skill_info) in enumerate(job_skills.items()):
+        job_skill_hashes = skill_info["skill_hashes"]
+        job_skill_info = [
+            sk for sk in mapped_skills if sk["ojo_skill_id"] in job_skill_hashes
+        ]
+        matched_skills_formatted = []
+        for job_skill in job_skill_info:
+            if job_skill["top_tax_skills"][0][2] > skill_threshold:
+                matched_skills_formatted.append(
+                    (
+                        job_skill["ojo_ner_skill"],
+                        (
+                            job_skill["top_tax_skills"][0][0],
+                            job_skill["top_tax_skills"][0][1],
+                        ),
+                    )
+                )
+        matched_skills.append(
+            {
+                "SKILL": matched_skills_formatted,
+                "EXPERIENCE": raw_skills[i]["EXPERIENCE"],
+            }
+        )
+
+    return matched_skills

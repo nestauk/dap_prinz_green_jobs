@@ -20,10 +20,8 @@ from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
 from dap_prinz_green_jobs.getters.ojo import get_ojo_skills_sample
-from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
-    format_skills,
-    chunks,
-)
+import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
+
 from datetime import datetime as date
 import argparse
 
@@ -46,6 +44,10 @@ if __name__ == "__main__":
         help="whether to run in production mode",
     )
 
+    parser.add_argument(
+        "--skill_threshold", type=int, default=0.7, help="skill match threshold"
+    )
+
     args = parser.parse_args()
 
     # load ExtractSkills class with custom config
@@ -54,8 +56,6 @@ if __name__ == "__main__":
 
     es.load()
     es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
-    # set skill match threshold as 0 to get all skills (although get_top_comparisons sets skills threshold to 0.5 anyway)
-    es.taxonomy_info["match_thresholds_dict"]["skill_match_thresh"] = 0
 
     # load job sample
     logger.info("loading ojo skills sample...")
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         skills.groupby("id")
         .skill_label.apply(list)
         .reset_index()
-        .assign(skills_formatted=lambda x: x.skill_label.apply(format_skills))
+        .assign(skills_formatted=lambda x: x.skill_label.apply(sm.format_skills))
     )
 
     skills_formatted_list = skills_formatted_df.skills_formatted.to_list()
@@ -79,25 +79,20 @@ if __name__ == "__main__":
     logger.info("extracting green skills...")
 
     ojo_sample_all_green_skills = {}
-    for batch_job_id_to_raw_skills in chunks(
+    for batch_job_id_to_raw_skills in sm.chunks(
         job_id_to_formatted_raw_skills, batch_size
     ):
         job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(
             {"predictions": batch_job_id_to_raw_skills}
         )
-        # to get the output with the top ten closest skills
-        mapped_skills = es.skill_mapper.map_skills(
-            es.taxonomy_skills,
-            skill_hashes,
-            es.taxonomy_info.get("num_hier_levels"),
-            es.taxonomy_info.get("skill_type_dict"),
+        # to get the output with the top skill
+        matched_skills = sm.get_green_skill_measures(
+            es=es,
+            raw_skills=list(batch_job_id_to_raw_skills.values()),
+            skill_hashes=skill_hashes,
+            job_skills=job_skills,
+            skill_threshold=args.skill_threshold,
         )
-        matched_skills = []
-        for job_id, skill_info in job_skills.items():
-            job_skill_hashes = skill_info["skill_hashes"]
-            matched_skills.append(
-                [sk for sk in mapped_skills if sk["ojo_skill_id"] in job_skill_hashes]
-            )
         ojo_sample_all_green_skills.update(
             dict(zip(batch_job_id_to_raw_skills.keys(), matched_skills))
         )

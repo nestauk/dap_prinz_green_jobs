@@ -7,9 +7,11 @@ from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
 )  # import the module
 import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils as om
 import dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils as im
+import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 
 from dap_prinz_green_jobs import logger
 from typing import List, Union, Dict, Optional
+from uuid import uuid4
 
 
 class GreenMeasures(object):
@@ -81,11 +83,28 @@ class GreenMeasures(object):
                 raw_skills = es.format_skills(skill_list)
             raw_skills = skill_list
         if (job_advert) and (not skill_list):
-            if type(job_advert) == str:
+            if type(job_advert) == dict:
                 job_advert = [job_advert]
             raw_skills = es.get_skills([job[self.job_text_name] for job in job_advert])
 
-        extracted_green_skills = es.map_skills(raw_skills)
+        job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(
+            {
+                "predictions": dict(
+                    zip(
+                        [str(uuid4()).replace("-", "") for _ in range(len(raw_skills))],
+                        [skill for skill in raw_skills],
+                    )
+                )
+            }
+        )
+
+        extracted_green_skills = sm.get_green_skill_measures(
+            es=es,
+            raw_skills=raw_skills,
+            skill_hashes=skill_hashes,
+            job_skills=job_skills,
+            skill_threshold=self.skill_threshold,
+        )
 
         # extract green measures for each job advert and save to dictionary
         self.green_skill_measures = []
@@ -94,8 +113,7 @@ class GreenMeasures(object):
                 green_skill_percent = (
                     len(extracted_green_skills[i]["SKILL"])
                     / (len(raw_skills[i]["SKILL"]) + len(raw_skills[i]["MULTISKILL"]))
-                    * 100
-                )
+                ) * 100
                 green_skill_count = len(extracted_green_skills[i]["SKILL"])
                 green_skills = extracted_green_skills[i]["SKILL"]
             else:
@@ -118,7 +136,7 @@ class GreenMeasures(object):
             - GREEN CATEGORY: O*NET green occupation categorisation
             - GREEN/NOT GREEN: whether occupation name is considered green or not green
         """
-        if type(job_advert) == str:
+        if type(job_advert) == dict:
             job_advert = [job_advert]
 
         soc_2010_4_mapper = om.create_job_title_soc_mapper(self.jobtitle_soc_data[0])
@@ -155,7 +173,7 @@ class GreenMeasures(object):
             - INDUSTRY: random choice green/not green industry classification
         """
 
-        if type(job_advert) == str:
+        if type(job_advert) == dict:
             job_advert = [job_advert]
 
         ind_green_measures_list = []
