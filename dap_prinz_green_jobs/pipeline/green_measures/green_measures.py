@@ -22,22 +22,27 @@ class GreenMeasures(object):
     ----------
     skill_threshold (float): the minimum skill_match_threshold to be considered a match to a taxonomy skill.
     config_name (str): the name of the config file to use for the skills extractor.
+    job_text_name (str): the name of the job text key in the job advert.
+    job_title_name (str): the name of the job title key in the job advert.
+    company_name (str): the name of the company key in the job advert.
     ----------
     Methods
     ----------
-    get_skill_measures(job_advert):
-        for a given job advert or list of job adverts, extract skill-level green measures.
+    get_skill_measures(job_advert=None, skill_list=None):
+        for a given job advert or list of job adverts, extract skill-level green measures. If you have
+            already extracted raw skills, you can pass a list of skills to avoid re-extracting.
     get_occupation_measures(job_advert):
         for a given job advert or list of job adverts, extract occupation-level green measures.
     get_industry_measures(job_advert):
         for a given job advert or list of job adverts, extract industry-level green measures.
-    get_green_measures(job_advert):
+    get_green_measures(job_advert, skill_list=None):
         for a given job advert or list of job adverts, extract skill-, occupation- and industry-level green measures.
+            you can also pass a skill list to avoid re-extracting skills.
     """
 
     def __init__(
         self,
-        skill_threshold: int = 0.4,
+        skill_threshold: int = 0.7,
         config_name: str = "extract_green_skills_esco",
         job_text_name: str = "job_text",
         job_title_name: str = "job_title",
@@ -73,10 +78,6 @@ class GreenMeasures(object):
         es.load()
 
         es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
-        # set skill match threshold as 0 to get all skills
-        es.taxonomy_info["match_thresholds_dict"][
-            "skill_match_thresh"
-        ] = self.skill_threshold
 
         if (not job_advert) and (skill_list):
             if isinstance(skill_list[0], str):
@@ -106,7 +107,7 @@ class GreenMeasures(object):
             skill_threshold=self.skill_threshold,
         )
 
-        # extract green measures for each job advert and save to dictionary
+        # create green measures for each job advert and save to dictionary
         self.green_skill_measures = []
         for i, _ in enumerate(raw_skills):
             if "SKILL" in extracted_green_skills[i].keys():

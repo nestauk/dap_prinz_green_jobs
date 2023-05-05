@@ -90,7 +90,7 @@ class ExtractGreenMeasuresFlow(FlowSpec):
 
         # load current ojo sample
         logger.info("loading and reformattting ojo sample...")
-        ojo_sample_raw = get_ojo_sample()[:10]
+        ojo_sample_raw = get_ojo_sample()
 
         ojo_sample_raw if self.production else ojo_sample_raw[:1]
 
