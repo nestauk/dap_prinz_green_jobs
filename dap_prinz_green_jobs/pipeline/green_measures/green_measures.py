@@ -191,7 +191,7 @@ class GreenMeasures(object):
 
     def get_green_measures(
         self, job_advert: Dict[str, str], skill_list: Optional[List[str]] = None
-    ) -> List[dict]:
+    ) -> Dict[str, List[dict]]:
         """
         Extract measures of greenness at the skill-, occupation- and industry-level. Measures include:
             - skills: green skill %, green skill count and the extracted green skills
