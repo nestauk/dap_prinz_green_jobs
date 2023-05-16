@@ -9,10 +9,15 @@ It also saves the extracted green measures to s3.
 python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures_flow.py run
 """
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
+from dap_prinz_green_jobs.getters.ojo_getters import (
+    get_ojo_skills_sample,
+    get_ojo_sample,
+    get_ojo_job_title_sample,
+)
+
 from dap_prinz_green_jobs import logger
 
 from toolz import partition_all
-from collections import ChainMap
 from metaflow import FlowSpec, step, Parameter
 
 # instantiate GreenMeasures class here
@@ -35,14 +40,14 @@ class ExtractGreenMeasuresFlow(FlowSpec):
         """
         loads ojo skills sample from s3 and reformat it to be compliant with GreenMeasures
         """
-        from dap_prinz_green_jobs.getters.ojo import get_ojo_skills_sample
         import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 
         # also load extracted skills so as not to duplicate skills extraction
         logger.info("loading and reformattting extracted skills from ojo sample...")
         ojo_skills_raw = get_ojo_skills_sample()
 
-        ojo_skills_raw if self.production else ojo_skills_raw[:1]
+        if not self.production:
+            ojo_skills_raw = ojo_skills_raw[:1]
 
         # reformat it to be the output of es.get_skills() for GreenMeasures
         self.ojo_skills = (
@@ -51,11 +56,17 @@ class ExtractGreenMeasuresFlow(FlowSpec):
             .reset_index()
             .assign(skills_formatted=lambda x: x.skill_label.apply(sm.format_skills))
             .skills_formatted.tolist()
-        )[:10]
+        )
 
         # chunk job skills
         logger.info("chunking already extracted job skills...")
-        self.job_skill_chunks = list(partition_all(self.batch_size, self.ojo_skills))
+
+        if self.production:
+            self.job_skill_chunks = list(
+                partition_all(self.batch_size, self.ojo_skills)
+            )
+        else:
+            self.job_skill_chunks = list(partition_all(1, self.ojo_skills))
 
         self.next(self.extract_skill_measures, foreach="job_skill_chunks")
 
@@ -86,25 +97,24 @@ class ExtractGreenMeasuresFlow(FlowSpec):
         """
         extract industry and occupation measures for ojo sample
         """
-        from dap_prinz_green_jobs.getters.ojo import get_ojo_sample
+        import pandas as pd
 
         # load current ojo sample
         logger.info("loading and reformattting ojo sample...")
-        ojo_sample_raw = get_ojo_sample()
+        ojo_sample_raw, ojo_job_title_raw = get_ojo_sample(), get_ojo_job_title_sample()
+        ojo_sample_raw_title = pd.merge(ojo_sample_raw, ojo_job_title_raw, on="id")
 
-        ojo_sample_raw if self.production else ojo_sample_raw[:1]
-
+        if not self.production:
+            ojo_sample_raw_title = ojo_sample_raw_title[:1]
         # reformat it to be a list of dictionaries for GreenMeasures
         ojo_sample = list(
             (
-                ojo_sample_raw
+                ojo_sample_raw_title
                 # currently to deal with no company name
-                .assign(company_name=lambda x: "Nesta")[
-                    ["job_title_raw", "company_name", "description"]
-                ]
+                [["job_title_raw_x", "company_raw", "description"]]
                 .rename(
                     columns={
-                        "job_title_raw": gm.job_title_name,
+                        "job_title_raw_x": gm.job_title_name,
                         "company_name": gm.company_name,
                         "description": gm.job_text_name,
                     }

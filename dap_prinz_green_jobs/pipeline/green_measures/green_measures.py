@@ -9,6 +9,11 @@ import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measu
 import dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils as im
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 
+from dap_prinz_green_jobs.getters.industry_getters import (
+    load_industry_ghg_dict,
+    load_companies_house_dict,
+)
+
 from dap_prinz_green_jobs import logger
 from typing import List, Union, Dict, Optional
 from uuid import uuid4
@@ -55,6 +60,8 @@ class GreenMeasures(object):
         self.company_name = company_name
         self.green_soc_data = (om.load_green_soc(),)
         self.jobtitle_soc_data = (om.load_job_title_soc(),)
+        self.ghg_emissions_dict = load_industry_ghg_dict()
+        self.ojo_companies_house_dict = load_companies_house_dict()
 
     def get_skill_measures(
         self,
@@ -171,23 +178,28 @@ class GreenMeasures(object):
     def get_industry_measures(self, job_advert: Dict[str, str]) -> List[dict]:
         """
         Extract measures of greenness at the industry-level. Measures include:
-            - INDUSTRY: random choice green/not green industry classification
+            - INDUSTRY: SIC GHG emissions based on job advert company name
         """
 
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        ind_green_measures_list = []
-        for job in job_advert:
-            comp_names = job.get(self.company_name)
-            if comp_names:
-                comp_name_clean = im.clean_company_name(comp_names)
-                ind_green_measures = im.get_green_industry_measure(comp_name_clean)
-                ind_green_measures_list.append({"INDUSTRY": ind_green_measures})
-            else:
-                ind_green_measures_list.append({"INDUSTRY": None})
+        comp_names = [job.get(self.company_name) for job in job_advert]
 
-        return ind_green_measures_list
+        ind_green_measures_dict = {}
+        if comp_names:
+            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = [
+                im.get_green_industry_measure(
+                    company_name=comp_name,
+                    ghg_emissions_dict=self.ghg_emissions_dict,
+                    ojo_companies_house_dict=self.ojo_companies_house_dict,
+                )
+                for comp_name in comp_names
+            ]
+        else:
+            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = None
+
+        return ind_green_measures_dict
 
     def get_green_measures(
         self, job_advert: Dict[str, str], skill_list: Optional[List[str]] = None

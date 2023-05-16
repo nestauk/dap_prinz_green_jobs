@@ -1,14 +1,14 @@
 """
 Util functions for industry green measures
 """
-
-import pandas as pd
 import re
-from urllib import parse
-from collections import Counter
-import json
-import openpyxl
 import random
+from typing import Union, Dict
+
+from dap_prinz_green_jobs.getters.industry_getters import (
+    load_companies_house_dict,
+    load_industry_ghg_dict,
+)
 
 # Found using the most common words in CH data
 company_stop_words = set(
@@ -34,45 +34,8 @@ company_stop_words = set(
     ]
 )
 
-
-def load_companies_house() -> pd.DataFrame():
-    """Downloads the Companies House dataset
-    :return: A dataframe of company information including name and SIC
-    :rtype: pd.DataFrame()
-    """
-    companies_house = pd.read_csv(
-        "s3://prinz-green-jobs/inputs/data/industry_data/BasicCompanyDataAsOneFile-2023-05-01_key_columns_only.csv"
-    )
-    return companies_house
-
-
-def load_industry_ghg() -> pd.DataFrame():
-    """Downloads a dataset of greenhouse gas emissions per SIC
-    :return: A dataframe of SIC and greenhouse gas emissions
-    :rtype: pd.DataFrame()
-    """
-    emissions_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx",
-        sheet_name="GHG total",
-        skiprows=3,
-    )
-    emissions_data.reset_index(inplace=True)
-    emissions_data = emissions_data.loc[list(range(0, 21)) + list(range(26, 156))]
-
-    return emissions_data
-
-
-def load_sic() -> pd.DataFrame():
-    """Downloads a dataset of greenhouse gas emissions per SIC
-    :return: A dataframe of SIC and greenhouse gas emissions
-    :rtype: pd.DataFrame()
-    """
-    sic_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/industry_data/publisheduksicsummaryofstructureworksheet.xlsx",
-        sheet_name="reworked structure",
-    )
-
-    return sic_data
+ojo_companies_house_dict = load_companies_house_dict()
+ghg_emissions_dict = load_industry_ghg_dict()
 
 
 def clean_company_name(
@@ -112,55 +75,100 @@ def clean_company_name(
     return name
 
 
-def get_green_industry_measure(company_name):
-    return random.choice(["Green", "Not green"])
+def clean_sic(sic_name):
+    if sic_name:
+        sic = str(sic_name.split(" - ")[0])
+        if len(sic) == 4:
+            return "0" + sic
+        else:
+            return sic
+    else:
+        return None
 
 
-# def map_company_name(
-#     company_name: Union[str, List[str]],
-#     company_sics: pd.DataFrame()
-# ) -> Union[str, List[str]]:
-#     """Finds the SIC(s) for a particular company name(s)
-#     :param company_name: A company name or list of company names
-#     :type company_name: str or a list of string
-#     :param company_sics: SICs for each company name
-#     :type company_sics: pd.DataFrame()
-#     :return: A SOC or list of SOCs for the inputted job titles
-#     :rtype: str or list
-#     """
-
-#     if job_title.isinstance(str):
-#         return soc_job_titles.get(job_title)
-#     else:
-#         return [soc_job_titles.get(title) for title in job_title]
-
-
-# ## TO DO IN OJO APPLICATION EVENTUALLY
-# if __name__ == '__main__':
-
-#     companies_house = load_companies_house()
-#     companies_house["cleaned_name"] = companies_house["CompanyName"].map(clean_company_name)
+def get_ghg_sic(sic, ghg_emissions_dict: Dict[str, float] = ghg_emissions_dict):
+    """
+    Could do more to find it, but I think it might be best to just clean the emissions data
+    """
+    if sic:
+        sic_2 = sic[0:2]  # 19
+        sic_3 = sic[0:2] + "." + sic[2]  # 19.1
+        sic_4 = sic[0:2] + "." + sic[2:4]  # 19.12
+        if sic_2 in ghg_emissions_dict:
+            return ghg_emissions_dict[sic_2]
+        elif sic_3 in ghg_emissions_dict:
+            return ghg_emissions_dict[sic_3]
+        elif sic_4 in ghg_emissions_dict:
+            return ghg_emissions_dict[sic_4]
+        else:
+            return None
+    else:
+        return None
 
 
-#     from dap_prinz_green_jobs.getters.ojo import get_ojo_sample, get_ojo_job_title_sample, get_ojo_location_sample, get_ojo_salaries_sample, get_ojo_skills_sample
+def get_ch_sic(
+    cleaned_name: str,
+    ojo_companies_house_dict: Dict[str, Dict[str, str]] = ojo_companies_house_dict,
+) -> str:
+    """
+    Pick one SIC for each cleaned name using the Companies House data.
+    If there are multiple SICs given for a name then pick one randomly.
 
-#     ojo_data = get_ojo_sample()
+    TO DO: Pick based off semantic similarity?
 
-#     ojo_data_1 = get_ojo_job_title_sample()
+    :param ojo_companies_house_dict: The companies house data with cleaned
+            company name as the key and the various SIC codes given for this cleaned name
+            (as there can be multiple)
+    :type companies_house_cleaned_in_ojo_dict: dict
+
+    :param cleaned_name: The cleaned company name
+    :type cleaned_name: str
+
+    :return: A SIC or None
+    :rtype: str or None
+
+    """
+    companies_house_data = ojo_companies_house_dict.get(cleaned_name)
+    if companies_house_data:
+        sic_options = [
+            c["SICCode.SicText_1"]
+            for c in companies_house_data
+            if c["SICCode.SicText_1"]
+        ]
+        random.seed(42)
+        return random.choice(sic_options)
+    else:
+        return None
 
 
-#     # # I dont think the sector/parent sector/knowledge domain match well to SIC
-#     # sic_data = load_sic()
+def get_green_industry_measure(
+    company_name: str,
+    ojo_companies_house_dict: Dict[str, Dict[str, str]] = ojo_companies_house_dict,
+    ghg_emissions_dict: Dict[str, float] = ghg_emissions_dict,
+) -> Union[float, None]:
+    """Gets SIC GHG emissions for a given company name.
 
-#     ## whilst I wait for compnay name to be added
-#     with open("/Users/elizabethgallagher/Code/liz_sandpit/prinz/data/20220622_sampled_job_ads.json") as f:
-#         ojo_data_2 = json.load(f)
-#     ojo_data_2 = pd.DataFrame(ojo_data_2).T
-#     ojo_data_2["id"] = ojo_data_2.index.astype(int)
-#     ojo_data_2.head(2)
+    Args:
+        company_name (str): Company name to get SIC GHG emissions for
+        ojo_companies_house_dict (Dict[str, Dict[str, str]]): Dictionary of company names
+            and companies house SIC data
+        ghg_emissions_dict (Dict[str, float]): Dictionary of SIC codes and GHG emissions
 
-#     ojo_data_2["cleaned_name"] = ojo_data_2["company_raw"].map(clean_company_name)
+    Returns:
+        Union[float, None]: Returns SIC GHG emissions for a given company name
+            or None if no match
+    """
+    # clean company name
+    company_name_clean = clean_company_name(company_name)
 
-
-# name="perfect placement"
-# companies_house[companies_house['cleaned_name']==name]
+    ch_sic = get_ch_sic(
+        ojo_companies_house_dict=ojo_companies_house_dict,
+        cleaned_name=company_name_clean,
+    )
+    # if sic match then clean sic and get ghg emissions
+    if ch_sic:
+        clean_ch_sic = clean_sic(ch_sic)
+        ghg_emissions_info = get_ghg_sic(clean_ch_sic, ghg_emissions_dict)
+        return ghg_emissions_info
+    else:
+        return None
