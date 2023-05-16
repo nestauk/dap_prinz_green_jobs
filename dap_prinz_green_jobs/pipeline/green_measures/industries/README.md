@@ -4,10 +4,9 @@ As a one-off run:
 
 ```
 python dap_prinz_green_jobs/pipeline/green_measures/industries/industries_data_processing.py
-
 ```
 
-this will save out just the key columns from the full Companies House dataset to `s3://prinz-green-jobs/inputs/data/industry_data/BasicCompanyDataAsOneFile-2023-05-01_key_columns_only.csv`. This speeds up the rest of the pipeline as loading the full dataset is slow. It will also save a series of relevant GHG data.
+This will save out just the key columns from the full Companies House dataset to `s3://prinz-green-jobs/inputs/data/industry_data/BasicCompanyDataAsOneFile-2023-05-01_key_columns_only.csv`. This speeds up the rest of the pipeline as loading the full dataset is slow. It will also save a series of relevant GHG data. NOTE: this script will take a long time to run.
 
 The script
 

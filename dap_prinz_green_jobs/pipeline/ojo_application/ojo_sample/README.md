@@ -11,7 +11,7 @@ python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/deduplication.py
 
 ```
 
-this creates a csv with deduplicated job adverts ids in a certain time window. The default is a 7 day window; so this means if two adverts with the same text and location turn up within a week of each other, then only one will remain in the outputted data.
+this creates a csv with deduplicated job adverts ids in a certain time window (if desired). The default is not to use a time window; so this means any instance (time independent) of a job adverts having the same text and location will be deduplicated. If a time window is used (e.g. 7 days) then if two adverts with the same text and location turn up within a week of each other, then only one will remain in the outputted data.
 
 ## Sampling
 

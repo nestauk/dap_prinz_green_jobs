@@ -1,10 +1,10 @@
-ojo_deduplication_num_units: 7
-ojo_deduplication_unit_type: "days"
+ojo_deduplication_num_units: null
+ojo_deduplication_unit_type: null
 ojo_s3_file_adverts_ojd_daps_extract: "s3://open-jobs-lake/latest_output_tables/adverts_ojd_daps_extract.parquet"
 ojo_s3_file_descriptions: "s3://open-jobs-lake/latest_output_tables/descriptions.parquet"
 ojo_s3_file_salaries: "s3://open-jobs-lake/latest_output_tables/salaries_ojd_daps_extract.parquet"
 ojo_s3_file_locations: "s3://open-jobs-lake/latest_output_tables/locations_ojd_daps_extract.parquet"
 ojo_s3_file_skills: "s3://open-jobs-lake/latest_output_tables/skills_ojd_daps_extract.parquet"
-ojo_deduplication_file: "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids_7days_chunks.csv"
+ojo_deduplication_file: "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids.csv"
 ojo_random_sample_size: 100000
 ojo_sample_file: "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv"

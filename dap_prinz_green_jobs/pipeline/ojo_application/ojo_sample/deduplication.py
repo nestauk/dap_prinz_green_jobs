@@ -44,15 +44,27 @@ if __name__ == "__main__":
     # Can't do anything with the adverts without description text, so remove these before deduplication and sampling
     job_adverts = job_adverts[job_adverts["description_hash"].notnull()]
 
-    no_duplicates = get_deduplicated_job_adverts(
-        job_adverts,
-        num_units=num_units,
-        unit_type=unit_type,
-        id_col="id",
-        date_col="created",
-        job_loc_col="job_location_raw",
-        description_hash="description_hash",
-    )
+    if num_units:
+        # If you are using a time window it's a bit more complex
+        no_duplicates = get_deduplicated_job_adverts(
+            job_adverts,
+            num_units=num_units,
+            unit_type=unit_type,
+            id_col="id",
+            date_col="created",
+            job_loc_col="job_location_raw",
+            description_hash="description_hash",
+        )
+        output_file_name = f"outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids_{num_units}{unit_type}_chunks.csv"
+    else:
+        # Without a time window the deduplication is easy
+        no_duplicates = job_adverts.sample(frac=1, random_state=42).drop_duplicates(
+            ["job_location_raw", "description_hash"]
+        )
+        output_file_name = (
+            "outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids.csv"
+        )
+
     logger.info(
         f"{len(job_adverts)} job adverts with a description, deduplicated to {len(no_duplicates)} job adverts"
     )
@@ -62,5 +74,5 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         no_duplicates,
-        f"outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids_{num_units}{unit_type}_chunks.csv",
+        output_file_name,
     )
