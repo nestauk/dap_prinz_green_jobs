@@ -5,6 +5,7 @@ from typing import Dict
 from dap_prinz_green_jobs import BUCKET_NAME
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 
+
 def load_companies_house() -> pd.DataFrame():
     """Downloads the Companies House dataset
     :return: A dataframe of company information including name and SIC
@@ -22,6 +23,7 @@ def load_companies_house_dict() -> Dict[str, Dict[str, dict]]:
         BUCKET_NAME, "outputs/data/green_industries/companies_house_dict.json"
     )
 
+
 def load_industry_ghg() -> pd.DataFrame():
     """Downloads a dataset of greenhouse gas emissions per SIC
     :return: A dataframe of SIC and greenhouse gas emissions
@@ -31,6 +33,15 @@ def load_industry_ghg() -> pd.DataFrame():
     return load_s3_data(
         BUCKET_NAME, "outputs/data/green_industries/ghg_emissions_data.csv"
     )
+
+
+def load_industry_ghg_dict() -> dict:
+    """Downloads a dictionary of greenhouse gas emissions per SIC
+    :return: A dictionary of SIC and greenhouse gas emissions
+    :rtype: dict
+    """
+
+    return load_s3_data(BUCKET_NAME, "outputs/data/green_industries/ghg_dict.json")
 
 
 def load_sic() -> pd.DataFrame():
