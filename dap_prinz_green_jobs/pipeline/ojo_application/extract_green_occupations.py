@@ -5,7 +5,7 @@ Create a dataset of green occupations for the sample of OJO data
 import pandas as pd
 
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils import *
-from dap_prinz_green_jobs.getters.ojo import get_ojo_sample
+from dap_prinz_green_jobs.getters.ojo_getters import get_ojo_sample
 
 if __name__ == "__main__":
     ojo_data = get_ojo_sample()

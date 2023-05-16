@@ -19,7 +19,7 @@ from tqdm import tqdm
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
-from dap_prinz_green_jobs.getters.ojo import get_ojo_skills_sample
+from dap_prinz_green_jobs.getters.ojo_getters import get_ojo_skills_sample
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 
 from datetime import datetime as date
