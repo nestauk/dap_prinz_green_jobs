@@ -12,7 +12,7 @@ this will save out just the key columns from the full Companies House dataset to
 The script
 
 ```
-python dap_prinz_green_jobs/pipeline/green_measures/industries/industry_measures_utils.py
+dap_prinz_green_jobs/pipeline/green_measures/industries/industry_measures_utils.py
 ```
 
 contains functions needed to see whether industries are green or not.

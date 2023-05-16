@@ -26,8 +26,7 @@ if __name__ == "__main__":
             (companies_house["SICCode.SicText_1"] != "None Supplied")
             & (companies_house["SICCode.SicText_1"] != "99999 - Dormant Company")
         )
-    ]
-    companies_house.reset_index(drop=True, inplace=True)
+    ].reset_index(drop=True)
 
     save_to_s3(
         BUCKET_NAME,

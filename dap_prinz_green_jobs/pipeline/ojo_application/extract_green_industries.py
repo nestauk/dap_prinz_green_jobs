@@ -6,6 +6,7 @@ import pandas as pd
 
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils import *
 from dap_prinz_green_jobs.getters.ojo import get_ojo_job_title_sample
+from dap_prinz_green_jobs.getters.industry_getters import load_industry_ghg
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
 
