@@ -109,9 +109,7 @@ class ExtractGreenMeasuresFlow(FlowSpec):
         # reformat it to be a list of dictionaries for GreenMeasures
         ojo_sample = list(
             (
-                ojo_sample_raw_title
-                # currently to deal with no company name
-                [["job_title_raw_x", "company_raw", "description"]]
+                ojo_sample_raw_title[["job_title_raw_x", "company_raw", "description"]]
                 .rename(
                     columns={
                         "job_title_raw_x": gm.job_title_name,
@@ -145,15 +143,12 @@ class ExtractGreenMeasuresFlow(FlowSpec):
         from dap_prinz_green_jobs.getters.data_getters import save_to_s3
         from dap_prinz_green_jobs import BUCKET_NAME
 
-        if self.production:
-            logger.info("saving green measures to s3...")
-            save_to_s3(
-                BUCKET_NAME,
-                self.green_outputs,
-                "outputs/data/ojo_application/ojo_sample_green_measures.json",
-            )
-        else:
-            pass
+        logger.info("saving green measures to s3...")
+        save_to_s3(
+            BUCKET_NAME,
+            self.green_outputs,
+            f"outputs/data/ojo_application/ojo_sample_green_measures_production_{self.production}.json",
+        )
 
 
 if __name__ == "__main__":

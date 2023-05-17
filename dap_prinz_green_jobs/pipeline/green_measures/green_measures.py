@@ -26,10 +26,10 @@ class GreenMeasures(object):
     Attributes
     ----------
     skill_threshold (float): the minimum skill_match_threshold to be considered a match to a taxonomy skill.
-    config_name (str): the name of the config file to use for the skills extractor.
-    job_text_name (str): the name of the job text key in the job advert.
-    job_title_name (str): the name of the job title key in the job advert.
-    company_name (str): the name of the company key in the job advert.
+    skills_config_name (str): the name of the config file to use for the skills extractor.
+    job_text_key (str): the name of the job text key in the job advert.
+    job_title_key (str): the name of the job title key in the job advert.
+    company_name_key (str): the name of the company key in the job advert.
     ----------
     Methods
     ----------
@@ -48,16 +48,20 @@ class GreenMeasures(object):
     def __init__(
         self,
         skill_threshold: int = 0.7,
-        config_name: str = "extract_green_skills_esco",
-        job_text_name: str = "job_text",
-        job_title_name: str = "job_title",
-        company_name: str = "company_name",
+        skills_config_name: str = "extract_green_skills_esco",
+        job_text_key: str = "job_text",
+        job_title_key: str = "job_title",
+        company_name_key: str = "company_name",
+        get_skill_measures_called=False,
+        get_occupation_measures_called=False,
     ):
         self.skill_threshold = skill_threshold
-        self.config_name = config_name
-        self.job_text_name = job_text_name
-        self.job_title_name = job_title_name
-        self.company_name = company_name
+        self.skills_config_name = skills_config_name
+        self.job_text_key = job_text_key
+        self.job_title_key = job_title_key
+        self.company_name_key = company_name_key
+        self.get_skill_measures_called = get_skill_measures_called
+        self.get_occupation_measures_called = get_occupation_measures_called
         self.green_soc_data = (om.load_green_soc(),)
         self.jobtitle_soc_data = (om.load_job_title_soc(),)
         self.ghg_emissions_dict = load_industry_ghg_dict()
@@ -76,15 +80,17 @@ class GreenMeasures(object):
 
         Can also take as input the output of es.get_skills() (skill_list) to avoid re-extracting skills.
         """
-        try:
-            es = ExtractSkills(self.config_name)
-        except FileNotFoundError:
-            logger.exception(
-                "*** Please run dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py to add custom config and data files to ojd-daps-skills library folder ***"
-            )
-        es.load()
 
-        es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
+        if not self.get_skill_measures_called:
+            try:
+                es = ExtractSkills(self.skills_config_name)
+            except FileNotFoundError:
+                logger.exception(
+                    "*** Please run dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py to add custom config and data files to ojd-daps-skills library folder ***"
+                )
+            es.load()
+
+            es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
 
         if (not job_advert) and (skill_list):
             if isinstance(skill_list[0], str):
@@ -93,7 +99,7 @@ class GreenMeasures(object):
         if (job_advert) and (not skill_list):
             if type(job_advert) == dict:
                 job_advert = [job_advert]
-            raw_skills = es.get_skills([job[self.job_text_name] for job in job_advert])
+            raw_skills = es.get_skills([job[self.job_text_key] for job in job_advert])
 
         job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(
             {
@@ -147,17 +153,20 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        soc_2010_4_mapper = om.create_job_title_soc_mapper(self.jobtitle_soc_data[0])
+        if not self.get_occupation_measures_called:
+            soc_2010_4_mapper = om.create_job_title_soc_mapper(
+                self.jobtitle_soc_data[0]
+            )
 
-        soc_green_measures_dict = (
-            self.green_soc_data[0]
-            .set_index("soc_4_2010")[["Green Category", "Green/Non-green"]]
-            .T.to_dict()
-        )
+            soc_green_measures_dict = (
+                self.green_soc_data[0]
+                .set_index("soc_4_2010")[["Green Category", "Green/Non-green"]]
+                .T.to_dict()
+            )
 
         occ_green_measures_list = []
         for job in job_advert:
-            job_titles = job.get(self.job_title_name)
+            job_titles = job.get(self.job_title_key)
             job_titles_clean = om.clean_job_title(job_titles)
             job_title_to_soc = soc_2010_4_mapper.get(job_titles_clean)
             green_occ_measures = soc_green_measures_dict.get(job_title_to_soc)
@@ -184,7 +193,7 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        comp_names = [job.get(self.company_name) for job in job_advert]
+        comp_names = [job.get(self.company_name_key) for job in job_advert]
 
         ind_green_measures_dict = {}
         if comp_names:
