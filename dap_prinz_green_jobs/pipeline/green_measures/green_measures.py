@@ -52,7 +52,6 @@ class GreenMeasures(object):
         job_text_key: str = "job_text",
         job_title_key: str = "job_title",
         company_name_key: str = "company_name",
-        get_skill_measures_called=False,
         get_occupation_measures_called=False,
     ):
         self.skill_threshold = skill_threshold
@@ -60,12 +59,19 @@ class GreenMeasures(object):
         self.job_text_key = job_text_key
         self.job_title_key = job_title_key
         self.company_name_key = company_name_key
-        self.get_skill_measures_called = get_skill_measures_called
         self.get_occupation_measures_called = get_occupation_measures_called
         self.green_soc_data = (om.load_green_soc(),)
         self.jobtitle_soc_data = (om.load_job_title_soc(),)
         self.ghg_emissions_dict = load_industry_ghg_dict()
         self.ojo_companies_house_dict = load_companies_house_dict()
+        try:
+            self.es = ExtractSkills(self.skills_config_name)
+        except FileNotFoundError:
+            logger.exception(
+                "*** Please run dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py to add custom config and data files to ojd-daps-skills library folder ***"
+            )
+        self.es.load()
+        self.es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
 
     def get_skill_measures(
         self,
@@ -80,28 +86,18 @@ class GreenMeasures(object):
 
         Can also take as input the output of es.get_skills() (skill_list) to avoid re-extracting skills.
         """
-
-        if not self.get_skill_measures_called:
-            try:
-                es = ExtractSkills(self.skills_config_name)
-            except FileNotFoundError:
-                logger.exception(
-                    "*** Please run dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py to add custom config and data files to ojd-daps-skills library folder ***"
-                )
-            es.load()
-
-            es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
-
         if (not job_advert) and (skill_list):
             if isinstance(skill_list[0], str):
-                raw_skills = es.format_skills(skill_list)
+                raw_skills = self.es.format_skills(skill_list)
             raw_skills = skill_list
         if (job_advert) and (not skill_list):
             if type(job_advert) == dict:
                 job_advert = [job_advert]
-            raw_skills = es.get_skills([job[self.job_text_key] for job in job_advert])
+            raw_skills = self.es.get_skills(
+                [job[self.job_text_key] for job in job_advert]
+            )
 
-        job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(
+        job_skills, skill_hashes = self.es.skill_mapper.preprocess_job_skills(
             {
                 "predictions": dict(
                     zip(
@@ -113,7 +109,7 @@ class GreenMeasures(object):
         )
 
         extracted_green_skills = sm.get_green_skill_measures(
-            es=es,
+            es=self.es,
             raw_skills=raw_skills,
             skill_hashes=skill_hashes,
             job_skills=job_skills,
@@ -124,24 +120,22 @@ class GreenMeasures(object):
         self.green_skill_measures = []
         for i, _ in enumerate(raw_skills):
             if "SKILL" in extracted_green_skills[i].keys():
+                matched_skills = [
+                    i for i in extracted_green_skills[i]["SKILL"] if i[1][0] != ""
+                ]
                 green_skill_percent = (
-                    len(extracted_green_skills[i]["SKILL"])
-                    / (len(raw_skills[i]["SKILL"]) + len(raw_skills[i]["MULTISKILL"]))
+                    len(matched_skills) / len(extracted_green_skills[i]["SKILL"])
                 ) * 100
-                green_skill_count = len(extracted_green_skills[i]["SKILL"])
-                green_skills = extracted_green_skills[i]["SKILL"]
             else:
+                matched_skills = 0
                 green_skill_percent = 0
-                green_skill_count = 0
-                green_skills = [{}]
             self.green_skill_measures.append(
                 {
-                    "GREEN SKILL PERCENT": green_skill_percent,
-                    "GREEN SKILL COUNT": green_skill_count,
-                    "GREEN SKILLS": green_skills,
+                    "GREEN SKILL PERCENT": round(green_skill_percent, 2),
+                    "GREEN SKILL COUNT": len(matched_skills),
+                    "GREEN SKILLS": matched_skills,
                 }
             )
-
         return self.green_skill_measures
 
     def get_occupation_measures(self, job_advert: Dict[str, str]) -> List[dict]:

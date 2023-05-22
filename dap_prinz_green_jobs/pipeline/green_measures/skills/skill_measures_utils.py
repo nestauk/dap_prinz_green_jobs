@@ -19,7 +19,7 @@ def chunks(data_dict: dict, chunk_size: int = 100):
         yield {k: data_dict[k] for k in islice(it, chunk_size)}
 
 
-def format_skills(skill_label: List[str]) -> Dict[str, List[str]]:
+def format_skills(skill_label: List[str]) -> List[Dict[str, list]]:
     """Format extracted skills into a dictionary with the following keys:
     EXPERIENCE, SKILL, MULTISKILL
 
@@ -27,10 +27,10 @@ def format_skills(skill_label: List[str]) -> Dict[str, List[str]]:
         skill_label (List[str]): List of extracted skills
 
     Returns:
-        Dict[str, List[str]]: Formatted dictionary of extracted skills
+        List[Dict[str, list]]: Formatted list of a dictionary of extracted skills
     """
     if type(skill_label) == list:
-        return {"EXPERIENCE": [], "SKILL": skill_label, "MULTISKILL": []}
+        return [{"SKILL": [], "MULTISKILL": skill_label, "EXPERIENCE": []}]
     else:
         return skill_label
 
@@ -78,6 +78,13 @@ def get_green_skill_measures(
                             job_skill["top_tax_skills"][0][0],
                             job_skill["top_tax_skills"][0][1],
                         ),
+                    )
+                )
+            else:
+                matched_skills_formatted.append(
+                    (
+                        job_skill["ojo_ner_skill"],
+                        ("", 0),
                     )
                 )
         matched_skills.append(
