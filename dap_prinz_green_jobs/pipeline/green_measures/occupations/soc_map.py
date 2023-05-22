@@ -251,7 +251,7 @@ class SOCMapper(object):
         find the top n SOC job titles which are most similar to each input job title.
         """
 
-        logger.info(f"Finding most similar job titles")
+        logger.info(f"Finding most similar job titles for {len(job_titles)} job titles")
 
         similarities = cosine_similarity(job_title_embeddings, self.all_soc_embeddings)
 
