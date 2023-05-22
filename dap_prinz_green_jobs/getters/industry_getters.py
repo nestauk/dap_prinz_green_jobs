@@ -1,5 +1,9 @@
 import pandas as pd
 import openpyxl
+from typing import Dict
+
+from dap_prinz_green_jobs import BUCKET_NAME
+from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 
 
 def load_companies_house() -> pd.DataFrame():
@@ -13,26 +17,31 @@ def load_companies_house() -> pd.DataFrame():
     return companies_house
 
 
+def load_companies_house_dict() -> Dict[str, Dict[str, dict]]:
+    """Loads companies house dictionary"""
+    return load_s3_data(
+        BUCKET_NAME, "outputs/data/green_industries/companies_house_dict.json"
+    )
+
+
 def load_industry_ghg() -> pd.DataFrame():
     """Downloads a dataset of greenhouse gas emissions per SIC
     :return: A dataframe of SIC and greenhouse gas emissions
     :rtype: pd.DataFrame()
-
-    TO DO: clean this dataset - there are SIC codes in there like '20.12+20.2'
     """
-    emissions_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx",
-        sheet_name="GHG total",
-        skiprows=3,
-    )
-    emissions_data.reset_index(inplace=True)
-    emissions_data = emissions_data.loc[list(range(0, 21)) + list(range(26, 156))]
 
-    emissions_data["Unnamed: 0"] = emissions_data["Unnamed: 0"].apply(
-        lambda x: x if isinstance(x, str) else "0" + str(x) if x < 10 else str(x)
+    return load_s3_data(
+        BUCKET_NAME, "outputs/data/green_industries/ghg_emissions_data.csv"
     )
 
-    return emissions_data
+
+def load_industry_ghg_dict() -> dict:
+    """Downloads a dictionary of greenhouse gas emissions per SIC
+    :return: A dictionary of SIC and greenhouse gas emissions
+    :rtype: dict
+    """
+
+    return load_s3_data(BUCKET_NAME, "outputs/data/green_industries/ghg_dict.json")
 
 
 def load_sic() -> pd.DataFrame():

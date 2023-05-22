@@ -6,11 +6,21 @@ It will also contain scripts to generate an OJO sample.
 
 Ultimately, we would like to have a single flow that applies the green measures class to a representative OJO sample to be used for i.e. a dashboard.
 
+## Extract Green Measures
+
+To extract measures across the skill-, occupations- and industries- level, you can run the folloing:
+
+```
+python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures_flow.py
+```
+
 ## Extract Green Skills
 
 To extract skills from a sample of OJO job adverts and map them onto ESCO's green skills taxonomy, you can run the following:
 
-`python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_skills.py`
+```
+python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_skills.py
+```
 
 ## Extract Green Occupations
 
