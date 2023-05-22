@@ -8,6 +8,7 @@ from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
 import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils as om
 import dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils as im
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 
 from dap_prinz_green_jobs.getters.industry_getters import (
     load_industry_ghg_dict,
@@ -52,16 +53,13 @@ class GreenMeasures(object):
         job_text_key: str = "job_text",
         job_title_key: str = "job_title",
         company_name_key: str = "company_name",
-        get_occupation_measures_called=False,
     ):
         self.skill_threshold = skill_threshold
         self.skills_config_name = skills_config_name
         self.job_text_key = job_text_key
         self.job_title_key = job_title_key
         self.company_name_key = company_name_key
-        self.get_occupation_measures_called = get_occupation_measures_called
-        self.green_soc_data = (om.load_green_soc(),)
-        self.jobtitle_soc_data = (om.load_job_title_soc(),)
+        self.green_soc_data = om.load_green_soc()
         self.ghg_emissions_dict = load_industry_ghg_dict()
         self.ojo_companies_house_dict = load_companies_house_dict()
         try:
@@ -72,6 +70,7 @@ class GreenMeasures(object):
             )
         self.es.load()
         self.es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
+        self.get_occupation_measures_called = False
 
     def get_skill_measures(
         self,
@@ -148,32 +147,39 @@ class GreenMeasures(object):
             job_advert = [job_advert]
 
         if not self.get_occupation_measures_called:
-            soc_2010_4_mapper = om.create_job_title_soc_mapper(
-                self.jobtitle_soc_data[0]
-            )
+            self.soc_green_measures_dict = self.green_soc_data.set_index("soc_4_2010")[
+                ["Green Category", "Green/Non-green"]
+            ].T.to_dict()
+            self.soc_mapper = SOCMapper()
+            self.soc_mapper.load()
 
-            soc_green_measures_dict = (
-                self.green_soc_data[0]
-                .set_index("soc_4_2010")[["Green Category", "Green/Non-green"]]
-                .T.to_dict()
-            )
+            self.get_occupation_measures_called = True
+
+        # It's quicker to use soc_mapper with a bulk unique input
+        ix_2_job_titles = {
+            i: job.get(self.job_title_key) for i, job in enumerate(job_advert)
+        }
+        unique_job_titles = list(set(ix_2_job_titles.values()))
+        soc_matches = self.soc_mapper.get_soc(job_titles=unique_job_titles)
+        job_title_2_match = dict(zip(unique_job_titles, soc_matches))
 
         occ_green_measures_list = []
         for job in job_advert:
-            job_titles = job.get(self.job_title_key)
-            job_titles_clean = om.clean_job_title(job_titles)
-            job_title_to_soc = soc_2010_4_mapper.get(job_titles_clean)
-            green_occ_measures = soc_green_measures_dict.get(job_title_to_soc)
+            soc = job_title_2_match[job.get(self.job_title_key)]
+            if soc:
+                soc = soc[0]
+            green_occ_measures = self.soc_green_measures_dict.get(soc)
             if green_occ_measures:
                 occ_green_measures_list.append(
                     {
                         "GREEN CATEGORY": green_occ_measures.get("Green Category"),
                         "GREEN/NOT GREEN": green_occ_measures.get("Green/Non-green"),
+                        "SOC": soc,
                     }
                 )
             else:
                 occ_green_measures_list.append(
-                    {"GREEN CATEGORY": None, "GREEN/NOT GREEN": None}
+                    {"GREEN CATEGORY": None, "GREEN/NOT GREEN": None, "SOC": None}
                 )
 
         return occ_green_measures_list
