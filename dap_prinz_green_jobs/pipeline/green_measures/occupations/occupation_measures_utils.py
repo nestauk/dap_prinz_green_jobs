@@ -64,15 +64,37 @@ def load_job_title_soc() -> pd.DataFrame():
 
 def load_green_soc() -> pd.DataFrame():
     """
-    Load the dataset which gives green SOC codes
+    Load the datasets which gives green measures from SOC codes
     """
 
-    green_soc_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/occupation_data/gla/Summary of green occupations (Nov 2021).xlsx",
-        sheet_name="1. List of all occupations",
-        skiprows=3,
+    green_gla_data = (
+        pd.read_excel(
+            "s3://prinz-green-jobs/inputs/data/occupation_data/gla/Summary of green occupations (Nov 2021).xlsx",
+            sheet_name="1. List of all occupations",
+            skiprows=3,
+            converters={"SOC2010 4-digit": str},
+        )
+        .add_prefix("GLA_")
+        .rename(columns={"GLA_SOC2010 4-digit": "SOC_2010"})
     )
-    green_soc_data["soc_4_2010"] = green_soc_data["SOC2010 4-digit"].astype("str")
+
+    green_timeshares = (
+        pd.read_excel(
+            "s3://prinz-green-jobs/inputs/data/occupation_data/ons/greentimesharesoc.xlsx",
+            sheet_name="SOC_2010",
+            skiprows=2,
+            converters={"SOC 2010 code": str},
+        )
+        .add_prefix("timeshare_")
+        .rename(columns={"timeshare_SOC 2010 code": "SOC_2010"})
+    )
+
+    green_soc_data = pd.merge(
+        green_gla_data,
+        green_timeshares,
+        how="outer",
+        on="SOC_2010",
+    ).rename(columns={"SOC 2010 code": "SOC_2010"})
 
     return green_soc_data
 

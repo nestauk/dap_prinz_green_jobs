@@ -30,7 +30,7 @@ if __name__ == "__main__":
         )
     )
 
-    ojo_sample = ojo_sample[0:100]  # For demo
+    ojo_sample = ojo_sample  # [0:100]  # For demo
 
     green_occupation_outputs = gm.get_occupation_measures(job_advert=ojo_sample)
 
@@ -52,3 +52,5 @@ if __name__ == "__main__":
         .groupby(level=0, group_keys=False)
         .head(10)
     )
+
+    print(ojo_data_green.groupby(["GREEN CATEGORY"])["GREEN TIMESHARE"].mean())

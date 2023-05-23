@@ -147,8 +147,8 @@ class GreenMeasures(object):
             job_advert = [job_advert]
 
         if not self.get_occupation_measures_called:
-            self.soc_green_measures_dict = self.green_soc_data.set_index("soc_4_2010")[
-                ["Green Category", "Green/Non-green"]
+            self.soc_green_measures_dict = self.green_soc_data.set_index("SOC_2010")[
+                ["GLA_Green Category", "GLA_Green/Non-green", "timeshare_2019"]
             ].T.to_dict()
             self.soc_mapper = SOCMapper()
             self.soc_mapper.load()
@@ -187,14 +187,22 @@ class GreenMeasures(object):
             if green_occ_measures:
                 occ_green_measures_list.append(
                     {
-                        "GREEN CATEGORY": green_occ_measures.get("Green Category"),
-                        "GREEN/NOT GREEN": green_occ_measures.get("Green/Non-green"),
+                        "GREEN CATEGORY": green_occ_measures.get("GLA_Green Category"),
+                        "GREEN/NOT GREEN": green_occ_measures.get(
+                            "GLA_Green/Non-green"
+                        ),
+                        "GREEN TIMESHARE": green_occ_measures.get("timeshare_2019"),
                         "SOC": soc_info,
                     }
                 )
             else:
                 occ_green_measures_list.append(
-                    {"GREEN CATEGORY": None, "GREEN/NOT GREEN": None, "SOC": None}
+                    {
+                        "GREEN CATEGORY": None,
+                        "GREEN/NOT GREEN": None,
+                        "GREEN TIMESHARE": None,
+                        "SOC": None,
+                    }
                 )
 
         return occ_green_measures_list
