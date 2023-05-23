@@ -8,3 +8,22 @@ ojo_s3_file_skills: "s3://open-jobs-lake/latest_output_tables/skills_ojd_daps_ex
 ojo_deduplication_file: "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids.csv"
 ojo_random_sample_size: 100000
 ojo_sample_file: "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv"
+
+job_adverts:
+  job_text_key: "job_text"
+  job_title_key: "job_title"
+  company_name_key: "company_name"
+skills:
+  skill_threshold: 0.7
+  skills_config_name: "extract_green_skills_esco"
+occupations:
+  local: False
+  embeddings_output_dir: "outputs/data/green_occupations/soc_matching/"
+  batch_size: 500
+  match_top_n: 10
+  sim_threshold: 0.67
+  top_n_sim_threshold: 0.5
+  minimum_n: 3
+  minimum_prop: 0.5
+  save_embeds: True
+industries:

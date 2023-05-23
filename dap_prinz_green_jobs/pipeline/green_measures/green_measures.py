@@ -9,15 +9,16 @@ import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measu
 import dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils as im
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
-
 from dap_prinz_green_jobs.getters.industry_getters import (
     load_industry_ghg_dict,
     load_companies_house_dict,
 )
+from dap_prinz_green_jobs import logger, PROJECT_DIR
 
-from dap_prinz_green_jobs import logger
 from typing import List, Union, Dict, Optional
 from uuid import uuid4
+import yaml
+import os
 
 
 class GreenMeasures(object):
@@ -26,11 +27,7 @@ class GreenMeasures(object):
         industry-level for a given job advert or list of job adverts.
     Attributes
     ----------
-    skill_threshold (float): the minimum skill_match_threshold to be considered a match to a taxonomy skill.
-    skills_config_name (str): the name of the config file to use for the skills extractor.
-    job_text_key (str): the name of the job text key in the job advert.
-    job_title_key (str): the name of the job title key in the job advert.
-    company_name_key (str): the name of the company key in the job advert.
+    config_name (str): the name of the config file to use.
     ----------
     Methods
     ----------
@@ -48,18 +45,27 @@ class GreenMeasures(object):
 
     def __init__(
         self,
-        skill_threshold: int = 0.7,
-        skills_config_name: str = "extract_green_skills_esco",
-        job_text_key: str = "job_text",
-        job_title_key: str = "job_title",
-        company_name_key: str = "company_name",
+        config_name: str = "base",
     ):
-        self.skill_threshold = skill_threshold
-        self.skills_config_name = skills_config_name
-        self.job_text_key = job_text_key
-        self.job_title_key = job_title_key
-        self.company_name_key = company_name_key
-        self.green_soc_data = om.load_green_soc()
+        # Set variables from the config file
+        if ".yaml" not in config_name:
+            config_name += ".yaml"
+        config_path = os.path.join(
+            PROJECT_DIR, "dap_prinz_green_jobs/config/", config_name
+        )
+        with open(config_path, "r") as f:
+            self.config = yaml.load(f, Loader=yaml.FullLoader)
+
+        # Skills config variables
+        self.skill_threshold = self.config["skills"]["skill_threshold"]
+        self.skills_config_name = self.config["skills"]["skills_config_name"]
+
+        # Input job advert data config variables
+        self.job_text_key = self.config["job_adverts"]["job_text_key"]
+        self.job_title_key = self.config["job_adverts"]["job_title_key"]
+        self.company_name_key = self.config["job_adverts"]["company_name_key"]
+
+        self.green_soc_data = om.get_green_soc_measures()
         self.ghg_emissions_dict = load_industry_ghg_dict()
         self.ojo_companies_house_dict = load_companies_house_dict()
         try:
@@ -150,8 +156,19 @@ class GreenMeasures(object):
             self.soc_green_measures_dict = self.green_soc_data.set_index("SOC_2010")[
                 ["GLA_Green Category", "GLA_Green/Non-green", "timeshare_2019"]
             ].T.to_dict()
-            self.soc_mapper = SOCMapper()
-            self.soc_mapper.load()
+            self.soc_mapper = SOCMapper(
+                local=self.config["occupations"]["local"],
+                embeddings_output_dir=self.config["occupations"][
+                    "embeddings_output_dir"
+                ],
+                batch_size=self.config["occupations"]["batch_size"],
+                match_top_n=self.config["occupations"]["match_top_n"],
+                sim_threshold=self.config["occupations"]["sim_threshold"],
+                top_n_sim_threshold=self.config["occupations"]["top_n_sim_threshold"],
+                minimum_n=self.config["occupations"]["minimum_n"],
+                minimum_prop=self.config["occupations"]["minimum_prop"],
+            )
+            self.soc_mapper.load(save_embeds=self.config["occupations"]["save_embeds"])
 
             self.get_occupation_measures_called = True
 
