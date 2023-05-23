@@ -19,9 +19,7 @@ import pandas as pd
 from tqdm import tqdm
 import numpy as np
 
-from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils import (
-    load_job_title_soc,
-)
+from dap_prinz_green_jobs.getters.occupation_getters import load_job_title_soc
 from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,
     load_s3_data,
@@ -124,13 +122,13 @@ class SOCMapper(object):
         """
 
         jobtitle_soc_data = load_job_title_soc()
-        jobtitle_soc_data = jobtitle_soc_data[jobtitle_soc_data["soc_4_2020"] != "}}}}"]
+        jobtitle_soc_data = jobtitle_soc_data[jobtitle_soc_data["SOC_2020"] != "}}}}"]
 
         # TO DO: Not sure this is 1:1
         self.soc_2020_2010_mapper = dict(
             zip(
-                jobtitle_soc_data["SOC 2020"].astype(str),
-                jobtitle_soc_data["SOC 2010"].astype(str),
+                jobtitle_soc_data["SOC_2020"].astype(str),
+                jobtitle_soc_data["SOC_2010"].astype(str),
             )
         )
 
@@ -166,19 +164,19 @@ class SOCMapper(object):
         # Try to find a unique job title to SOC 2020 4 or 6 code mapping
         job_title_2_soc6_4 = {}
         for job_title, grouped_soc_data in jobtitle_soc_data.groupby(col_name_0):
-            if grouped_soc_data["soc_6_2020"].nunique() == 1:
+            if grouped_soc_data["SOC_2020_EXT"].nunique() == 1:
                 job_title_2_soc6_4[job_title] = (
-                    grouped_soc_data["soc_6_2020"].unique()[0],
-                    grouped_soc_data["soc_4_2020"].unique()[0],
+                    grouped_soc_data["SOC_2020_EXT"].unique()[0],
+                    grouped_soc_data["SOC_2020"].unique()[0],
                 )
             else:
                 for job_title_1, grouped_soc_data_1 in grouped_soc_data.groupby(
                     f"{col_name_0} and {col_name_1}"
                 ):
-                    if grouped_soc_data_1["soc_6_2020"].nunique() == 1:
+                    if grouped_soc_data_1["SOC_2020_EXT"].nunique() == 1:
                         job_title_2_soc6_4[job_title_1] = (
-                            grouped_soc_data_1["soc_6_2020"].unique()[0],
-                            grouped_soc_data_1["soc_4_2020"].unique()[0],
+                            grouped_soc_data_1["SOC_2020_EXT"].unique()[0],
+                            grouped_soc_data_1["SOC_2020"].unique()[0],
                         )
                     else:
                         for (
@@ -187,10 +185,10 @@ class SOCMapper(object):
                         ) in grouped_soc_data_1.groupby(
                             f"{col_name_0} and {col_name_1} and {col_name_2}"
                         ):
-                            if grouped_soc_data_2["soc_6_2020"].nunique() == 1:
+                            if grouped_soc_data_2["SOC_2020_EXT"].nunique() == 1:
                                 job_title_2_soc6_4[job_title_2] = (
-                                    grouped_soc_data_2["soc_6_2020"].unique()[0],
-                                    grouped_soc_data_2["soc_4_2020"].unique()[0],
+                                    grouped_soc_data_2["SOC_2020_EXT"].unique()[0],
+                                    grouped_soc_data_2["SOC_2020"].unique()[0],
                                 )
 
         return job_title_2_soc6_4
