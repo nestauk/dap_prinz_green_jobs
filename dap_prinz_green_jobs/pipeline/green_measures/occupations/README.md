@@ -3,10 +3,27 @@
 The script
 
 ```
-python dap_prinz_green_jobs/pipeline/green_measures/occupations/occupation_measures_utils.py
+dap_prinz_green_jobs/pipeline/green_measures/occupations/occupation_measures_utils.py
 ```
 
 contains functions needed to see whether occupations are green or not.
+
+The class in
+
+```
+dap_prinz_green_jobs/pipeline/green_measures/occupations/soc_map.py
+```
+
+can be used to map job title(s) to SOC codes, for example
+
+```
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
+
+soc_mapper = SOCMapper()
+soc_mapper.load()
+soc_mapper.get_soc(job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"])
+>>> [('2425', 'data scientist'), ('6141', 'assistant nurse'), ('3534', 'financial consultant')]
+```
 
 ## Datasets used
 

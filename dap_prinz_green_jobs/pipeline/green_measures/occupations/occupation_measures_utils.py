@@ -56,6 +56,7 @@ def load_job_title_soc() -> pd.DataFrame():
     jobtitle_soc_data["soc_6_2020"] = jobtitle_soc_data["SOC 2020 Ext Code"].astype(
         "str"
     )
+    jobtitle_soc_data["soc_4_2020"] = jobtitle_soc_data["SOC 2020"].astype("str")
     jobtitle_soc_data["soc_4_2010"] = jobtitle_soc_data["SOC 2010"].astype("str")
 
     return jobtitle_soc_data

@@ -1,5 +1,5 @@
 """
-A class to map inputted job titles to their most likely SOC codes.
+A class to map inputted job titles to their most likely SOC 2020 4-digit codes.
 
 Usage:
 
@@ -38,9 +38,9 @@ def chunks(orig_list, n_chunks):
 class SOCMapper(object):
     """Class for linking job titles to SOC codes.
 
-        The input job title is matched to a dataset of job titles with their SOC.
-        - If the most similar job title is very similar, then the corresponding SOC is outputted.
-        - Otherwise, we look at a group of the most similar job titles, and if they all have the same SOC, then this is outputted.
+        The input job title is matched to a dataset of job titles with their 2020 SOC.
+        - If the most similar job title is very similar, then the corresponding 6-digit SOC is outputted.
+        - Otherwise, we look at a group of the most similar job titles, and if they all have the same 4-digit SOC, then this is outputted.
 
         Attributes
     ----------
@@ -103,7 +103,7 @@ class SOCMapper(object):
         embeddings_output_dir: str = "outputs/data/green_occupations/soc_matching/",
         batch_size: int = 500,
         match_top_n: int = 10,
-        sim_threshold: float = 0.7,
+        sim_threshold: float = 0.67,
         top_n_sim_threshold: float = 0.5,
         minimum_n: int = 3,
         minimum_prop: float = 0.5,
@@ -124,7 +124,15 @@ class SOCMapper(object):
         """
 
         jobtitle_soc_data = load_job_title_soc()
-        jobtitle_soc_data = jobtitle_soc_data[jobtitle_soc_data["soc_4_2010"] != "}}}}"]
+        jobtitle_soc_data = jobtitle_soc_data[jobtitle_soc_data["soc_4_2020"] != "}}}}"]
+
+        # TO DO: Not sure this is 1:1
+        self.soc_2020_2010_mapper = dict(
+            zip(
+                jobtitle_soc_data["SOC 2020"].astype(str),
+                jobtitle_soc_data["SOC 2010"].astype(str),
+            )
+        )
 
         return jobtitle_soc_data
 
@@ -155,13 +163,13 @@ class SOCMapper(object):
             axis=1,
         )
 
-        # Try to find a unique job title to SOC 4 mapping
+        # Try to find a unique job title to SOC 2020 4 or 6 code mapping
         job_title_2_soc6_4 = {}
         for job_title, grouped_soc_data in jobtitle_soc_data.groupby(col_name_0):
             if grouped_soc_data["soc_6_2020"].nunique() == 1:
                 job_title_2_soc6_4[job_title] = (
                     grouped_soc_data["soc_6_2020"].unique()[0],
-                    grouped_soc_data["soc_4_2010"].unique()[0],
+                    grouped_soc_data["soc_4_2020"].unique()[0],
                 )
             else:
                 for job_title_1, grouped_soc_data_1 in grouped_soc_data.groupby(
@@ -170,7 +178,7 @@ class SOCMapper(object):
                     if grouped_soc_data_1["soc_6_2020"].nunique() == 1:
                         job_title_2_soc6_4[job_title_1] = (
                             grouped_soc_data_1["soc_6_2020"].unique()[0],
-                            grouped_soc_data_1["soc_4_2010"].unique()[0],
+                            grouped_soc_data_1["soc_4_2020"].unique()[0],
                         )
                     else:
                         for (
@@ -182,7 +190,7 @@ class SOCMapper(object):
                             if grouped_soc_data_2["soc_6_2020"].nunique() == 1:
                                 job_title_2_soc6_4[job_title_2] = (
                                     grouped_soc_data_2["soc_6_2020"].unique()[0],
-                                    grouped_soc_data_2["soc_4_2010"].unique()[0],
+                                    grouped_soc_data_2["soc_4_2020"].unique()[0],
                                 )
 
         return job_title_2_soc6_4
@@ -266,7 +274,8 @@ class SOCMapper(object):
                 top_soc_matches.append(
                     [
                         soc_text,
-                        self.job_title_2_soc6_4[soc_text][1],
+                        self.job_title_2_soc6_4[soc_text][0],  # 6 digit
+                        self.job_title_2_soc6_4[soc_text][1],  # 4 digit
                         similarities[job_title_ix][soc_ix],
                     ]
                 )
@@ -285,24 +294,24 @@ class SOCMapper(object):
     ) -> tuple:
         """
         For a single job title and the details of the most similar SOC matches, find a single most likely SOC
-        1. If the top match has a really high similarity score (>sim_threshold) then use this.
+        1. If the top match has a really high similarity score (>sim_threshold) at the 6-digit level then use this.
                 This will return (soc, job_title)
-        2. Get the SOCs of the good (>top_n_sim_threshold) matches in the top n most similar.
-        3. If there are a few of these (>=minimum_n) and over a certain proportion (>minimum_prop) of these are the same - use this as the SOC.
+        2. Get the 4-digit SOCs of the good (>top_n_sim_threshold) matches in the top n most similar.
+        3. If there are a few of these (>=minimum_n) and over a certain proportion (>minimum_prop) of these are the same at the 4 digit level - use this as the SOC.
                 This will return (soc, the job titles given for this same soc)
         """
 
         top_soc_match = match_row["top_soc_matches"][0][0]
-        top_soc_match_code = match_row["top_soc_matches"][0][1]
-        top_soc_match_score = match_row["top_soc_matches"][0][2]
+        top_soc_match_code = match_row["top_soc_matches"][0][1]  # 6 digit
+        top_soc_match_score = match_row["top_soc_matches"][0][3]
 
         if top_soc_match_score > self.sim_threshold:
             return (top_soc_match_code, top_soc_match)
         else:
             all_good_socs = [
-                t[1]
+                t[2]  # 4 digit
                 for t in match_row["top_soc_matches"]
-                if t[2] > self.top_n_sim_threshold
+                if t[3] > self.top_n_sim_threshold
             ]
             if len(all_good_socs) >= self.minimum_n:
                 common_soc, num_common_soc = Counter(all_good_socs).most_common(1)[0]
@@ -315,8 +324,8 @@ class SOCMapper(object):
                                 t[0]
                                 for t in match_row["top_soc_matches"]
                                 if (
-                                    (t[2] > self.top_n_sim_threshold)
-                                    and (t[1] == common_soc)
+                                    (t[3] > self.top_n_sim_threshold)
+                                    and (t[2] == common_soc)
                                 )
                             ]
                         ),
@@ -354,9 +363,9 @@ class SOCMapper(object):
         logger.info(f"Finding most likely SOC")
         found_count = 0
         for job_matches in top_soc_matches:
-            most_likely_soc4 = self.find_most_likely_soc(job_matches)
-            job_matches["most_likely_soc4"] = most_likely_soc4
-            if most_likely_soc4:
+            most_likely_soc = self.find_most_likely_soc(job_matches)
+            job_matches["most_likely_soc"] = most_likely_soc
+            if most_likely_soc:
                 found_count += 1
 
         logger.info(
@@ -367,5 +376,5 @@ class SOCMapper(object):
             return top_soc_matches
         else:
             return [
-                job_matches.get("most_likely_soc4") for job_matches in top_soc_matches
+                job_matches.get("most_likely_soc") for job_matches in top_soc_matches
             ]

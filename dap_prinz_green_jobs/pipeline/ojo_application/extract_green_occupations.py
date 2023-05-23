@@ -1,5 +1,7 @@
 """
 Create a dataset of green occupations for the sample of OJO data
+
+This script acts as a way to test the occupations part of the pipeline out
 """
 
 from collections import Counter

@@ -156,25 +156,40 @@ class GreenMeasures(object):
             self.get_occupation_measures_called = True
 
         # It's quicker to use soc_mapper with a bulk unique input
-        ix_2_job_titles = {
-            i: job.get(self.job_title_key) for i, job in enumerate(job_advert)
-        }
-        unique_job_titles = list(set(ix_2_job_titles.values()))
+        unique_job_titles = list(
+            set(
+                [
+                    job.get(self.job_title_key)
+                    for job in job_advert
+                    if self.job_title_key in job
+                ]
+            )
+        )
         soc_matches = self.soc_mapper.get_soc(job_titles=unique_job_titles)
         job_title_2_match = dict(zip(unique_job_titles, soc_matches))
 
         occ_green_measures_list = []
         for job in job_advert:
-            soc = job_title_2_match[job.get(self.job_title_key)]
-            if soc:
-                soc = soc[0]
-            green_occ_measures = self.soc_green_measures_dict.get(soc)
+            soc_2020 = job_title_2_match[job.get(self.job_title_key)]
+            soc_info = {}
+            if soc_2020:
+                soc_2020 = soc_2020[
+                    0
+                ]  # first is the code, second is the job title match
+                if len(soc_2020) > 4:
+                    soc_info["SOC_2020_EXT"] = soc_2020
+                    soc_2020 = soc_2020[0:4]
+            soc_info["SOC_2020"] = soc_2020
+            # TO DO: THIS MAPPER MIGHT NOT BE 1:1
+            soc_2010 = self.soc_mapper.soc_2020_2010_mapper.get(soc_2020)
+            soc_info["SOC_2010"] = soc_2010
+            green_occ_measures = self.soc_green_measures_dict.get(soc_2010)
             if green_occ_measures:
                 occ_green_measures_list.append(
                     {
                         "GREEN CATEGORY": green_occ_measures.get("Green Category"),
                         "GREEN/NOT GREEN": green_occ_measures.get("Green/Non-green"),
-                        "SOC": soc,
+                        "SOC": soc_info,
                     }
                 )
             else:
