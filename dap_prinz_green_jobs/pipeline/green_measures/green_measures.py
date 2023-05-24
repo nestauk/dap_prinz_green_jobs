@@ -55,6 +55,7 @@ class GreenMeasures(object):
         )
         with open(config_path, "r") as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
+        self.config_path = config_path
 
         # Skills config variables
         self.skill_threshold = self.config["skills"]["skill_threshold"]
