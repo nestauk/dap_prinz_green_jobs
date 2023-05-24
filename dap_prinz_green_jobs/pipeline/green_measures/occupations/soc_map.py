@@ -235,7 +235,9 @@ class SOCMapper(object):
                 self.all_soc_embeddings = load_s3_data(BUCKET_NAME, embeddings_path)
                 self.soc_job_titles = load_s3_data(BUCKET_NAME, job_titles_path)
         except:
-            logger.info(f"SOC job title embeddings not found")
+            logger.info(
+                f"SOC job title embeddings not found locally or in S3 - embedding ..."
+            )
 
             # Embed the SOC job titles
             self.soc_job_titles = list(self.job_title_2_soc6_4.keys())

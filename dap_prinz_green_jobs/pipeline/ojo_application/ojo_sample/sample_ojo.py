@@ -19,7 +19,9 @@ def filter_data(data, filter_ids_set, id_col_name="id"):
 
 
 if __name__ == "__main__":
-    deduplicated_ids = pd.read_csv(config["ojo_deduplication_file"])
+    deduplicated_ids = pd.read_csv(
+        "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids.csv"
+    )
 
     # Sample job adverts
 
