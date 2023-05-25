@@ -7,8 +7,8 @@ from itertools import islice
 
 def list_chunks(orig_list: list, chunk_size: int = 100):
     """Chunks list into batches of a specified chunk_size."""
-    for i in range(0, len(orig_list), n_chunks):
-        yield orig_list[i : i + n_chunks]
+    for i in range(0, len(orig_list), chunk_size):
+        yield orig_list[i : i + chunk_size]
 
 
 def dict_chunks(data_dict: dict, chunk_size: int = 100):
