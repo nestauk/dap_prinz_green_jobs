@@ -18,7 +18,7 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
     get_ojo_job_title_sample,
 )
 from dap_prinz_green_jobs import logger
-from dap_prinz_green_jobs.getters.data_getters import save_to_s3
+from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs import BUCKET_NAME
 
 import pandas as pd
@@ -50,13 +50,17 @@ ojo_sample = list(
         .rename(
             columns={
                 "job_title_raw_x": gm.job_title_key,
-                "company_name": gm.company_name_key,
+                "company_raw": gm.company_name_key,
                 "description": gm.job_text_key,
             }
         )
         .T.to_dict()
         .values()
     )
+)
+
+extracted_skill_embeddings = load_s3_data(
+    BUCKET_NAME, "green_measures/skills/skill_embeddings.json"
 )
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ import pandas as pd
 from dap_prinz_green_jobs import BUCKET_NAME
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 
+from typing import Dict, List
+
 
 # to remove any cleaning from this step
 def get_ojo_sample() -> pd.DataFrame:
@@ -64,4 +66,17 @@ def get_ojo_skills_sample() -> pd.DataFrame:
     return load_s3_data(
         BUCKET_NAME,
         "outputs/data/ojo_application/deduplicated_sample/skills_data_sample.csv",
+    )
+
+
+def get_extracted_green_measures() -> Dict[str, Dict[str, List[str]]]:
+    """
+    Gets the extracted green measures from s3
+
+    Returns:
+        dictionary of extracted green measures
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/extracted_green_measures/ojo_sample_green_measures_production_True_base.json",
     )
