@@ -28,7 +28,7 @@ from uuid import uuid4
 from tqdm import tqdm
 
 # instantiate GreenMeasures class here
-gm = GreenMeasures()
+gm = GreenMeasures(config_name="base")
 
 # load and reformat relevant data
 logger.info("loading and reformattting datasets...")
@@ -46,7 +46,7 @@ ojo_sample_raw_title = pd.merge(ojo_sample_raw, ojo_job_title_raw, on="id")
 # reformat it to be a list of dictionaries for GreenMeasures
 ojo_sample = list(
     (
-        ojo_sample_raw_title[["job_title_raw_x", "company_raw", "description"]]
+        ojo_sample_raw_title[["id", "job_title_raw_x", "company_raw", "description"]]
         .rename(
             columns={
                 "job_title_raw_x": gm.job_title_key,
@@ -61,8 +61,8 @@ ojo_sample = list(
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--production", type=bool, default=True)
-    parser.add_argument("--batch_size", type=int, default=50000)
+    parser.add_argument("--production", type=bool, default=False)
+    parser.add_argument("--batch_size", type=int, default=10000)
 
     args = parser.parse_args()
 
@@ -70,10 +70,11 @@ if __name__ == "__main__":
     batch_size = args.batch_size
 
     if not production:
-        ojo_skills_list = ojo_skills_list[:1]
-        ojo_skills_raw = ojo_skills_raw[:1]
-        ojo_sample = ojo_sample[:1]
-        batch_size = 1
+        test_n = 100
+        ojo_skills_list = ojo_skills_list[:test_n]
+        ojo_skills_raw = ojo_skills_raw[:test_n]
+        ojo_sample = ojo_sample[:test_n]
+        batch_size = test_n
 
     logger.info("extracting green skills...")
     all_extracted_green_skills = []
@@ -94,7 +95,6 @@ if __name__ == "__main__":
                 )
             }
         )
-
         formatted_raw_skills_green = sm.get_green_skill_measures(
             es=gm.es,
             raw_skills=formatted_raw_skills,
@@ -127,11 +127,12 @@ if __name__ == "__main__":
         "SKILL MEASURES": green_skill_outputs,
         "INDUSTRY MEASURES": green_industry_outputs,
         "OCCUPATION MEASURES": green_occupation_outputs,
+        "job_ids": [job["id"] for job in ojo_sample],
     }
 
     logger.info("saving green measures to s3...")
     save_to_s3(
         BUCKET_NAME,
         green_outputs,
-        f"outputs/data/ojo_application/extracted_green_measures/ojo_sample_green_measures_production_{production}.json",
+        f"outputs/data/ojo_application/extracted_green_measures/ojo_sample_green_measures_production_{production}_{gm.config_name}.json",
     )
