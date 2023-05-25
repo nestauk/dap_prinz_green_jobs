@@ -21,6 +21,7 @@ from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
 )  # import the module
 from dap_prinz_green_jobs.getters.ojo_getters import get_ojo_skills_sample
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
+from dap_prinz_green_jobs.utils.processing import dict_chunks
 
 from datetime import datetime as date
 import argparse
@@ -79,7 +80,7 @@ if __name__ == "__main__":
     logger.info("extracting green skills...")
 
     ojo_sample_all_green_skills = {}
-    for batch_job_id_to_raw_skills in sm.chunks(
+    for batch_job_id_to_raw_skills in dict_chunks(
         job_id_to_formatted_raw_skills, batch_size
     ):
         job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(

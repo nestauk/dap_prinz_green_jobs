@@ -20,17 +20,14 @@ from tqdm import tqdm
 import numpy as np
 
 from dap_prinz_green_jobs.getters.occupation_getters import load_job_title_soc
+from dap_prinz_green_jobs.utils.occupations_data_processing import process_job_title_soc
+from dap_prinz_green_jobs.utils.processing import list_chunks
 from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,
     load_s3_data,
     load_json_dict,
 )
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config, PROJECT_DIR
-
-
-def chunks(orig_list, n_chunks):
-    for i in range(0, len(orig_list), n_chunks):
-        yield orig_list[i : i + n_chunks]
 
 
 class SOCMapper(object):
@@ -121,8 +118,7 @@ class SOCMapper(object):
         A small amount of processing.
         """
 
-        jobtitle_soc_data = load_job_title_soc()
-        jobtitle_soc_data = jobtitle_soc_data[jobtitle_soc_data["SOC_2020"] != "}}}}"]
+        jobtitle_soc_data = process_job_title_soc(load_job_title_soc())
 
         # TO DO: Not sure this is 1:1
         self.soc_2020_2010_mapper = dict(
@@ -199,7 +195,7 @@ class SOCMapper(object):
     ) -> np.array(object):
         logger.info(f"Embedding texts in {len(texts)/self.batch_size} batches")
         all_embeddings = []
-        for batch_texts in tqdm(chunks(texts, self.batch_size)):
+        for batch_texts in tqdm(list_chunks(texts, self.batch_size)):
             all_embeddings.append(
                 self.bert_model.encode(np.array(batch_texts), batch_size=32)
             )
