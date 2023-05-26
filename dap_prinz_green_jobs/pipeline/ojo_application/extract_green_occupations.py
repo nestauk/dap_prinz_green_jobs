@@ -8,7 +8,7 @@ from collections import Counter
 
 import pandas as pd
 
-from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils import *
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import *
 from dap_prinz_green_jobs.getters.ojo_getters import get_ojo_job_title_sample
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
 

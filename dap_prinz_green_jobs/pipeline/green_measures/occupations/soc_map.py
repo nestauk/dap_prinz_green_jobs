@@ -20,7 +20,10 @@ from tqdm import tqdm
 import numpy as np
 
 from dap_prinz_green_jobs.getters.occupation_getters import load_job_title_soc
-from dap_prinz_green_jobs.utils.occupations_data_processing import process_job_title_soc
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_processing import (
+    process_job_title_soc,
+)
+
 from dap_prinz_green_jobs.utils.processing import list_chunks
 from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,

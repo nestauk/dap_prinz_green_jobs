@@ -45,18 +45,17 @@ def get_green_skill_matches(
     """
     skill_top_green_skills = []
     for skill_ix, skill in tqdm(enumerate(extracted_skill_list)):
-        top_skill_matches = []
-        for green_skill_ix in np.flip(np.argsort(similarities[skill_ix]))[0:1]:
-            if similarities[skill_ix][0] > skill_threshold:
-                green_skill = green_skills_taxonomy.iloc[
-                    [green_skill_ix]
-                ].description.values[0]
-                green_skill_id = skill_ix
-            else:
-                green_skill = ""
-                green_skill_id = None
-            top_skill_matches.append((skill, (green_skill, green_skill_id)))
-        skill_top_green_skills.extend(top_skill_matches)
+        top_skill_match = np.flip(np.sort(similarities[skill_ix]))[0:1]
+        if top_skill_match[0] > skill_threshold:
+            green_skill_ix = np.flip(np.argsort(similarities[skill_ix]))[0:1]
+            green_skill = green_skills_taxonomy.iloc[green_skill_ix].description.values[
+                0
+            ]
+            green_skill_id = skill_ix
+        else:
+            green_skill = ""
+            green_skill_id = None
+        skill_top_green_skills.append((skill, (green_skill, green_skill_id)))
 
     return skill_top_green_skills
 

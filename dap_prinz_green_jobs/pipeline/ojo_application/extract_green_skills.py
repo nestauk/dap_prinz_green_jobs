@@ -12,31 +12,25 @@ python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_skills.py
 from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,
 )
-from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
+from dap_prinz_green_jobs import BUCKET_NAME, logger
 
-from typing import List, Dict
-from tqdm import tqdm
-from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
-    ExtractSkills,
-)  # import the module
-from dap_prinz_green_jobs.getters.ojo_getters import get_ojo_skills_sample
+from dap_prinz_green_jobs.getters.ojo_getters import (
+    get_ojo_skills_sample,
+    get_extracted_skill_embeddings,
+)
+from dap_prinz_green_jobs.getters.skill_getters import (
+    get_green_skills_taxonomy,
+    get_green_skills_taxonomy_embeddings,
+)
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
-from dap_prinz_green_jobs.utils.processing import dict_chunks
 
 from datetime import datetime as date
 import argparse
-
-batch_size = 5000
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--config_name",
-        default="extract_green_skills_esco",
-        type=str,
-        help="name of config file",
-    )
 
     parser.add_argument(
         "--production",
@@ -50,53 +44,66 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
-    # load ExtractSkills class with custom config
-    logger.info("instantiating Extract Skills class...")
-    es = ExtractSkills(args.config_name)
-
-    es.load()
-    es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
+    production = args.production
+    skill_threshold = args.skill_threshold
 
     # load job sample
     logger.info("loading ojo skills sample...")
-    skills = get_ojo_skills_sample()
-    if not args.production:
-        skills = skills.head(batch_size)
-
-    skills_formatted_df = (
-        skills.groupby("id")
-        .skill_label.apply(list)
-        .reset_index()
-        .assign(skills_formatted=lambda x: x.skill_label.apply(sm.format_skills))
+    ojo_skills_raw = (
+        get_ojo_skills_sample()
+        # drop nas in skill_label
+        .dropna(subset=["skill_label"])
     )
+    # step 0.1 load embeddings (extracted skills and green skills taxonomy) and green skills taxonomy df
+    logger.info("loading embeddings...")
+    extracted_skill_embeddings = get_extracted_skill_embeddings()
+    extracted_skill_embeddings_skills = list(extracted_skill_embeddings.keys())
 
-    skills_formatted_list = skills_formatted_df.skills_formatted.to_list()
+    green_taxonomy_embeddings = get_green_skills_taxonomy_embeddings()
+    green_taxonomy_embeddings_skills = list(green_taxonomy_embeddings.keys())
 
-    job_id_to_formatted_raw_skills = dict(
-        zip(skills_formatted_df.id.to_list(), skills_formatted_list)
-    )
+    green_skills_taxonomy = get_green_skills_taxonomy()
+
+    if not production:
+        test_n = 100
+        extracted_skill_embeddings_skills = extracted_skill_embeddings_skills[:test_n]
+        extracted_skill_embeddings = {
+            i: j
+            for i, j in extracted_skill_embeddings.items()
+            if i in extracted_skill_embeddings_skills
+        }
 
     logger.info("extracting green skills...")
+    similarities = cosine_similarity(
+        np.array(list(extracted_skill_embeddings.values())),
+        np.array(list(green_taxonomy_embeddings.values())),
+    )
+    # Top matches for skill chunk
+    top_green_skills = sm.get_green_skill_matches(
+        extracted_skill_list=extracted_skill_embeddings_skills,
+        similarities=similarities,
+        green_skills_taxonomy=green_skills_taxonomy,
+        skill_threshold=skill_threshold,
+    )
 
-    ojo_sample_all_green_skills = {}
-    for batch_job_id_to_raw_skills in dict_chunks(
-        job_id_to_formatted_raw_skills, batch_size
-    ):
-        job_skills, skill_hashes = es.skill_mapper.preprocess_job_skills(
-            {"predictions": batch_job_id_to_raw_skills}
+    all_extracted_green_skills_dict = {sk[0]: (sk[0], sk[1]) for sk in top_green_skills}
+
+    green_skill_outputs = (
+        ojo_skills_raw.assign(
+            green_skills=lambda x: x.skill_label.map(all_extracted_green_skills_dict)
         )
-        # to get the output with the top skill
-        matched_skills = sm.get_green_skill_measures(
-            es=es,
-            raw_skills=list(batch_job_id_to_raw_skills.values()),
-            skill_hashes=skill_hashes,
-            job_skills=job_skills,
-            skill_threshold=args.skill_threshold,
-        )
-        ojo_sample_all_green_skills.update(
-            dict(zip(batch_job_id_to_raw_skills.keys(), matched_skills))
-        )
+        .groupby("id")
+        .green_skills.apply(list)
+    )
+
+    green_outputs = {
+        "SKILL MEASURES": [
+            {"job_id": job_id, "skills": skills}
+            for job_id, skills in zip(
+                list(green_skill_outputs.index), list(green_skill_outputs.values)
+            )
+        ]
+    }
 
     # save extracted green skills to s3
     date_stamp = str(date.today().date()).replace("-", "")
@@ -105,6 +112,6 @@ if __name__ == "__main__":
         logger.info("saving extracted skills to s3...")
         save_to_s3(
             BUCKET_NAME,
-            ojo_sample_all_green_skills,
-            f"outputs/data/green_skills/{date_stamp}_{args.config_name}_all_matched_skills.json",
+            green_outputs,
+            f"outputs/data/green_skills/{date_stamp}_all_matched_skills.json",
         )

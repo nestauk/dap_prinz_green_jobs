@@ -95,3 +95,15 @@ def get_extracted_skill_embeddings() -> Dict[str, List[float]]:
         BUCKET_NAME,
         "outputs/data/green_skill_lists/extracted_skills_embeddings.json",
     )
+
+
+def get_mapped_green_skills() -> List[Dict[str, list]]:
+    """Loads mapped green skills from s3
+
+    Returns:
+        A list of dictionaries where there is a job_id key and
+        a list of mapped green skills based on gm.skill_threshold value
+    """
+    return load_s3_data(
+        BUCKET_NAME, "outputs/data/green_skills/20230526_all_matched_skills.json"
+    )
