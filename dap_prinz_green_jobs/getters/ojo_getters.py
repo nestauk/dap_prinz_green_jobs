@@ -8,7 +8,6 @@ from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 from typing import Dict, List
 
 
-# to remove any cleaning from this step
 def get_ojo_sample() -> pd.DataFrame:
     """Gets ojo sample data from s3
 
@@ -79,4 +78,20 @@ def get_extracted_green_measures() -> Dict[str, Dict[str, List[str]]]:
     return load_s3_data(
         BUCKET_NAME,
         "outputs/data/ojo_application/extracted_green_measures/ojo_sample_green_measures_production_True_base.json",
+    )
+
+
+def get_extracted_skill_embeddings() -> Dict[str, List[float]]:
+    """
+    Gets the extracted skill embeddings (output from get_ojo_skills_sample) from s3
+        the extracted skills are from the job sample output from
+
+
+    Returns:
+        dictionary of extracted skill embeddings where the key is the extracted skill
+        and the value is a list of floats representing the embedding
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/green_skill_lists/extracted_skills_embeddings.json",
     )
