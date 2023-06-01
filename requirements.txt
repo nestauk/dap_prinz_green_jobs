@@ -10,3 +10,4 @@ ojd-daps-skills
 pyarrow==10.0.0
 altair
 umap
+vega
