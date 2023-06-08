@@ -15,11 +15,13 @@ this creates a csv with deduplicated job adverts ids in a certain time window (i
 
 ## Sampling
 
-To sample the deduplicated dataset run:
+To sample the deduplicated dataset for both a random sample and an engineered 'green' sample based on keywords run:
 
 ```
 python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/sample_ojo.py
 
 ```
 
-this will create a sample of the deduplicated OJO dataset and output all the OJO tables filtered by this sample. All outputs will go to the `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/` S3 folder. The main file of interest is `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv` which contains the job advert descriptions, the location, date, and the job title.
+this will create a sample of the deduplicated OJO dataset and output all the OJO tables filtered by this sample. All outputs will go to the `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/` S3 folder.
+
+The main file of interest is `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv` which contains the job advert descriptions, the location, date, and the job title. It also generates a file `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/green_ojo_sample.csv` which contains identical information to `ojo_sample.csv` but has been filtered to contain green keywords in the description text.
