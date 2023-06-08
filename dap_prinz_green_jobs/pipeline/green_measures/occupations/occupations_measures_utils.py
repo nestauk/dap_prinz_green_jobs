@@ -10,7 +10,7 @@ from dap_prinz_green_jobs.getters.occupation_getters import (
     load_green_gla_soc,
     load_green_timeshare_soc,
 )
-from dap_prinz_green_jobs.utils.occupations_data_processing import (
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_processing import (
     process_green_gla_soc,
     process_green_timeshare_soc,
 )

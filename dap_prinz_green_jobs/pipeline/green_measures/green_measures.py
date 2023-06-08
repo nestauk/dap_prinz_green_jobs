@@ -5,8 +5,8 @@ A Green Measures class that takes as input a job advert and outputs
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
-import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupation_measures_utils as om
-import dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils as im
+import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils as om
+import dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils as im
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 from dap_prinz_green_jobs.getters.industry_getters import (
