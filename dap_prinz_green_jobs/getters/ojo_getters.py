@@ -6,7 +6,6 @@ from dap_prinz_green_jobs import BUCKET_NAME
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 
 
-# to remove any cleaning from this step
 def get_ojo_sample() -> pd.DataFrame:
     """Gets ojo sample data from s3
 
@@ -64,4 +63,55 @@ def get_ojo_skills_sample() -> pd.DataFrame:
     return load_s3_data(
         BUCKET_NAME,
         "outputs/data/ojo_application/deduplicated_sample/skills_data_sample.csv",
+    )
+
+
+## ditto but for "green" jobs based on keyword approach
+
+
+def get_green_ojo_sample() -> pd.DataFrame:
+    """Gets ojo sample data from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_ojo_sample.csv",
+    )
+
+
+def get_green_ojo_job_title_sample() -> pd.DataFrame:
+    """Gets ojo sample data with job title and sectors information from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_job_title_data_sample.csv",
+    )
+
+
+def get_green_ojo_location_sample() -> pd.DataFrame:
+    """Gets ojo sample data with location information from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_locations_data_sample.csv",
+    )
+
+
+def get_green_ojo_salaries_sample() -> pd.DataFrame:
+    """Gets ojo sample data with salaries information from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_salaries_data_sample.csv",
     )
