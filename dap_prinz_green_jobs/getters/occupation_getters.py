@@ -1,4 +1,8 @@
 import pandas as pd
+from dap_prinz_green_jobs import BUCKET_NAME
+from dap_prinz_green_jobs.getters.data_getters import load_s3_data
+
+# THIS IS TO EDIT THE PATHS TO THE DATA
 
 
 def load_job_title_soc() -> pd.DataFrame():
