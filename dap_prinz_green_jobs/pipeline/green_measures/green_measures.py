@@ -10,8 +10,12 @@ import dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measur
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 from dap_prinz_green_jobs.getters.industry_getters import (
+    load_sic,
     load_industry_ghg_dict,
     load_companies_house_dict,
+    load_green_tasks_prop_hours,
+    load_green_tasks_prop_workers,
+    load_green_tasks_prop_workers_20,
 )
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
@@ -66,9 +70,27 @@ class GreenMeasures(object):
         self.job_title_key = self.config["job_adverts"]["job_title_key"]
         self.company_name_key = self.config["job_adverts"]["company_name_key"]
 
+        # Occupation variables
         self.green_soc_data = om.get_green_soc_measures()
+
+        # Industry variables
         self.ghg_emissions_dict = load_industry_ghg_dict()
         self.ojo_companies_house_dict = load_companies_house_dict()
+        sic_data = load_sic()
+        self.sic_to_section = {
+            k: v.strip()
+            for k, v in dict(zip(sic_data["Sub Class"], sic_data["SECTION"])).items()
+        }
+        self.sic_section_2_prop_hours = im.create_section_dict(
+            load_green_tasks_prop_hours()
+        )
+        self.sic_section_2_prop_workers = im.create_section_dict(
+            load_green_tasks_prop_workers()
+        )
+        self.sic_section_2_prop_workers_20 = im.create_section_dict(
+            load_green_tasks_prop_workers_20()
+        )
+
         try:
             self.es = ExtractSkills(self.skills_config_name)
         except FileNotFoundError:
@@ -238,16 +260,35 @@ class GreenMeasures(object):
 
         ind_green_measures_dict = {}
         if comp_names:
-            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = [
+            green_industry_measures = [
                 im.get_green_industry_measure(
                     company_name=comp_name,
                     ghg_emissions_dict=self.ghg_emissions_dict,
                     ojo_companies_house_dict=self.ojo_companies_house_dict,
+                    sic_to_section=self.sic_to_section,
+                    sic_section_2_prop_hours=self.sic_section_2_prop_hours,
+                    sic_section_2_prop_workers=self.sic_section_2_prop_workers,
+                    sic_section_2_prop_workers_20=self.sic_section_2_prop_workers_20,
                 )
                 for comp_name in comp_names
             ]
+            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = green_industry_measures[
+                "ghg_emissions_info"
+            ]
+            ind_green_measures_dict[
+                "INDUSTRY PROP HOURS GREEN TASKS"
+            ] = green_industry_measures["green_tasks_prop_hours"]
+            ind_green_measures_dict[
+                "INDUSTRY PROP WORKERS GREEN TASKS"
+            ] = green_industry_measures["green_tasks_prop_workers"]
+            ind_green_measures_dict[
+                "INDUSTRY PROP WORKERS 20PERC GREEN TASKS"
+            ] = green_industry_measures["green_tasks_prop_workers_20"]
         else:
             ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = None
+            ind_green_measures_dict["INDUSTRY PROP HOURS GREEN TASKS"] = None
+            ind_green_measures_dict["INDUSTRY PROP WORKERS GREEN TASKS"] = None
+            ind_green_measures_dict["INDUSTRY PROP WORKERS 20PERC GREEN TASKS"] = None
 
         return ind_green_measures_dict
 

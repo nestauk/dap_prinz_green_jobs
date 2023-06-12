@@ -36,6 +36,22 @@ company_stop_words = set(
 
 ojo_companies_house_dict = load_companies_house_dict()
 ghg_emissions_dict = load_industry_ghg_dict()
+sic_data = load_sic()
+sic_to_section = {
+    k: v.strip()
+    for k, v in dict(zip(sic_data["Sub Class"], sic_data["SECTION"])).items()
+}
+
+
+def create_section_dict(data):
+    """
+    For the green task proportions per SIC section the data needs a little bit of cleaning.
+    Will output in the form {'A': 5.4,'B': 17,'C': 12.1,...}
+    """
+    data = data.copy().T
+    data.columns = data.iloc[0]
+    data = data.iloc[1:]
+    return dict(zip(data["SIC 2007 section code"], data[2019]))
 
 
 def clean_company_name(
@@ -111,7 +127,7 @@ def get_ch_sic(
     ojo_companies_house_dict: Dict[str, Dict[str, str]] = ojo_companies_house_dict,
 ) -> str:
     """
-    Pick one SIC for each cleaned name using the Companies House data.
+    Pick one 5 digit SIC for each cleaned name using the Companies House data.
     If there are multiple SICs given for a name then pick one randomly.
 
     TO DO: Pick based off semantic similarity?
@@ -143,16 +159,24 @@ def get_ch_sic(
 
 def get_green_industry_measure(
     company_name: str,
+    sic_section_2_prop_hours: Dict[str, float],
+    sic_section_2_prop_workers: Dict[str, float],
+    sic_section_2_prop_workers_20: Dict[str, float],
     ojo_companies_house_dict: Dict[str, Dict[str, str]] = ojo_companies_house_dict,
     ghg_emissions_dict: Dict[str, float] = ghg_emissions_dict,
+    sic_to_section: Dict[str, str] = sic_to_section,
 ) -> Union[float, None]:
     """Gets SIC GHG emissions for a given company name.
 
     Args:
         company_name (str): Company name to get SIC GHG emissions for
+        sic_section_2_prop_hours (Dict[str, float]): Dictionary of SIC sector (e.g. "A") to proportion of hours worked spent doing green tasks
+        sic_section_2_prop_workers (Dict[str, float]): Dictionary of SIC sector (e.g. "A") to proportion of workers doing green tasks
+        sic_section_2_prop_workers_20 (Dict[str, float]): Dictionary of SIC sector (e.g. "A") to proportion of workers spending at least 20% of their time doing green tasks per SIC
         ojo_companies_house_dict (Dict[str, Dict[str, str]]): Dictionary of company names
             and companies house SIC data
         ghg_emissions_dict (Dict[str, float]): Dictionary of SIC codes and GHG emissions
+        sic_to_section (Dict[str, str]): Dictionary of 5 digit SIC codes to their SIC section code ({'01621': 'A','01629': 'A','05101': 'B',..})
 
     Returns:
         Union[float, None]: Returns SIC GHG emissions for a given company name
@@ -169,6 +193,14 @@ def get_green_industry_measure(
     if ch_sic:
         clean_ch_sic = clean_sic(ch_sic)
         ghg_emissions_info = get_ghg_sic(clean_ch_sic, ghg_emissions_dict)
-        return ghg_emissions_info
+        sic_section = sic_to_section.get(clean_ch_sic)
+        return {
+            "ghg_emissions_info": ghg_emissions_info,
+            "green_tasks_prop_hours": sic_section_2_prop_hours.get(sic_section),
+            "green_tasks_prop_workers": sic_section_2_prop_workers.get(sic_section),
+            "green_tasks_prop_workers_20": sic_section_2_prop_workers_20.get(
+                sic_section
+            ),
+        }
     else:
         return None

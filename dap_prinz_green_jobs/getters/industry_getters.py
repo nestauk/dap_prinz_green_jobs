@@ -55,3 +55,42 @@ def load_sic() -> pd.DataFrame():
     )
 
     return sic_data
+
+
+def load_green_tasks_prop_hours() -> pd.DataFrame():
+    """Downloads a dataset of the proportion of hours worked spent doing green tasks per SIC
+    :return: A dataframe of SIC and proportion of hours worked spent doing green tasks
+    :rtype: pd.DataFrame()
+    """
+    green_tasks_prop_hours = pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/greentasks.xlsx",
+        sheet_name="Table_6",
+    )
+
+    return green_tasks_prop_hours
+
+
+def load_green_tasks_prop_workers() -> pd.DataFrame():
+    """Downloads a dataset of the proportion of workers doing green tasks per SIC
+    :return: A dataframe of SIC and proportion of workers doing green tasks
+    :rtype: pd.DataFrame()
+    """
+    green_tasks_prop_workers = pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/greentasks.xlsx",
+        sheet_name="Table_7",
+    )
+
+    return green_tasks_prop_workers
+
+
+def load_green_tasks_prop_workers_20() -> pd.DataFrame():
+    """Downloads a dataset of the proportion of workers spending at least 20% of their time doing green tasks per SIC
+    :return: A dataframe of SIC and proportion of workers spending at least 20% of their time doing green tasks
+    :rtype: pd.DataFrame()
+    """
+    green_tasks_prop_workers_20 = pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/greentasks.xlsx",
+        sheet_name="Table_8",
+    )
+
+    return green_tasks_prop_workers_20

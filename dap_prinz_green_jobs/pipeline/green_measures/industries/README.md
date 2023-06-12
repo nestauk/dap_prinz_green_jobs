@@ -22,3 +22,13 @@ contains functions needed to see whether industries are green or not.
 - `BasicCompanyDataAsOneFile-2023-05-01_key_columns_only.csv`: Just the important columns from the above Companies House data (created by running `companies_house_processing.py`).
 - `atmosphericemissionsghg.xlsx`: The greenhouse gas emissions per SIC from the ONS website [here](https://www.ons.gov.uk/economy/environmentalaccounts/datasets/ukenvironmentalaccountsatmosphericemissionsgreenhousegasemissionsbyeconomicsectorandgasunitedkingdom). The current edition of the dataset was downloaded as of 02/05/23 and uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx`).
 - `publisheduksicsummaryofstructureworksheet.xlsx`: The ONS SIC codes downloaded from [here](https://www.ons.gov.uk/methodology/classificationsandstandards/ukstandardindustrialclassificationofeconomicactivities/uksic2007). The 'UK SIC 2007 Summary of Structure Worksheet' xlsx was downloaded on 02/05/2023 and uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/publisheduksicsummaryofstructureworksheet.xlsx`).
+- `greentasks.xlsx`: The ONS time spent on green tasks from [here](https://www.ons.gov.uk/economy/environmentalaccounts/datasets/timespentongreentasks) - downloaded on 12/06/2023 and uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/greentasks.xlsx`). "Experimental estimates of the time spent doing green tasks, over time, by UK country and by industry. The estimates use a new method based on task-level data from the ONET database in the US."
+
+## Green measures
+
+Measures based of the job adverts predicted SIC:
+
+- INDUSTRY GHG EMISSIONS : The 2020 greenhouse gas emissions for this SIC section code (letter) or division code (two digit). From `atmosphericemissionsghg.xlsx`.
+- INDUSTRY PROP HOURS GREEN TASKS : The proportion of hours worked spent doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
+- INDUSTRY PROP WORKERS GREEN TASKS : proportion of workers doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
+- INDUSTRY PROP WORKERS 20PERC GREEN TASKS : proportion of workers spending at least 20% of their time doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
