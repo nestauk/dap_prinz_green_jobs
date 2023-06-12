@@ -68,6 +68,59 @@ def get_ojo_skills_sample() -> pd.DataFrame:
     )
 
 
+## ditto but for "green" jobs based on keyword approach
+
+
+def get_green_ojo_sample() -> pd.DataFrame:
+    """Gets ojo sample data from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_ojo_sample.csv",
+    )
+
+
+def get_green_ojo_job_title_sample() -> pd.DataFrame:
+    """Gets ojo sample data with job title and sectors information from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_job_title_data_sample.csv",
+    )
+
+
+def get_green_ojo_location_sample() -> pd.DataFrame:
+    """Gets ojo sample data with location information from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_locations_data_sample.csv",
+    )
+
+
+def get_green_ojo_salaries_sample() -> pd.DataFrame:
+    """Gets ojo sample data with salaries information from s3 filtered by green keywords
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return (
+        load_s3_data(
+            BUCKET_NAME,
+            "outputs/data/ojo_application/deduplicated_sample/green_salaries_data_sample.csv",
+        ),
+    )
+
+
 def get_extracted_green_measures() -> Dict[str, Dict[str, List[str]]]:
     """
     Gets the extracted green measures from s3
@@ -78,6 +131,87 @@ def get_extracted_green_measures() -> Dict[str, Dict[str, List[str]]]:
     return load_s3_data(
         BUCKET_NAME,
         "outputs/data/ojo_application/extracted_green_measures/ojo_sample_green_measures_production_True_base.json",
+    )
+
+
+def get_green_ojo_skills_sample() -> pd.DataFrame:
+    """Gets ojo sample data with skills information from s3 filtered by green keywords
+    NOTE: they're skills from SkillsExtractor, not any developments from the project
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/green_skills_data_sample.csv",
+    )
+
+
+## ditto but for mixed jobs based on keyword approach + random sample of non-green jobs
+
+
+def get_mixed_ojo_sample() -> pd.DataFrame:
+    """Gets ojo sample data from s3 filtered by green keywords + random sample
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/mixed_ojo_sample.csv",
+    )
+
+
+def get_mixed_ojo_job_title_sample() -> pd.DataFrame:
+    """Gets ojo sample data with job title and sectors information from
+        s3 filtered by green keywords + random sample
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/mixed_job_title_data_sample.csv",
+    )
+
+
+def get_mixed_ojo_location_sample() -> pd.DataFrame:
+    """Gets ojo sample data with location information from s3 filtered
+        by green keywords + random sample
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/mixed_locations_data_sample.csv",
+    )
+
+
+def get_mixed_ojo_salaries_sample() -> pd.DataFrame:
+    """Gets ojo sample data with salaries information from s3 filtered
+        by green keywords + random sample
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/mixed_salaries_data_sample.csv",
+    )
+
+
+def get_mixed_ojo_skills_sample() -> pd.DataFrame:
+    """Gets ojo sample data with skills information from s3 filtered by green keywords
+        + random sample
+    NOTE: they're skills from SkillsExtractor, not any developments from the project
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/mixed_skills_data_sample.csv",
     )
 
 
@@ -98,7 +232,8 @@ def get_extracted_skill_embeddings() -> Dict[str, List[float]]:
 
 
 def get_mapped_green_skills() -> List[Dict[str, list]]:
-    """Loads mapped green skills from s3
+    """Loads mapped green skills (output from get_ojo_skills_sample) from
+        s3 from random ojo sample
 
     Returns:
         A list of dictionaries where there is a job_id key and

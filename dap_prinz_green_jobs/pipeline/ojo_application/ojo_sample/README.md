@@ -15,11 +15,15 @@ this creates a csv with deduplicated job adverts ids in a certain time window (i
 
 ## Sampling
 
-To sample the deduplicated dataset run:
+To sample the deduplicated dataset for both a random sample and an engineered 'green' sample based on keywords run:
 
 ```
 python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/sample_ojo.py
 
 ```
 
-this will create a sample of the deduplicated OJO dataset and output all the OJO tables filtered by this sample. All outputs will go to the `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/` S3 folder. The main file of interest is `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv` which contains the job advert descriptions, the location, date, and the job title.
+this will create a sample of the deduplicated OJO dataset and output all the OJO tables filtered by this sample. All outputs will go to the `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/` S3 folder.
+
+The main file of interest is `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/ojo_sample.csv` which contains the job advert descriptions, the location, date, and the job title. It also generates a file `s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/green_ojo_sample.csv` which has the same schema as `ojo_sample.csv` but contains job adverts that have green keywords in the description text.
+
+Since green jobs are rare in our dataset, the green sample was generated as a way to test out our approaches on jobs that are likely to be green. We recognise the keyword search created dataset is not a conclusive list, will pick up false positives, and will also miss many green jobs. This list or the way it's been generated will not be used to make any comment on greenness - just as a useful dataset for this projects development.
