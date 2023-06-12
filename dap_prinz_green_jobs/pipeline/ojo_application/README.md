@@ -8,10 +8,10 @@ Ultimately, we would like to have a single flow that applies the green measures 
 
 ## Extract Green Measures
 
-To extract measures across the skill-, occupations- and industries- level, you can run the folloing:
+To extract measures across the skill-, occupations- and industries- level, you can run the following:
 
 ```
-python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures_flow.py
+python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py
 ```
 
 ## Extract Green Skills

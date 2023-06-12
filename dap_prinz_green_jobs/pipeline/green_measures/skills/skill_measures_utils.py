@@ -1,6 +1,9 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from itertools import islice
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import ExtractSkills
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
 
 
 def format_skills(skill_label: List[str]) -> List[Dict[str, list]]:
@@ -17,6 +20,44 @@ def format_skills(skill_label: List[str]) -> List[Dict[str, list]]:
         return [{"SKILL": [], "MULTISKILL": skill_label, "EXPERIENCE": []}]
     else:
         return skill_label
+
+
+def get_green_skill_matches(
+    extracted_skill_list: List[str],
+    similarities: np.array,
+    green_skills_taxonomy: pd.DataFrame(),
+    skill_threshold: float = 0.7,
+) -> List[Tuple[str, Tuple[str, int]]]:
+    """Get green skill matches for a list of extracted skills - use this
+        in extract_green_measures flow instead of get_green_skill_measures
+
+        NOTE: this is because speeds up skills mapping considerably
+        and because the esco green taxonomy is not hierarchical so we are simply
+        matching the extracted skills to the green taxonomy based on a minimum
+        threshold cosine similarity.
+
+    Args:
+        extracted_skill_list (List[str]): List of extracted skills
+
+    Returns:
+        List[Tuple[str, Tuple[str, int]]]: List of tuples with the extracted
+            skill; the mapped green skill and a green skill id
+    """
+    skill_top_green_skills = []
+    for skill_ix, skill in tqdm(enumerate(extracted_skill_list)):
+        top_skill_match = np.flip(np.sort(similarities[skill_ix]))[0:1]
+        if top_skill_match[0] > skill_threshold:
+            green_skill_ix = np.flip(np.argsort(similarities[skill_ix]))[0:1]
+            green_skill = green_skills_taxonomy.iloc[green_skill_ix].description.values[
+                0
+            ]
+            green_skill_id = skill_ix
+        else:
+            green_skill = ""
+            green_skill_id = None
+        skill_top_green_skills.append((skill, (green_skill, green_skill_id)))
+
+    return skill_top_green_skills
 
 
 def get_green_skill_measures(
