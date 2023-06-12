@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
     descriptions_data = pd.read_parquet(config["ojo_s3_file_descriptions"])
     descriptions_data["id"] = descriptions_data["id"].astype(int)
+
     # filter using ALL deuped ids
     logger.info("Filtering descriptions data on ALL deduplicated ids")
 
@@ -47,11 +48,6 @@ if __name__ == "__main__":
 
     # sample from the filtered data to get a sample of the descriptions data
     logger.info("Getting descriptions data sample")
-
-    # use filter data function to get a sample of the descriptions data
-    descriptions_data_sample = filter_data(
-        descriptions_data, set(sample_ids), id_col_name="id"
-    )
 
     # get green jobs here based on keywords
     logger.info("Getting green descriptions data")
@@ -68,6 +64,11 @@ if __name__ == "__main__":
             descriptions_data_green.id.to_list(), config["ojo_random_sample_size"]
         )
 
+    mixed_sample_ids = (
+        random.sample(sample_ids, len(sample_green_ids)) + sample_green_ids
+    )
+    random.shuffle(mixed_sample_ids)
+
     save_to_s3(
         BUCKET_NAME,
         sample_ids,
@@ -78,6 +79,12 @@ if __name__ == "__main__":
         BUCKET_NAME,
         sample_green_ids,
         f"outputs/data/ojo_application/deduplicated_sample/sampled_green_job_ids.json",
+    )
+
+    save_to_s3(
+        BUCKET_NAME,
+        mixed_sample_ids,
+        f"outputs/data/ojo_application/deduplicated_sample/sampled_mixed_job_ids.json",
     )
 
     # Filter the datasets for this sample
@@ -98,6 +105,10 @@ if __name__ == "__main__":
         job_title_data, set(sample_green_ids), id_col_name="id"
     )
 
+    job_title_data_sample_mixed = filter_data(
+        job_title_data, set(mixed_sample_ids), id_col_name="id"
+    )
+
     save_to_s3(
         BUCKET_NAME,
         job_title_data_sample,
@@ -108,6 +119,12 @@ if __name__ == "__main__":
         BUCKET_NAME,
         job_title_data_sample_green,
         f"outputs/data/ojo_application/deduplicated_sample/green_job_title_data_sample.csv",
+    )
+
+    save_to_s3(
+        BUCKET_NAME,
+        job_title_data_sample_mixed,
+        f"outputs/data/ojo_application/deduplicated_sample/mixed_job_title_data_sample.csv",
     )
 
     logger.info("Creating and saving the salaries data sample")
@@ -121,6 +138,9 @@ if __name__ == "__main__":
     salaries_data_sample_green = filter_data(
         salaries_data, set(sample_green_ids), id_col_name="id"
     )
+    salaries_data_sample_mixed = filter_data(
+        salaries_data, set(mixed_sample_ids), id_col_name="id"
+    )
 
     save_to_s3(
         BUCKET_NAME,
@@ -132,6 +152,12 @@ if __name__ == "__main__":
         BUCKET_NAME,
         salaries_data_sample_green,
         f"outputs/data/ojo_application/deduplicated_sample/green_salaries_data_sample.csv",
+    )
+
+    save_to_s3(
+        BUCKET_NAME,
+        salaries_data_sample_mixed,
+        f"outputs/data/ojo_application/deduplicated_sample/mixed_salaries_data_sample.csv",
     )
 
     logger.info("Creating and saving the locations data sample")
@@ -147,6 +173,10 @@ if __name__ == "__main__":
         locations_data, set(sample_green_ids), id_col_name="id"
     )
 
+    locations_data_sample_mixed = filter_data(
+        locations_data, set(mixed_sample_ids), id_col_name="id"
+    )
+
     save_to_s3(
         BUCKET_NAME,
         locations_data_sample,
@@ -159,6 +189,12 @@ if __name__ == "__main__":
         f"outputs/data/ojo_application/deduplicated_sample/green_locations_data_sample.csv",
     )
 
+    save_to_s3(
+        BUCKET_NAME,
+        locations_data_sample_mixed,
+        f"outputs/data/ojo_application/deduplicated_sample/mixed_locations_data_sample.csv",
+    )
+
     logger.info("Creating and saving the skills data sample")
 
     # only doing this for random sample of jobs
@@ -166,16 +202,44 @@ if __name__ == "__main__":
 
     skills_data_sample = filter_data(skills_data, set(sample_ids), id_col_name="id")
 
+    skills_data_sample_green = filter_data(
+        skills_data, set(sample_green_ids), id_col_name="id"
+    )
+
+    skills_data_sample_mixed = filter_data(
+        skills_data, set(mixed_sample_ids), id_col_name="id"
+    )
+
     save_to_s3(
         BUCKET_NAME,
         skills_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/skills_data_sample.csv",
     )
 
+    save_to_s3(
+        BUCKET_NAME,
+        skills_data_sample_mixed,
+        f"outputs/data/ojo_application/deduplicated_sample/green_skills_data_sample.csv",
+    )
+
+    save_to_s3(
+        BUCKET_NAME,
+        skills_data_sample_mixed,
+        f"outputs/data/ojo_application/deduplicated_sample/mixed_skills_data_sample.csv",
+    )
+
     logger.info("Creating and saving the descriptions + main info data sample")
+
+    descriptions_data_sample = filter_data(
+        descriptions_data, set(sample_ids), id_col_name="id"
+    )
 
     descriptions_data_green_sample = filter_data(
         descriptions_data_green, set(sample_green_ids), id_col_name="id"
+    )
+
+    descriptions_data_mixed_sample = filter_data(
+        descriptions_data_green, set(mixed_sample_ids), id_col_name="id"
     )
 
     ojo_data_sample = pd.merge(job_title_data_sample, descriptions_data_sample, on="id")
@@ -216,4 +280,26 @@ if __name__ == "__main__":
         BUCKET_NAME,
         green_ojo_data_sample,
         f"outputs/data/ojo_application/deduplicated_sample/green_ojo_sample.csv",
+    )
+
+    # for mixed
+    mixed_ojo_data_sample = pd.merge(
+        job_title_data_sample_mixed, descriptions_data_mixed_sample, on="id"
+    )
+    mixed_ojo_data_sample = pd.merge(
+        mixed_ojo_data_sample,
+        locations_data_sample_mixed[["id", "itl_3_code", "itl_3_name"]],
+        on="id",
+    )
+
+    # Save out the main things that are needed
+    mixed_ojo_data_sample = mixed_ojo_data_sample[
+        ["id", "job_title_raw", "created", "description", "itl_3_code", "itl_3_name"]
+    ]
+    mixed_ojo_data_sample.reset_index(drop=True, inplace=True)
+
+    save_to_s3(
+        BUCKET_NAME,
+        mixed_ojo_data_sample,
+        f"outputs/data/ojo_application/deduplicated_sample/mixed_ojo_sample.csv",
     )

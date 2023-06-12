@@ -61,6 +61,7 @@ if __name__ == "__main__":
         no_duplicates = job_adverts.sample(frac=1, random_state=42).drop_duplicates(
             ["job_location_raw", "description_hash"]
         )
+
         output_file_name = (
             "outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids.csv"
         )
@@ -70,9 +71,10 @@ if __name__ == "__main__":
     )
 
     no_duplicates.reset_index(drop=True, inplace=True)
-
+    
     save_to_s3(
         BUCKET_NAME,
         no_duplicates,
         output_file_name,
     )
+
