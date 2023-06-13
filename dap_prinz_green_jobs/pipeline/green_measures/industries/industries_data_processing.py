@@ -69,31 +69,3 @@ if __name__ == "__main__":
         companies_house_cleaned_dict,
         "outputs/data/green_industries/companies_house_dict.json",
     )
-
-    # TO DO: clean this dataset - there are SIC codes in there like '20.12+20.2'
-
-    emissions_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx",
-        sheet_name="GHG total",
-        skiprows=3,
-    )
-    emissions_data.reset_index(inplace=True)
-    emissions_data = emissions_data.loc[list(range(0, 21)) + list(range(26, 156))]
-
-    emissions_data["Unnamed: 0"] = emissions_data["Unnamed: 0"].apply(
-        lambda x: x if isinstance(x, str) else "0" + str(x) if x < 10 else str(x)
-    )
-
-    ghg_emissions_dict = dict(
-        zip(emissions_data["Unnamed: 0"].tolist(), emissions_data[2020].tolist())
-    )
-
-    save_to_s3(
-        BUCKET_NAME, ghg_emissions_dict, "outputs/data/green_industries/ghg_dict.json"
-    )
-
-    save_to_s3(
-        BUCKET_NAME,
-        emissions_data,
-        "outputs/data/green_industries/ghg_emissions_data.csv",
-    )

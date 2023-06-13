@@ -74,7 +74,7 @@ class GreenMeasures(object):
         self.green_soc_data = om.get_green_soc_measures()
 
         # Industry variables
-        self.ghg_emissions_dict = load_industry_ghg_dict()
+        self.ghg_emissions_dict, self.ghg_unit_emissions_dict = im.get_clean_ghg_data()
         self.ojo_companies_house_dict = load_companies_house_dict()
         sic_data = load_sic()
         self.sic_to_section = {
@@ -264,6 +264,7 @@ class GreenMeasures(object):
                 im.get_green_industry_measure(
                     company_name=comp_name,
                     ghg_emissions_dict=self.ghg_emissions_dict,
+                    ghg_unit_emissions_dict=self.ghg_unit_emissions_dict,
                     ojo_companies_house_dict=self.ojo_companies_house_dict,
                     sic_to_section=self.sic_to_section,
                     sic_section_2_prop_hours=self.sic_section_2_prop_hours,
@@ -272,9 +273,12 @@ class GreenMeasures(object):
                 )
                 for comp_name in comp_names
             ]
-            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = green_industry_measures[
-                "ghg_emissions_info"
-            ]
+            ind_green_measures_dict[
+                "INDUSTRY TOTAL GHG EMISSIONS"
+            ] = green_industry_measures["ghg_emissions_info"]
+            ind_green_measures_dict[
+                "INDUSTRY GHG PER UNIT EMISSIONS"
+            ] = green_industry_measures["ghg_unit_emissions_info"]
             ind_green_measures_dict[
                 "INDUSTRY PROP HOURS GREEN TASKS"
             ] = green_industry_measures["green_tasks_prop_hours"]
@@ -285,7 +289,8 @@ class GreenMeasures(object):
                 "INDUSTRY PROP WORKERS 20PERC GREEN TASKS"
             ] = green_industry_measures["green_tasks_prop_workers_20"]
         else:
-            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = None
+            ind_green_measures_dict["INDUSTRY TOTAL GHG EMISSIONS"] = None
+            ind_green_measures_dict["INDUSTRY GHG PER UNIT EMISSIONS"] = None
             ind_green_measures_dict["INDUSTRY PROP HOURS GREEN TASKS"] = None
             ind_green_measures_dict["INDUSTRY PROP WORKERS GREEN TASKS"] = None
             ind_green_measures_dict["INDUSTRY PROP WORKERS 20PERC GREEN TASKS"] = None

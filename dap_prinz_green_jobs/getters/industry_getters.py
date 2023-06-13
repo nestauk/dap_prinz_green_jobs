@@ -25,28 +25,43 @@ def load_companies_house_dict() -> Dict[str, Dict[str, dict]]:
 
 
 def load_industry_ghg() -> pd.DataFrame():
-    """Downloads a dataset of greenhouse gas emissions per SIC
+    """Downloads the dataset of greenhouse gas emissions by SIC
     :return: A dataframe of SIC and greenhouse gas emissions
     :rtype: pd.DataFrame()
     """
 
-    return load_s3_data(
-        BUCKET_NAME, "outputs/data/green_industries/ghg_emissions_data.csv"
+    return pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx",
+        sheet_name="GHG total",
+        header=None,
     )
 
 
-def load_industry_ghg_dict() -> dict:
-    """Downloads a dictionary of greenhouse gas emissions per SIC
-    :return: A dictionary of SIC and greenhouse gas emissions
-    :rtype: dict
+def load_industry_ghg_intensity() -> pd.DataFrame():
+    """Downloads the dataset of greenhouse gas emissions per unit of economy activity by SIC
+    :return: A dataframe of SIC and greenhouse gas emissions
+    :rtype: pd.DataFrame()
     """
 
-    return load_s3_data(BUCKET_NAME, "outputs/data/green_industries/ghg_dict.json")
+    return pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghgintensity.xlsx",
+        sheet_name="GHG intensity",
+        header=None,
+    )
+
+
+# def load_industry_ghg_dict() -> dict:
+#     """Downloads a dictionary of greenhouse gas emissions per SIC
+#     :return: A dictionary of SIC and greenhouse gas emissions
+#     :rtype: dict
+#     """
+
+#     return load_s3_data(BUCKET_NAME, "outputs/data/green_industries/ghg_dict.json")
 
 
 def load_sic() -> pd.DataFrame():
-    """Downloads a dataset of greenhouse gas emissions per SIC
-    :return: A dataframe of SIC and greenhouse gas emissions
+    """Downloads the SIC dataset
+    :return: A dataframe of SIC codes and names
     :rtype: pd.DataFrame()
     """
     sic_data = pd.read_excel(
