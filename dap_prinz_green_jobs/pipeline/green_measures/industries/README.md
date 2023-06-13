@@ -34,3 +34,15 @@ Measures based of the job adverts predicted SIC:
 - INDUSTRY PROP HOURS GREEN TASKS : The 2019 proportion of hours worked spent doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
 - INDUSTRY PROP WORKERS GREEN TASKS : The 2019 proportion of workers doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
 - INDUSTRY PROP WORKERS 20PERC GREEN TASKS : Thw 2019 proportion of workers spending at least 20% of their time doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
+
+## Usage
+
+```
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import IndustryMeasures
+im = IndustryMeasures()
+im.load_ch()
+im.get_green_measure_for_company("Global British Petroleum")
+>>> {'SIC': '09100', 'SIC_name': 'Support activities for petroleum and natural gas extraction', 'INDUSTRY TOTAL GHG EMISSIONS': 28.2, 'INDUSTRY GHG PER UNIT EMISSIONS': 0.05, 'INDUSTRY PROP HOURS GREEN TASKS': 17, 'INDUSTRY PROP WORKERS GREEN TASKS': 85.7, 'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 22.5}
+im.get_green_measure_for_company("Boots")
+>>> {'SIC': '46450', 'SIC_name': 'Wholesale of perfume and cosmetics', 'INDUSTRY TOTAL GHG EMISSIONS': 6299.6, 'INDUSTRY GHG PER UNIT EMISSIONS': 0.11, 'INDUSTRY PROP HOURS GREEN TASKS': 9.4, 'INDUSTRY PROP WORKERS GREEN TASKS': 39.7, 'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 17.4}
+```

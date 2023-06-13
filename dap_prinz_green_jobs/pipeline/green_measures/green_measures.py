@@ -6,16 +6,11 @@ from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
 import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils as om
-import dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils as im
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
+    IndustryMeasures,
+)
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
-from dap_prinz_green_jobs.getters.industry_getters import (
-    load_sic,
-    load_companies_house_dict,
-    load_green_tasks_prop_hours,
-    load_green_tasks_prop_workers,
-    load_green_tasks_prop_workers_20,
-)
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
 from typing import List, Union, Dict, Optional
@@ -72,23 +67,9 @@ class GreenMeasures(object):
         # Occupation variables
         self.green_soc_data = om.get_green_soc_measures()
 
-        # Industry variables
-        self.ghg_emissions_dict, self.ghg_unit_emissions_dict = im.get_clean_ghg_data()
-        self.ojo_companies_house_dict = load_companies_house_dict()
-        sic_data = load_sic()
-        self.sic_to_section = {
-            k: v.strip()
-            for k, v in dict(zip(sic_data["Sub Class"], sic_data["SECTION"])).items()
-        }
-        self.sic_section_2_prop_hours = im.create_section_dict(
-            load_green_tasks_prop_hours()
-        )
-        self.sic_section_2_prop_workers = im.create_section_dict(
-            load_green_tasks_prop_workers()
-        )
-        self.sic_section_2_prop_workers_20 = im.create_section_dict(
-            load_green_tasks_prop_workers_20()
-        )
+        # Industry attributes
+        self.im = IndustryMeasures()
+        self.im.load_ch()
 
         try:
             self.es = ExtractSkills(self.skills_config_name)
@@ -255,22 +236,9 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        ind_green_measures_list = []
-        for job in job_advert:
-            comp_name = job.get(self.company_name_key)
-
-            ind_green_measures_list.append(
-                im.get_green_industry_measure(
-                    company_name=comp_name,
-                    ghg_emissions_dict=self.ghg_emissions_dict,
-                    ghg_unit_emissions_dict=self.ghg_unit_emissions_dict,
-                    ojo_companies_house_dict=self.ojo_companies_house_dict,
-                    sic_to_section=self.sic_to_section,
-                    sic_section_2_prop_hours=self.sic_section_2_prop_hours,
-                    sic_section_2_prop_workers=self.sic_section_2_prop_workers,
-                    sic_section_2_prop_workers_20=self.sic_section_2_prop_workers_20,
-                )
-            )
+        ind_green_measures_list = self.im.get_measures(
+            job_advert=job_advert, company_name_key=self.company_name_key
+        )
 
         return ind_green_measures_list
 
