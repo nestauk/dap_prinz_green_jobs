@@ -9,6 +9,7 @@ from dap_prinz_green_jobs.getters.industry_getters import (
     load_companies_house_dict,
     load_industry_ghg,
     load_industry_ghg_intensity,
+    load_sic,
 )
 
 # Found using the most common words in CH data
@@ -102,7 +103,7 @@ def clean_sic(sic_name):
         return None
 
 
-def get_ghg_sic(sic, ghg_emissions_dict: Dict[str, float] = ghg_emissions_dict):
+def get_ghg_sic(sic, ghg_emissions_dict: Dict[str, float]):
     """
     Could do more to find it, but I think it might be best to just clean the emissions data
     """
@@ -196,18 +197,33 @@ def get_green_industry_measure(
         clean_ch_sic = clean_sic(ch_sic)
         sic_section = sic_to_section.get(clean_ch_sic)
         return {
-            "ghg_emissions_info": get_ghg_sic(clean_ch_sic, ghg_emissions_dict),
-            "ghg_unit_emissions_info": get_ghg_sic(
+            "SIC": clean_ch_sic,
+            "INDUSTRY TOTAL GHG EMISSIONS": get_ghg_sic(
+                clean_ch_sic, ghg_emissions_dict
+            ),
+            "INDUSTRY GHG PER UNIT EMISSIONS": get_ghg_sic(
                 clean_ch_sic, ghg_unit_emissions_dict
             ),
-            "green_tasks_prop_hours": sic_section_2_prop_hours.get(sic_section),
-            "green_tasks_prop_workers": sic_section_2_prop_workers.get(sic_section),
-            "green_tasks_prop_workers_20": sic_section_2_prop_workers_20.get(
+            "INDUSTRY PROP HOURS GREEN TASKS": sic_section_2_prop_hours.get(
+                sic_section
+            ),
+            "INDUSTRY PROP WORKERS GREEN TASKS": sic_section_2_prop_workers.get(
+                sic_section
+            ),
+            "INDUSTRY PROP WORKERS 20PERC GREEN TASKS": sic_section_2_prop_workers_20.get(
                 sic_section
             ),
         }
+
     else:
-        return None
+        return {
+            "SIC": None,
+            "INDUSTRY TOTAL GHG EMISSIONS": None,
+            "INDUSTRY GHG PER UNIT EMISSIONS": None,
+            "INDUSTRY PROP HOURS GREEN TASKS": None,
+            "INDUSTRY PROP WORKERS GREEN TASKS": None,
+            "INDUSTRY PROP WORKERS 20PERC GREEN TASKS": None,
+        }
 
 
 def get_clean_ghg_data():

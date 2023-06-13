@@ -50,15 +50,6 @@ def load_industry_ghg_intensity() -> pd.DataFrame():
     )
 
 
-# def load_industry_ghg_dict() -> dict:
-#     """Downloads a dictionary of greenhouse gas emissions per SIC
-#     :return: A dictionary of SIC and greenhouse gas emissions
-#     :rtype: dict
-#     """
-
-#     return load_s3_data(BUCKET_NAME, "outputs/data/green_industries/ghg_dict.json")
-
-
 def load_sic() -> pd.DataFrame():
     """Downloads the SIC dataset
     :return: A dataframe of SIC codes and names

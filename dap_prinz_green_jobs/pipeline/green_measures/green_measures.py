@@ -11,7 +11,6 @@ import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils 
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 from dap_prinz_green_jobs.getters.industry_getters import (
     load_sic,
-    load_industry_ghg_dict,
     load_companies_house_dict,
     load_green_tasks_prop_hours,
     load_green_tasks_prop_workers,
@@ -256,11 +255,11 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        comp_names = [job.get(self.company_name_key) for job in job_advert]
+        ind_green_measures_list = []
+        for job in job_advert:
+            comp_name = job.get(self.company_name_key)
 
-        ind_green_measures_dict = {}
-        if comp_names:
-            green_industry_measures = [
+            ind_green_measures_list.append(
                 im.get_green_industry_measure(
                     company_name=comp_name,
                     ghg_emissions_dict=self.ghg_emissions_dict,
@@ -271,31 +270,9 @@ class GreenMeasures(object):
                     sic_section_2_prop_workers=self.sic_section_2_prop_workers,
                     sic_section_2_prop_workers_20=self.sic_section_2_prop_workers_20,
                 )
-                for comp_name in comp_names
-            ]
-            ind_green_measures_dict[
-                "INDUSTRY TOTAL GHG EMISSIONS"
-            ] = green_industry_measures["ghg_emissions_info"]
-            ind_green_measures_dict[
-                "INDUSTRY GHG PER UNIT EMISSIONS"
-            ] = green_industry_measures["ghg_unit_emissions_info"]
-            ind_green_measures_dict[
-                "INDUSTRY PROP HOURS GREEN TASKS"
-            ] = green_industry_measures["green_tasks_prop_hours"]
-            ind_green_measures_dict[
-                "INDUSTRY PROP WORKERS GREEN TASKS"
-            ] = green_industry_measures["green_tasks_prop_workers"]
-            ind_green_measures_dict[
-                "INDUSTRY PROP WORKERS 20PERC GREEN TASKS"
-            ] = green_industry_measures["green_tasks_prop_workers_20"]
-        else:
-            ind_green_measures_dict["INDUSTRY TOTAL GHG EMISSIONS"] = None
-            ind_green_measures_dict["INDUSTRY GHG PER UNIT EMISSIONS"] = None
-            ind_green_measures_dict["INDUSTRY PROP HOURS GREEN TASKS"] = None
-            ind_green_measures_dict["INDUSTRY PROP WORKERS GREEN TASKS"] = None
-            ind_green_measures_dict["INDUSTRY PROP WORKERS 20PERC GREEN TASKS"] = None
+            )
 
-        return ind_green_measures_dict
+        return ind_green_measures_list
 
     def get_green_measures(
         self, job_advert: Dict[str, str], skill_list: Optional[List[str]] = None
