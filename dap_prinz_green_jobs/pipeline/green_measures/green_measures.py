@@ -6,13 +6,11 @@ from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
 import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils as om
-import dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils as im
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
+    IndustryMeasures,
+)
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
-from dap_prinz_green_jobs.getters.industry_getters import (
-    load_industry_ghg_dict,
-    load_companies_house_dict,
-)
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
 from typing import List, Union, Dict, Optional
@@ -66,9 +64,13 @@ class GreenMeasures(object):
         self.job_title_key = self.config["job_adverts"]["job_title_key"]
         self.company_name_key = self.config["job_adverts"]["company_name_key"]
 
+        # Occupation variables
         self.green_soc_data = om.get_green_soc_measures()
-        self.ghg_emissions_dict = load_industry_ghg_dict()
-        self.ojo_companies_house_dict = load_companies_house_dict()
+
+        # Industry attributes
+        self.im = IndustryMeasures()
+        self.im.load_ch()
+
         try:
             self.es = ExtractSkills(self.skills_config_name)
         except FileNotFoundError:
@@ -234,22 +236,11 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        comp_names = [job.get(self.company_name_key) for job in job_advert]
+        ind_green_measures_list = self.im.get_measures(
+            job_advert=job_advert, company_name_key=self.company_name_key
+        )
 
-        ind_green_measures_dict = {}
-        if comp_names:
-            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = [
-                im.get_green_industry_measure(
-                    company_name=comp_name,
-                    ghg_emissions_dict=self.ghg_emissions_dict,
-                    ojo_companies_house_dict=self.ojo_companies_house_dict,
-                )
-                for comp_name in comp_names
-            ]
-        else:
-            ind_green_measures_dict["INDUSTRY GHG EMISSIONS"] = None
-
-        return ind_green_measures_dict
+        return ind_green_measures_list
 
     def get_green_measures(
         self, job_advert: Dict[str, str], skill_list: Optional[List[str]] = None
