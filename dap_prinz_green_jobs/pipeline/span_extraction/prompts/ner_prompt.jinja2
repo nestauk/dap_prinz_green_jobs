@@ -1,33 +1,23 @@
-From the text below, extract the following entities in the following format:
+Here is the text of a job description you must extract entities from:
+{# whitespace #}
+"""
+{{ text }}
+"""
+{# whitespace #}
+Here is a list of entities to extract with entity definitions:
+{# whitespace #}
+company description: A phrase describing the company
+company sector: A phrase describing the sector the company is in
+qualification: the vocational degree, educational degree or training certificate required for the job
+skill: a skill required for the job
+multiskill: a phrase that contains multiple skills that is required for the job
+company benefit: a benefit that the company offers
+{# whitespace #}
+Please extract the entities mentioned above in the following format:
 {# whitespace #}
 {%- for label in labels -%}
 {{label}}: <comma delimited list of strings>
 {# whitespace #}
 {%- endfor -%}
 {# whitespace #}
-For the company description and company sector entities, please extract only the first occurrence of each entity.
-{# whitespace #}
-{# whitespace #}
-Text:
-"""
-{{text}}
-"""
-{# whitespace #}
-{%- if examples -%}
-{# whitespace #}
-For example:
-{# whitespace #}
-{# whitespace #}
-{%- for example in examples -%}
-Text:
-"""
-{{ example.text }}
-"""
-{# whitespace #}
-{%- for label, substrings in example.entities.items() -%}
-{{ label }}: {{ ", ".join(substrings) }}
-{# whitespace #}
-{%- endfor -%}
-{# whitespace #}
-{% endfor -%}
-{%- endif -%}
+If there are no entities of a certain type, please leave it blank.

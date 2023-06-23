@@ -2,7 +2,7 @@
 
 ### Generate training data
 
-To generate training data, run the following at the root of the directory:
+To generate training data, run the following:
 
 ```
 python -m dap_prinz_green_jobs.pipeline.span_extraction.make_training_data --train_size 5000
@@ -16,6 +16,13 @@ If you would like to save the training data locally, pass `--local True` when ru
 
 (Assuming you're in this directory and you've saved both the training data and examples locally)
 
+Make sure to [install Prodigy](https://prodi.gy/docs/install) as well as a few additional Python dependencies:
+
+```bash
+python -m pip install prodigy -f https://XXXX-XXXX-XXXX-XXXX@download.prodi.gy
+python -m pip install -r prodigy_requirements.txt
+```
+
 Create a .env file in your directory root and add your openAI keys:
 
 ```
@@ -26,11 +33,7 @@ OPENAI_KEY = "sk-"
 Run:
 
 ```
-python -m prodigy ner.openai.correct mixed_job_sample ./data/mixed_ojo_sample_5000.jsonl "company description,company sector,qualification,skill,multiskill,company benefit" -p ./prompts/ner_prompt.jinja2 -e ./examples/ner_ojo.yml -n 2 -F ./recipes/openai_ner.py
-```
-
-If you do not wish to pass examples via the prompt, run:
-
-```
 python -m prodigy ner.openai.correct mixed_job_sample ./data/mixed_ojo_sample_5000.jsonl "company description,company sector,qualification,skill,multiskill,company benefit" -p ./prompts/ner_prompt.jinja2 -F ./recipes/openai_ner.py
 ```
+
+Once you modify the labelling to make it correct, you can 'flag' the corrected labels to tune the prompt.
