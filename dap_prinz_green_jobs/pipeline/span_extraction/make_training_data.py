@@ -18,12 +18,12 @@ import yaml
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--train_size", type=int, default=5000)
-    parser.add_argument("--local", type=bool, default=False)
+    parser.add_argument("--local", type=bool, default=True)
     parser.add_argument(
         "--examples",
         help="to download training examples from s3 to local directory or not",
         type=bool,
-        default=False,
+        default=True,
     )
 
     args = parser.parse_args()
@@ -65,12 +65,14 @@ if __name__ == "__main__":
 
     if local:
         logger.info("saving training data locally...")
-        local_dir = str(
-            PROJECT_DIR
-            / f"dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_{str(train_size)}.jsonl"
-        )
-        # dump jsonl to local
-        with open(local_dir, "w") as f:
+        local_dir = "dap_prinz_green_jobs/pipeline/span_extraction/data/"
+        filename = f"mixed_ojo_sample_{str(train_size)}.jsonl"
+
+        # if file doesn't exist, create it then dump jsonl to local dir
+        if not os.path.exists(local_dir):
+            os.makedirs(local_dir)
+
+        with open(local_dir + filename, "w") as f:
             f.write(converted_training_data)
 
     if examples:
@@ -78,9 +80,12 @@ if __name__ == "__main__":
         ner_ojo_examples = load_s3_data(
             BUCKET_NAME, "inputs/data/training_data/ner_ojo.yml"
         )
-        output_dir = (
-            PROJECT_DIR
-            / "dap_prinz_green_jobs/pipeline/span_extraction/examples/ner_ojo_examples.yml"
-        )
-        with open(output_dir, "w") as outfile:
+        local_dir = "dap_prinz_green_jobs/pipeline/span_extraction/examples/"
+        filename = "ner_ojo_examples.yml"
+
+        # if file doesn't exist, create it then dump jsonl to local dir
+        if not os.path.exists(local_dir):
+            os.makedirs(local_dir)
+
+        with open(local_dir + filename, "w") as outfile:
             yaml.dump(ner_ojo_examples, outfile, default_flow_style=True)
