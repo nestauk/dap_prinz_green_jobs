@@ -81,7 +81,7 @@ if __name__ == "__main__":
             BUCKET_NAME, "inputs/data/training_data/ner_ojo.yml"
         )
         local_dir = "dap_prinz_green_jobs/pipeline/span_extraction/examples/"
-        filename = "ner_ojo_examples.yml"
+        filename = "ner_ojo.yml"
 
         # if file doesn't exist, create it then dump jsonl to local dir
         if not os.path.exists(local_dir):

@@ -15,6 +15,10 @@ research_daps/
 *.bbl
 *.blg
 
+# Prodigy training data and examples
+/dap_prinz_green_jobs/pipeline/span_extraction/data/*
+/dap_prinz_green_jobs/pipeline/span_extraction/examples/*
+
 # Metaflow
 .metaflow
 metaflow.s3.*
