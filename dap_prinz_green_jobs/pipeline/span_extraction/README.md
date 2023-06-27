@@ -16,8 +16,6 @@ If you would like to save the training data locally, pass `--local` when running
 
 ### Setting up your environment and environmental variables
 
-(Assuming you're in this directory and you've saved both the training data and examples locally)
-
 To avoid any environment conflicts, it would be best to create a new prodigy environment, [install Prodigy](https://prodi.gy/docs/install) in your prodigy environment and a few additional Python dependencies:
 
 ```bash
@@ -51,12 +49,14 @@ aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.
 In your prodigy environment with installed prodigy, run:
 
 ```
+cd dap_prinz_green_jobs/pipeline/span_extraction
 python -m prodigy ner.openai.correct mixed_job_sample ./data/mixed_ojo_sample_5000.jsonl "company description,company sector,qualification,skill,multiskill,company benefit" -p ./prompts/ner_prompt.jinja2 -F ./recipes/openai_ner.py
 ```
 
 If you would like to pass examples via the prompt, you can do so by:
 
 ```
+cd dap_prinz_green_jobs/pipeline/span_extraction
 python -m prodigy ner.openai.correct mixed_job_sample ./data/mixed_ojo_sample_5000.jsonl "company description,company sector,qualification,skill,multiskill,company benefit" -p ./prompts/ner_prompt.jinja2 -e ./examples/ner_ojo.yml -F ./recipes/openai_ner.py
 ```
 
