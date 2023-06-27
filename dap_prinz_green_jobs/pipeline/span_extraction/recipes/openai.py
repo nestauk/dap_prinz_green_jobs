@@ -1,3 +1,7 @@
+"""
+NOTE:
+We did not write this script; it is taken from:  https://github.com/explosion/prodigy-openai-recipes/blob/main/recipes/openai.py
+"""
 import abc
 import copy
 import os
