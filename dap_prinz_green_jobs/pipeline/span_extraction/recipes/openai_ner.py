@@ -1,3 +1,7 @@
+"""
+NOTE:
+We did not write this script; it is taken from:  https://github.com/explosion/prodigy-openai-recipes/blob/main/recipes/openai_ner.py
+"""
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, cast, Callable
@@ -14,9 +18,13 @@ from dotenv import load_dotenv
 from spacy.language import Language
 from spacy.util import filter_spans
 
-from recipes.openai import OpenAISuggester, PromptExample, get_api_credentials
-from recipes.openai import load_template, normalize_label
-from recipes.openai import read_prompt_examples
+from prodigy_openai_recipes.recipes.openai import (
+    OpenAISuggester,
+    PromptExample,
+    get_api_credentials,
+)
+from prodigy_openai_recipes.recipes.openai import load_template, normalize_label
+from prodigy_openai_recipes.recipes.openai import read_prompt_examples
 
 CSS_FILE_PATH = Path(__file__).parent / "style.css"
 DEFAULT_PROMPT_PATH = Path(__file__).parent.parent / "templates" / "ner_prompt.jinja2"
