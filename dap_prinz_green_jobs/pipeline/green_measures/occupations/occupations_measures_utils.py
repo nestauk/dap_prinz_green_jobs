@@ -245,6 +245,7 @@ class OccupationMeasures(object):
                 "SOC_2010": soc_match[0][2],
             }
             soc_2010 = soc_match[0][2]
+
             green_occ_measures = self.soc_green_measures_dict.get(soc_2010)
             if green_occ_measures:
                 soc_info["name"] = green_occ_measures.get("SOC_name")
