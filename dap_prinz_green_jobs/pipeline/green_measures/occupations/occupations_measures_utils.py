@@ -79,16 +79,6 @@ def process_green_topics(green_topics):
         lambda x: gla_mapper.get(x)[1] if gla_mapper.get(x) else None
     )
 
-    # # Print some info
-    # num_all_onet = len(green_topics)
-    # num_we_find = sum(pd.notnull(green_topics['SOC_2010']))
-    # num_gla_finds = sum(pd.notnull(green_topics['SOC_2010_GLA']))
-    # num_gla_finds_of_our_not_found = sum(green_topics[pd.isnull(green_topics['SOC_2010'])]['SOC_2010_GLA'].notnull())
-
-    # logger.info(f"Of the {num_all_onet} ONET occupations, we find 2010 SOC for {num_we_find} of them ({round(num_we_find*100/num_all_onet)}%)")
-    # logger.info(f"Of the {num_all_onet} ONET occupations, GLA find 2010 SOC for {num_gla_finds} of them ({round(num_gla_finds*100/num_all_onet)}%)")
-    # logger.info(f"We could recover {num_gla_finds_of_our_not_found} of our {num_all_onet-num_we_find} not found ones by using GLA's")
-
     # Use GLA if we don't find it
     # Of the 1354 ONET occupations, we find 2010 SOC for 1081 of them (80%)
     # Of the 1354 ONET occupations, GLA find 2010 SOC for 721 of them (53%)
@@ -255,17 +245,6 @@ class OccupationMeasures(object):
                 "SOC_2010": soc_match[0][2],
             }
             soc_2010 = soc_match[0][2]
-            # if soc_2020:
-            #     soc_2020 = soc_2020[
-            #         0
-            #     ]  # first is the code, second is the job title match
-            #     if len(soc_2020) > 4:
-            #         soc_info["SOC_2020_EXT"] = soc_2020
-            #         soc_2020 = soc_2020[0:4]
-            # soc_info["SOC_2020"] = soc_2020
-            # # TO DO: THIS MAPPER MIGHT NOT BE 1:1
-            # soc_2010 = self.soc_mapper.soc_2020_2010_mapper.get(soc_2020)
-            # soc_info["SOC_2010"] = soc_2010
             green_occ_measures = self.soc_green_measures_dict.get(soc_2010)
             if green_occ_measures:
                 soc_info["name"] = green_occ_measures.get("SOC_name")

@@ -90,10 +90,11 @@ class SOCMapper(object):
         ----------
     Usage
     ----------
+        from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
         soc_mapper = SOCMapper()
         soc_mapper.load()
         matches = soc_mapper.get_soc(job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"])
-
+        >>> [(('2433/02', '2433', '2425'), 'data scientist'), (('6131/99', '6131', '6141'), 'assistant nurse'), (('2422/02', '2422', '3534'), 'financial consultant')]
     """
 
     def __init__(
@@ -123,14 +124,6 @@ class SOCMapper(object):
         """
 
         jobtitle_soc_data = process_job_title_soc(load_job_title_soc())
-
-        # # TO DO: Not sure this is 1:1
-        # self.soc_2020_2010_mapper = dict(
-        #     zip(
-        #         jobtitle_soc_data["SOC_2020"].astype(str),
-        #         jobtitle_soc_data["SOC_2010"].astype(str),
-        #     )
-        # )
 
         return jobtitle_soc_data
 
