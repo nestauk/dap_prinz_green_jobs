@@ -5,12 +5,13 @@ A Green Measures class that takes as input a job advert and outputs
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
     ExtractSkills,
 )  # import the module
-import dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils as om
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import (
+    OccupationMeasures,
+)
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     IndustryMeasures,
 )
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
-from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
 from typing import List, Union, Dict, Optional
@@ -64,8 +65,9 @@ class GreenMeasures(object):
         self.job_title_key = self.config["job_adverts"]["job_title_key"]
         self.company_name_key = self.config["job_adverts"]["company_name_key"]
 
-        # Occupation variables
-        self.green_soc_data = om.get_green_soc_measures()
+        # Occupation attributes
+        self.om = OccupationMeasures()
+        self.om.load()
 
         # Industry attributes
         self.im = IndustryMeasures()
@@ -79,7 +81,6 @@ class GreenMeasures(object):
             )
         self.es.load()
         self.es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
-        self.get_occupation_measures_called = False
 
     def get_skill_measures(
         self,
@@ -152,30 +153,10 @@ class GreenMeasures(object):
             - GREEN CATEGORY: O*NET green occupation categorisation
             - GREEN/NOT GREEN: whether occupation name is considered green or not green
         """
+
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        if not self.get_occupation_measures_called:
-            self.soc_green_measures_dict = self.green_soc_data.set_index("SOC_2010")[
-                ["GLA_Green Category", "GLA_Green/Non-green", "timeshare_2019"]
-            ].T.to_dict()
-            self.soc_mapper = SOCMapper(
-                local=self.config["occupations"]["local"],
-                embeddings_output_dir=self.config["occupations"][
-                    "embeddings_output_dir"
-                ],
-                batch_size=self.config["occupations"]["batch_size"],
-                match_top_n=self.config["occupations"]["match_top_n"],
-                sim_threshold=self.config["occupations"]["sim_threshold"],
-                top_n_sim_threshold=self.config["occupations"]["top_n_sim_threshold"],
-                minimum_n=self.config["occupations"]["minimum_n"],
-                minimum_prop=self.config["occupations"]["minimum_prop"],
-            )
-            self.soc_mapper.load(save_embeds=self.config["occupations"]["save_embeds"])
-
-            self.get_occupation_measures_called = True
-
-        # It's quicker to use soc_mapper with a bulk unique input
         unique_job_titles = list(
             set(
                 [
@@ -185,45 +166,11 @@ class GreenMeasures(object):
                 ]
             )
         )
-        soc_matches = self.soc_mapper.get_soc(job_titles=unique_job_titles)
-        job_title_2_match = dict(zip(unique_job_titles, soc_matches))
 
-        occ_green_measures_list = []
-        for job in job_advert:
-            soc_2020 = job_title_2_match[job.get(self.job_title_key)]
-            soc_info = {}
-            if soc_2020:
-                soc_2020 = soc_2020[
-                    0
-                ]  # first is the code, second is the job title match
-                if len(soc_2020) > 4:
-                    soc_info["SOC_2020_EXT"] = soc_2020
-                    soc_2020 = soc_2020[0:4]
-            soc_info["SOC_2020"] = soc_2020
-            # TO DO: THIS MAPPER MIGHT NOT BE 1:1
-            soc_2010 = self.soc_mapper.soc_2020_2010_mapper.get(soc_2020)
-            soc_info["SOC_2010"] = soc_2010
-            green_occ_measures = self.soc_green_measures_dict.get(soc_2010)
-            if green_occ_measures:
-                occ_green_measures_list.append(
-                    {
-                        "GREEN CATEGORY": green_occ_measures.get("GLA_Green Category"),
-                        "GREEN/NOT GREEN": green_occ_measures.get(
-                            "GLA_Green/Non-green"
-                        ),
-                        "GREEN TIMESHARE": green_occ_measures.get("timeshare_2019"),
-                        "SOC": soc_info,
-                    }
-                )
-            else:
-                occ_green_measures_list.append(
-                    {
-                        "GREEN CATEGORY": None,
-                        "GREEN/NOT GREEN": None,
-                        "GREEN TIMESHARE": None,
-                        "SOC": None,
-                    }
-                )
+        job_title_2_match = self.om.precalculate_soc_mapper(unique_job_titles)
+        occ_green_measures_list = self.om.get_measures(
+            job_adverts=job_advert, job_title_key=self.job_title_key
+        )
 
         return occ_green_measures_list
 
