@@ -12,7 +12,7 @@ This will load the mixed ojo sample of likely green job adverts and random job a
 
 If you would like to save the training data locally, pass `--local` when running the script.
 
-## Run Prodigy LLM for NER labelling locally
+## Run prodigy recipes
 
 ### Setting up your environment and environmental variables
 
@@ -38,7 +38,7 @@ OPENAI_KEY = "sk-"
 aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.jsonl dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_5000.jsonl
 ```
 
-### Running prodigy recipes
+#### Running custom recipe to extract SIC phrase and predicted SIC code
 
 In your prodigy environment with installed prodigy, run:
 
