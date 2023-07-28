@@ -22,24 +22,18 @@ To avoid any environment conflicts, it would be best to create a new prodigy env
 conda create --name prodigy_env pip python=3.8
 conda activate prodigy_env
 python -m pip install prodigy -f https://XXXX-XXXX-XXXX-XXXX@download.prodi.gy
-python -m pip install -r prodigy_requirements.txt
+python -m pip install -r prodigy_requirements.txt #install additional langchain and openai libraries
 ```
 
-Create a .env file in your directory root and add your openAI keys:
+Create a .env file in your directory and add your openAI key:
 
 ```
-OPENAI_ORG = "org-"
 OPENAI_KEY = "sk-"
 ```
 
 ### Downloading data locally
 
-If you would like to pass examples with manually extracted company description, company sector, qualification, skill, multiskill and company benefit, you will first need to download the ner_ojo.yml file locally:
-
 ```
-#download the examples yaml file locally
-aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/ner_ojo.yml dap_prinz_green_jobs/pipeline/span_extraction/examples/ner_ojo.yml
-
 #download training data of train_size 5000
 aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.jsonl dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_5000.jsonl
 ```
@@ -49,15 +43,12 @@ aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.
 In your prodigy environment with installed prodigy, run:
 
 ```
-cd dap_prinz_green_jobs/pipeline/span_extraction
-python -m prodigy ner.openai.correct mixed_job_sample ./data/mixed_ojo_sample_5000.jsonl "company description,company sector,qualification,skill,multiskill,company benefit" -p ./prompts/ner_prompt.jinja2 -F ./recipes/openai_ner.py
+prodigy oa_ner_classification comp_desc_annotated \
+    dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_5000.jsonl \
+    -F dap_prinz_green_jobs/pipeline/span_extraction/custom_openai_recipe.py
 ```
 
-If you would like to pass examples via the prompt, you can do so by:
+This runs a custom prodigy recipe that uses gpt 3.5 to predict the SIC code and the phrase most predictive of the SIC code. You are able to modify both the phrase and the SIC code. If the SIC code is incorrect, you can update it by:
 
-```
-cd dap_prinz_green_jobs/pipeline/span_extraction
-python -m prodigy ner.openai.correct mixed_job_sample ./data/mixed_ojo_sample_5000.jsonl "company description,company sector,qualification,skill,multiskill,company benefit" -p ./prompts/ner_prompt.jinja2 -e ./examples/ner_ojo.yml -F ./recipes/openai_ner.py
-```
-
-In any case, once you modify the labelling to make it correct, you can 'flag' the corrected labels to tune the prompt.
+1. selecting the 'wrong SIC code' option;
+2. writing the correct SIC code in the free text box.
