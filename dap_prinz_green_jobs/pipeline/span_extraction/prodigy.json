@@ -1,7 +1,7 @@
 {
   "theme": "basic",
   "instant_submit": true,
-  "port": 1239,
+  "port": 1240,
   "swipe": true,
   "swipe_gestures": { "left": "accept", "right": "reject" }
 }
