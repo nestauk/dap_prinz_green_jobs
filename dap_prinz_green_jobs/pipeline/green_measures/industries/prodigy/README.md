@@ -1,4 +1,4 @@
-# Span Extraction
+# Extracting company descriptions and SIC codes
 
 ## Generate training data
 
@@ -28,7 +28,7 @@ python -m pip install -r prodigy_requirements.txt #install additional langchain 
 Create a .env file in your directory and add your openAI key:
 
 ```
-OPENAI_KEY = "sk-"
+OPENAI_API_KEY = "sk-"
 ```
 
 ### Downloading data locally
