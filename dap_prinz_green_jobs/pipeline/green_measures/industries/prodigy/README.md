@@ -35,7 +35,7 @@ OPENAI_KEY = "sk-"
 
 ```
 #download training data of train_size 5000
-aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.jsonl dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_5000.jsonl
+aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.jsonl dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/mixed_ojo_sample_5000.jsonl
 ```
 
 #### Running custom recipe to extract company description phrase and predicted SIC code
@@ -44,8 +44,8 @@ In your prodigy environment with installed prodigy, run:
 
 ```
 prodigy oa_ner_classification comp_sic_annotated \
-    dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_5000.jsonl \
-    -F dap_prinz_green_jobs/pipeline/span_extraction/custom_openai_recipe.py
+    dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/mixed_ojo_sample_5000.jsonl \
+    -F dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/custom_openai_recipe.py
 ```
 
 This runs a custom prodigy recipe that uses gpt 3.5 to extract a company description phrase and the SIC code based on the description phrase. You are able to modify the phrase.
@@ -57,5 +57,5 @@ If the SIC code is incorrect, you can select the 'wrong SIC code' option.
 To save the outputs of the labelled data:
 
 ```
-prodigy db-out comp_sic_annotated > dap_prinz_green_jobs/pipeline/span_extraction/data/company_desc_sic_labelled.jsonl
+prodigy db-out comp_sic_annotated > dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/company_desc_sic_labelled.jsonl
 ```
