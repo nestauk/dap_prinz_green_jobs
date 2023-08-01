@@ -9,6 +9,7 @@ from pandas import DataFrame
 import boto3
 from decimal import Decimal
 import numpy
+import yaml
 
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
 
@@ -128,6 +129,9 @@ def load_s3_data(bucket_name, file_name):
     if fnmatch(file_name, "*.jsonl.gz"):
         with gzip.GzipFile(fileobj=obj.get()["Body"]) as file:
             return [json.loads(line) for line in file]
+    if fnmatch(file_name, "*.yml") or fnmatch(file_name, "*.yaml"):
+        file = obj.get()["Body"].read().decode()
+        return yaml.safe_load(file)
     elif fnmatch(file_name, "*.jsonl"):
         file = obj.get()["Body"].read().decode()
         return [json.loads(line) for line in file]
