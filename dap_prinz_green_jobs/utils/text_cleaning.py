@@ -94,7 +94,7 @@ def replacements(text):
     text = (
         text.replace("&", "and")
         .replace("\xa0", " ")
-        .replace("\n", "")
+        .replace("\n", ".")
         .replace("[", "")
         .replace("]", "")
     )
