@@ -32,7 +32,6 @@ if not os.getenv("OPENAI_API_KEY"):
         "OPENAI_API_KEY not found in environment variables. Add key to .env file."
     )
 
-# use the 16k token window to account for the sic code dataset being passed in the prompt
 model = OpenAIChat(model="gpt-3.5-turbo", temperature=0.0)
 
 ner_schema = [
@@ -135,13 +134,14 @@ def make_tasks(
             )
 
         task["spans"] = spans
+
         options = [
             {"id": 1, "text": output_parsed["sic_phrase"]},
             {
-                "id": 1,
+                "id": 2,
                 "text": f"{output_parsed['sic_code']} ({output_parsed['sic_name']})",
             },
-            {"id": 2, "text": "wrong SIC code"},
+            {"id": 3, "text": "wrong SIC code"},
         ]
         task["options"] = options
 

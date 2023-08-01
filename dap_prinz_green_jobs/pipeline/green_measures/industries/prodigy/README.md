@@ -52,7 +52,7 @@ This runs a custom prodigy recipe that uses gpt 3.5 to extract a company descrip
 
 **NOTE:** Do modify phrases that do not match with gpt 3.5's prediction or that seem nonsensical. The span start and ends sometimes highlight incorrect phrases so be conscious of this.
 
-If the SIC code is incorrect, you can select the 'wrong SIC code' option.
+If the SIC code is incorrect, you can select the 'wrong SIC code' option. Do **NOT** select the SIC company description phrase.
 
 To save the outputs of the labelled data:
 
