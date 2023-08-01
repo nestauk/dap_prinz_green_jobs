@@ -50,7 +50,7 @@ prodigy oa_ner_classification comp_sic_annotated \
 
 This runs a custom prodigy recipe that uses gpt 3.5 to extract a company description phrase and the SIC code based on the description phrase. You are able to modify the phrase.
 
-**NOTE:** Do modify phrases that are the start token of the text, as this is a defact-o token span if there are errors related to parsing the LLM output or regex matching.
+**NOTE:** Do modify phrases that do not match with gpt 3.5's prediction or that seem nonsensical. The span start and ends sometimes highlight incorrect phrases so be conscious of this.
 
 If the SIC code is incorrect, you can select the 'wrong SIC code' option.
 
@@ -58,4 +58,7 @@ To save the outputs of the labelled data:
 
 ```
 prodigy db-out comp_sic_annotated > dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/company_desc_sic_labelled.jsonl
+aws s3 cp dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/company_desc_sic_labelled.jsonl s3://open-jobs-lake/escoe_extension/outputs/labelled_job_adverts/prodigy/sic/company_desc_sic_labelled_010823.jsonl
 ```
+
+You must provide the session url argument (with your name) when labelling the tasks if this is hosted on EC2, e.g. http://18.XXX:8080/?session=liz. This makes it so no two labellers will end up annotating the same task. Without it each time someone tried to label the stream of tasks will be exactly the same as another labeller.

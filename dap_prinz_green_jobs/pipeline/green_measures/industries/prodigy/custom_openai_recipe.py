@@ -4,12 +4,12 @@ Custom prodigy recipe to generate both NER start and end tokens of company descr
 
 To run the custom recipe:
 
-prodigy oa_ner_classification comp_desc_annotated \
-    dap_prinz_green_jobs/pipeline/span_extraction/data/mixed_ojo_sample_10.jsonl \
-    -F dap_prinz_green_jobs/pipeline/span_extraction/custom_openai_recipe.py
+prodigy oa_ner_classification comp_sic_annotated \
+    dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/mixed_ojo_sample_5000.jsonl \
+    -F dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/custom_openai_recipe.py
 """
 import langchain
-from langchain.llms import OpenAI
+from langchain.llms import OpenAIChat
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 from langchain.prompts import PromptTemplate
 from pathlib import Path
@@ -25,7 +25,6 @@ import spacy
 from prodigy.components.loaders import JSONL
 from prodigy.components.preprocess import add_tokens
 
-
 load_dotenv()  # load the openAI key
 
 if not os.getenv("OPENAI_API_KEY"):
@@ -33,20 +32,21 @@ if not os.getenv("OPENAI_API_KEY"):
         "OPENAI_API_KEY not found in environment variables. Add key to .env file."
     )
 
-model = OpenAI(temperature=0.0)
+# use the 16k token window to account for the sic code dataset being passed in the prompt
+model = OpenAIChat(model="gpt-3.5-turbo", temperature=0.0)
 
 ner_schema = [
     ResponseSchema(
         name="sic_phrase",
-        description="Predict the company description sentence in the input text. It must be an exact phrase from the input text. It must be a string.",
+        description="Predict the company description sentence in the input text. It must be an exact phrase from the input text.",
     ),
     ResponseSchema(
         name="sic_code",
-        description="Based on the predicted company description sentence, predict the SIC code. Must be a Standardised Industry Code.",
+        description="Based on the company description sentence, predict the 2007 Standardised Industrial Classification (SIC) code up to the 4 digit level. It must be a string.",
     ),
     ResponseSchema(
         name="sic_name",
-        description="The description of the predicted SIC code. Must be the description of the Standardised Industry Code.",
+        description="The description that corresponds to the predicted 2007 Standardised Industrial Classification (SIC) code. It must be a string.",
     ),
 ]
 
@@ -68,7 +68,7 @@ def _make_prompt(
 
     # generate the prompt template
     prompt = PromptTemplate(
-        template='Predict the SIC code and the phrase that generated the SIC code prediction in the job advert text.\n{format_instructions}\n The job advert text is in the triple quotes below: \n"""{job_advert}"""\n',
+        template='Predict the company description phrase and the SIC name based on the predicted company description phrase in a job advert.\n{format_instructions}\n The job advert text is in the triple quotes below: \n"""{job_advert}"""\n',
         input_variables=["job_advert"],
         partial_variables={"format_instructions": format_instructions},
     )
@@ -108,20 +108,11 @@ def make_tasks(
         except langchain.schema.OutputParserException:
             output_parsed = None
         if output_parsed:
-            # use regex instead of an llm to find the phrase in the text
-            pattern = r"\b{}\b".format(re.escape(output_parsed["sic_phrase"]))
-            # you only want the first match
-            matches = [
-                (match.start(), match.end()) for match in re.finditer(pattern, doc.text)
-            ]
-            matches = matches[0] if matches else None
-            if matches:
-                start, end = matches[0], matches[1]
-                charspan = doc.char_span(start, end)
-                if charspan:
-                    token_start, token_end = charspan.start, charspan.end - 1
-            else:
-                start, end, token_start, token_end = 0, 0, 0, 0
+            match = re.search(re.escape(output_parsed["sic_phrase"]), doc.text)
+            if match:
+                start, end = match.start(), match.end()
+                span = doc.char_span(start, end, alignment_mode="expand")
+                token_start, token_end = span.start, span.end - 1
 
             spans.append(
                 {
@@ -145,6 +136,7 @@ def make_tasks(
 
         task["spans"] = spans
         options = [
+            {"id": 1, "text": output_parsed["sic_phrase"]},
             {
                 "id": 1,
                 "text": f"{output_parsed['sic_code']} ({output_parsed['sic_name']})",
@@ -185,8 +177,5 @@ def custom_oa(dataset, source):
                 {"view_id": "ner_manual"},
                 {"view_id": "choice", "text": None},
             ],
-            "custom_theme": {
-                "labels": {"SIC_CODE": "#2592da"},
-            },
         },
     }
