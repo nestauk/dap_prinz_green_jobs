@@ -8,12 +8,13 @@ For example,
 from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger
 from dap_prinz_green_jobs.getters.ojo_getters import get_mixed_ojo_sample
 
-from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 import dap_prinz_green_jobs.utils.text_cleaning as tc
 
 from argparse import ArgumentParser
 import os
 import json
+
+import boto3
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -49,9 +50,10 @@ if __name__ == "__main__":
         converted_training_data += "\n"
 
     logger.info("saving training data to s3...")
-    output_dir = "inputs/data/training_data/"
-    save_to_s3(
-        BUCKET_NAME,
-        converted_training_data,
-        os.path.join(output_dir, f"mixed_ojo_sample_{str(train_size)}.jsonl"),
+    output_dir = "outputs/data/ojo_application/deduplicated_sample/"
+    s3 = boto3.client("s3")
+    s3.put_object(
+        Body=converted_training_data,
+        Bucket=BUCKET_NAME,
+        Key=os.path.join(output_dir, f"mixed_ojo_sample_{str(train_size)}.jsonl"),
     )

@@ -138,7 +138,7 @@ def make_tasks(
         options = [
             {"id": 1, "text": output_parsed["sic_phrase"]},
             {
-                "id": 2,
+                "id": 1,
                 "text": f"{output_parsed['sic_code']} ({output_parsed['sic_name']})",
             },
             {"id": 3, "text": "wrong SIC code"},

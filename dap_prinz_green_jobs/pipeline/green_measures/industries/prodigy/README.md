@@ -5,12 +5,10 @@
 To generate training data, run the following:
 
 ```
-python -m dap_prinz_green_jobs.pipeline.span_extraction.make_training_data --train_size 5000
+python dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/make_training_data.py --train_size 5000
 ```
 
 This will load the mixed ojo sample of likely green job adverts and random job adverts, minimally clean the job advert texts and saves data as .jsonl of train_size size (in the command above, 5000 job adverts) to s3.
-
-If you would like to save the training data locally, pass `--local` when running the script.
 
 ## Run prodigy recipes
 
