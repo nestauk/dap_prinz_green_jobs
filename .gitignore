@@ -3,6 +3,8 @@
 
 *.lock
 
+*.jsonl
+
 # Proposed convention
 scratch*
 
