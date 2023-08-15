@@ -56,7 +56,7 @@ To save the outputs of the labelled data:
 
 ```
 prodigy db-out comp_sic_annotated > dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/company_desc_sic_labelled.jsonl
-aws s3 cp dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/company_desc_sic_labelled.jsonl s3://open-jobs-lake/escoe_extension/outputs/labelled_job_adverts/prodigy/sic/company_desc_sic_labelled_010823.jsonl
+aws s3 cp dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/company_desc_sic_labelled.jsonl s3://prinz-green-jobs/outputs/data/labelled_job_adverts/dataset_comp_desc_150823.jsonl
 ```
 
 You must provide the session url argument (with your name) when labelling the tasks if this is hosted on EC2, e.g. http://18.XXX:8080/?session=liz. This makes it so no two labellers will end up annotating the same task. Without it each time someone tried to label the stream of tasks will be exactly the same as another labeller.
