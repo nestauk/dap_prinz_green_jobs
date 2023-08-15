@@ -12,8 +12,13 @@ job_adverts:
   job_title_key: "job_title"
   company_name_key: "company_name"
 skills:
-  skill_threshold: 0.7
   skills_config_name: "extract_green_skills_esco"
+  load_skills: False
+  load_skills_embeddings: False
+  load_taxonomy_embeddings: False
+  skills_output: "outputs/data/green_skill_lists/skills_data_ojo_mixed_20230815.json"
+  skill_embeddings_output: "outputs/data/green_skill_lists/extracted_skills_embeddings_20230815.json"
+  green_tax_embedding_path: "outputs/data/green_skill_lists/green_esco_embeddings_20230815.json"
 occupations:
   local: False
   embeddings_output_dir: "outputs/data/green_occupations/soc_matching/"
