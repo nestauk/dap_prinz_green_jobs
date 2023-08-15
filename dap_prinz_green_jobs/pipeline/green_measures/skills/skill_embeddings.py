@@ -1,4 +1,5 @@
 """
+DONT NEED THIS NOW
 This is a one-off script to embed:
     - a taxonomy of skills
     - the list of already extracted skills from OJO

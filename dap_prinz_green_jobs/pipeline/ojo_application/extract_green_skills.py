@@ -29,31 +29,8 @@ import argparse
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--production",
-        type=bool,
-        default=True,
-        help="whether to run in production mode",
-    )
-
-    parser.add_argument(
-        "--skill_threshold", type=int, default=0.7, help="skill match threshold"
-    )
-
-    args = parser.parse_args()
-    production = args.production
-    skill_threshold = args.skill_threshold
-
-    # load job sample
-    logger.info("loading ojo skills sample...")
-    ojo_skills_raw = (
-        get_ojo_skills_sample()
-        # drop nas in skill_label
-        .dropna(subset=["skill_label"])
-    )
+def find_green_skills(ojo_skills_raw):
     # step 0.1 load embeddings (extracted skills and green skills taxonomy) and green skills taxonomy df
     logger.info("loading embeddings...")
     extracted_skill_embeddings = get_extracted_skill_embeddings()
@@ -104,6 +81,37 @@ if __name__ == "__main__":
             )
         ]
     }
+
+    return green_outputs
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--production",
+        type=bool,
+        default=True,
+        help="whether to run in production mode",
+    )
+
+    parser.add_argument(
+        "--skill_threshold", type=int, default=0.7, help="skill match threshold"
+    )
+
+    args = parser.parse_args()
+    production = args.production
+    skill_threshold = args.skill_threshold
+
+    # load job sample
+    logger.info("loading ojo skills sample...")
+    ojo_skills_raw = (
+        get_ojo_skills_sample()
+        # drop nas in skill_label
+        .dropna(subset=["skill_label"])
+    )
+
+    green_outputs = find_green_skills(ojo_skills_raw)
 
     # save extracted green skills to s3
     date_stamp = str(date.today().date()).replace("-", "")
