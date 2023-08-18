@@ -11,7 +11,6 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures
 )
 from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
     SkillMeasures,
-    get_green_skill_measures,
 )
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
@@ -192,34 +191,3 @@ class GreenMeasures(object):
         )
 
         return ind_green_measures_list
-
-    def get_green_measures(
-        self, job_advert: Dict[str, str], skill_list: Optional[List[str]] = None
-    ) -> Dict[str, List[dict]]:
-        """
-        Extract measures of greenness at the skill-, occupation- and industry-level. Measures include:
-            - skills: green skill %, green skill count and the extracted green skills
-            - occupations: O*NET green occupation categorisation and whether occupation name is considered green or not green
-            - industry: random choice green or not green
-
-        Can also take as input the output of es.get_skills() (skill_list) to avoid re-extracting skills for
-            the .get_skill_measures method.
-        """
-        green_measures_dict = {}
-        if skill_list:
-            green_measures_dict["SKILL MEASURES"] = self.get_skill_measures(
-                skill_list=skill_list
-            )
-        else:
-            green_measures_dict["SKILL MEASURES"] = self.get_skill_measures(
-                job_advert=job_advert
-            )
-
-        green_measures_dict["INDUSTRY MEASURES"] = self.get_industry_measures(
-            job_advert=job_advert
-        )
-        green_measures_dict["OCCUPATION MEASURES"] = self.get_occupation_measures(
-            job_advert=job_advert
-        )
-
-        return green_measures_dict
