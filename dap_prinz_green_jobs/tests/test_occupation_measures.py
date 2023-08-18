@@ -15,15 +15,8 @@ def test_occupation_measures():
     }
 
     om.job_title_2_match = {
-        "Data Scientist": ("2433/02", "data scientist"),
-        "Nurse": ("2237/00", "nurse"),
-    }
-    om.soc_mapper = SOCMapper()
-    om.soc_mapper.soc_2020_2010_mapper = {
-        "2433": "2114",
-        "2237": "2231",
-        "2251": "2213",
-        "2112": "2112",
+        "Data Scientist": (("2433/02", "2433", "2114"), "data scientist"),
+        "Nurse": (("2237/00", "2237", "2231"), "nurse"),
     }
 
     assert (
