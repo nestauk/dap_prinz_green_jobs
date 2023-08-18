@@ -15,6 +15,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_p
     process_green_gla_soc,
     process_green_timeshare_soc,
 )
+from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 
 from dap_prinz_green_jobs import logger
@@ -204,16 +205,15 @@ class OccupationMeasures(object):
             ]
         ].T.to_dict()
 
-    def precalculate_soc_mapper(
-        self,
-        unique_job_titles,
-    ):
+    def precalculate_soc_mapper(self, unique_job_titles, output_path=""):
         """
         This just needs to be done once to calculate the SOCs for each unique job title in the dataset
         It's quicker to use soc_mapper with a bulk unique input, rather than use it one job title at a time
 
         Args:
             unique_job_titles (set): The job titles you want to find SOCs for
+            output_path (str): If this is given then the job_title to SOC mapping dict will be saved
+            to S3.
 
         Returns:
             dict: job title to SOC maps
@@ -222,6 +222,13 @@ class OccupationMeasures(object):
 
         soc_matches = self.soc_mapper.get_soc(job_titles=unique_job_titles)
         self.job_title_2_match = dict(zip(unique_job_titles, soc_matches))
+        if output_path:
+            logger.info(f"Saving job title to SOC maps to {output_path}")
+            save_to_s3(
+                BUCKET_NAME,
+                self.job_title_2_match,
+                output_path,
+            )
 
         return self.job_title_2_match
 
@@ -254,10 +261,9 @@ class OccupationMeasures(object):
                 else:
                     green_topics = (
                         len(green_occ_measures.get("ONET_green_topics"))
-                        if green_occ_measures.get("ONET_green_topics")
+                        if isinstance(green_occ_measures.get("ONET_green_topics"), list)
                         else 0
                     )
-
                 return {
                     "GREEN CATEGORY": green_occ_measures.get("GLA_Green Category"),
                     "GREEN/NOT GREEN": green_occ_measures.get("GLA_Green/Non-green"),
