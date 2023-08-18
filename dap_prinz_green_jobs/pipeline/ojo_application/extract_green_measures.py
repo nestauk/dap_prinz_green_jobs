@@ -17,9 +17,6 @@ import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils 
 from dap_prinz_green_jobs.getters.ojo_getters import (
     get_mixed_ojo_job_title_sample,
     get_mixed_ojo_sample,
-    #    get_extracted_skill_embeddings,
-    #    get_ojo_skills_sample,
-    get_mapped_green_skills,
 )
 
 from dap_prinz_green_jobs.getters.skill_getters import (
@@ -36,13 +33,14 @@ from argparse import ArgumentParser
 from tqdm import tqdm
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+from datetime import datetime as date
 
 # instantiate GreenMeasures class here
 gm = GreenMeasures(config_name="base")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--production", type=bool, default=True)
+    parser.add_argument("--production", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -56,98 +54,60 @@ if __name__ == "__main__":
     ojo_job_title_raw = get_mixed_ojo_job_title_sample()
     ojo_desc = get_mixed_ojo_sample()
 
-    ojo_data = pd.merge(
-        ojo_desc, ojo_job_title_raw[["id", "company_raw"]], how="left", on="id"
+    # We are only processing job adverts which have full texts
+    ojo_sample_raw = pd.merge(
+        ojo_desc[["id", "description", "job_title_raw"]],
+        ojo_job_title_raw[["id", "company_raw"]],
+        how="left",
+        on="id",
+    ).rename(
+        columns={
+            "job_title_raw": gm.job_title_key,
+            "company_raw": gm.company_name_key,
+            "id": gm.job_id_key,
+            "description": gm.job_text_key,
+        }
+    )
+    ojo_sample_raw[gm.job_id_key] = ojo_sample_raw[gm.job_id_key].astype(
+        str
+    )  # Just to be consistant
+    ojo_sample_raw = list(ojo_sample_raw.T.to_dict().values())
+
+    if not production:
+        test_n = 100
+        ojo_sample_raw = ojo_sample_raw[:test_n]
+
+    logger.info("extracting green skills...")
+    green_skills_outputs = gm.get_skill_measures(job_advert=ojo_sample_raw)
+
+    logger.info("extracting green industries...")
+    green_industry_outputs = gm.get_industry_measures(job_advert=ojo_sample_raw)
+    green_industry_outputs_dict = dict(
+        zip([j[gm.job_id_key] for j in ojo_sample_raw], green_industry_outputs)
     )
 
-    # # ojo_skills_raw = (
-    # #     get_ojo_skills_sample()
-    # #     # drop nas in skill_label
-    # #     .dropna(subset=["skill_label"])
-    # # )
-    # # # step 0.1 load embeddings (extracted skills and green skills taxonomy) and green skills taxonomy df
-    # # extracted_skill_embeddings = get_extracted_skill_embeddings()
-    # # extracted_skill_embeddings_skills = list(extracted_skill_embeddings.keys())
+    logger.info("extracting green occupations...")
+    green_occupation_outputs = gm.get_occupation_measures(job_advert=ojo_sample_raw)
+    green_occupation_outputs_dict = dict(
+        zip([j[gm.job_id_key] for j in ojo_sample_raw], green_occupation_outputs)
+    )
 
-    # # green_taxonomy_embeddings = get_green_skills_taxonomy_embeddings()
-    # # green_taxonomy_embeddings_skills = list(green_taxonomy_embeddings.keys())
+    logger.info("saving green measures to s3...")
 
-    # # green_skills_taxonomy = get_green_skills_taxonomy()
+    date_stamp = str(date.today().date()).replace("-", "")
 
-    # # # reformat it to be a list of dictionaries for GreenMeasures
-    # ojo_sample_raw = ojo_job_title_raw[["id", "job_title_raw", "company_raw"]].rename(
-    #     columns={
-    #         "job_title_raw": gm.job_title_key,
-    #         "company_raw": gm.company_name_key,
-    #     }
-    # )
-    # # we're not using descriptions so lets not load them to save time
-    # ojo_sample_raw = list(ojo_sample_raw.T.to_dict().values())
-
-    # # lets load the already mapped green skills from extract_green_skills.py instead of mapping them again
-    # green_skills = get_mapped_green_skills()["SKILL MEASURES"]
-
-    # if not production:
-    #     test_n = 100
-    #     # extracted_skill_embeddings_skills = extracted_skill_embeddings_skills[:test_n]
-    #     # extracted_skill_embeddings = {
-    #     #     i: j
-    #     #     for i, j in extracted_skill_embeddings.items()
-    #     #     if i in extracted_skill_embeddings_skills
-    #     # }
-    #     ojo_sample_raw = ojo_sample_raw[:test_n]
-    #     green_skills = green_skills[:test_n]
-
-    # # logger.info("extracting green skills...")
-    # # similarities = cosine_similarity(
-    # #     np.array(list(extracted_skill_embeddings.values())),
-    # #     np.array(list(green_taxonomy_embeddings.values())),
-    # # )
-    # # # Top matches for skill chunk
-    # # top_green_skills = sm.get_green_skill_matches(
-    # #     extracted_skill_list=extracted_skill_embeddings_skills,
-    # #     similarities=similarities,
-    # #     green_skills_taxonomy=green_skills_taxonomy,
-    # #     skill_threshold=gm.skill_threshold,
-    # # )
-
-    # # all_extracted_green_skills_dict = {sk[0]: (sk[0], sk[1]) for sk in top_green_skills}
-
-    # # green_skill_outputs = (
-    # #     ojo_skills_raw.assign(
-    # #         green_skills=lambda x: x.skill_label.map(all_extracted_green_skills_dict)
-    # #     )
-    # #     .groupby("id")
-    # #     .green_skills.apply(list)
-    # # )
-
-    # logger.info("extracting green industries...")
-    # green_industry_outputs = gm.get_industry_measures(job_advert=ojo_sample_raw)
-    # logger.info("extracting green occupations...")
-    # green_occupation_outputs = gm.get_occupation_measures(job_advert=ojo_sample_raw)
-
-    # # create dictionary with all green measures - where each measure type includes jobs ids
-    # # to accomodate for the fact that not all job adverts had skills extracted
-    # logger.info("collating green measures...")
-    # job_ids = [i["id"] for i in ojo_sample_raw]
-    # for i, occ in enumerate(green_occupation_outputs):
-    #     occ["job_id"] = job_ids[i]
-
-    # green_outputs = {
-    #     "SKILL MEASURES": green_skills,
-    #     "INDUSTRY MEASURES": [
-    #         {"job_id": job_id, "industry_ghg_emissions": emissions}
-    #         for job_id, emissions in zip(
-    #             job_ids, green_industry_outputs["INDUSTRY GHG EMISSIONS"]
-    #         )
-    #     ],
-    #     "OCCUPATION MEASURES": green_occupation_outputs,
-    # }
-
-    # logger.info("saving green measures to s3...")
-
-    # # save_to_s3(
-    # #     BUCKET_NAME,
-    # #     green_outputs,
-    # #     f"outputs/data/ojo_application/extracted_green_measures/ojo_sample_green_measures_production_{production}_{gm.config_path.split('/')[-1].split('.')[0]}.json",
-    # # )
+    save_to_s3(
+        BUCKET_NAME,
+        green_skills_outputs,
+        f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/ojo_sample_skills_green_measures_production_{production}_{gm.config_path.split('/')[-1].split('.')[0]}.json",
+    )
+    save_to_s3(
+        BUCKET_NAME,
+        green_industry_outputs_dict,
+        f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/ojo_sample_industry_green_measures_production_{production}_{gm.config_path.split('/')[-1].split('.')[0]}.json",
+    )
+    save_to_s3(
+        BUCKET_NAME,
+        green_occupation_outputs_dict,
+        f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/ojo_sample_occupation_green_measures_production_{production}_{gm.config_path.split('/')[-1].split('.')[0]}.json",
+    )
