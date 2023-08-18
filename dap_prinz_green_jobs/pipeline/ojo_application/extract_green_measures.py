@@ -35,14 +35,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from datetime import datetime as date
 
-# instantiate GreenMeasures class here
-gm = GreenMeasures(config_name="base")
-
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--production", action="store_true", default=False)
+    parser.add_argument("--config_name", default="base", type=str)
 
     args = parser.parse_args()
+
+    # instantiate GreenMeasures class here
+    gm = GreenMeasures(config_name=args.config_name)
 
     production = args.production
 
