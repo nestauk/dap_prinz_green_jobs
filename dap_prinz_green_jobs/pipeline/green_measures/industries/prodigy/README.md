@@ -1,4 +1,4 @@
-# Training data generation for company descriptions and SIC codes
+# Training data generation for company descriptions & SIC codes
 
 ## Generate training data
 
@@ -76,7 +76,7 @@ aws s3 cp s3://prinz-green-jobs/outputs/data/labelled_job_adverts/company_desc_s
 For binary classification downstream, you need to convert the .jsonl training data to sentences and labels:
 
 ```
-python dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/convert_training_data.py -f company_desc_sic_labelled_170823.jsonl
+python dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/convert_training_data.py -f company_desc_sic_labelled.jsonl
 ```
 
 If you would like to save the labelled data locally instead, pass a `-l` flag.
