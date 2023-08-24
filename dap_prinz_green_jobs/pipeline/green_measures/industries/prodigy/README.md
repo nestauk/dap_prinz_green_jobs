@@ -70,7 +70,7 @@ aws s3 cp dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/c
 To download the .jsonl training data:
 
 ```
-aws s3 cp s3://prinz-green-jobs/outputs/data/labelled_job_adverts/company_desc_sic_labelled.jsonl dap_prinz_green_jobs/pipeline/green_measures/industries/data/labelled_data/company_desc_sic_labelled.jsonl
+aws s3 cp s3://prinz-green-jobs/outputs/data/labelled_job_adverts/company_desc_sic_labelled.jsonl dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/labelled_data/company_desc_sic_labelled.jsonl
 ```
 
 For binary classification downstream, you need to convert the .jsonl training data to sentences and labels:
