@@ -1,4 +1,4 @@
-# Extracting company descriptions and SIC codes
+# Training data generation for company descriptions and SIC codes
 
 ## Generate training data
 
@@ -8,7 +8,7 @@ To generate training data, run the following:
 python dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/make_training_data.py --train_size 5000
 ```
 
-This will load the mixed ojo sample of likely green job adverts and random job adverts, minimally clean the job advert texts and saves data as .jsonl of train_size size (in the command above, 5000 job adverts) to s3. 
+This will load the mixed ojo sample of likely green job adverts and random job adverts, minimally clean the job advert texts and saves data as .jsonl of train_size size (in the command above, 5000 job adverts) to s3.
 
 You can also pass a `--random_seed` argument to set a different random seed. This is useful if you want to generate a different sample of job adverts.
 
@@ -34,6 +34,7 @@ OPENAI_API_KEY = "sk-"
 ### Downloading data locally
 
 To download i.e. `mixed_ojo_sample_5000.jsonl` run:
+
 ```
 #download training data of train_size 5000
 aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.jsonl dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/mixed_ojo_sample_5000.jsonl
