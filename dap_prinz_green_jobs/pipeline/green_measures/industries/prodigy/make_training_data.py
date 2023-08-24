@@ -1,6 +1,3 @@
-import sys
-
-sys.path.append("/Users/india.kerlenesta/Projects/dap_green_jobs/dap_prinz_green_jobs")
 """
 This script generates training data of train_size size.
 

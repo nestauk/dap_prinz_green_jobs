@@ -36,7 +36,7 @@ OPENAI_API_KEY = "sk-"
 aws s3 cp s3://prinz-green-jobs/inputs/data/training_data/mixed_ojo_sample_5000.jsonl dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/mixed_ojo_sample_5000.jsonl
 ```
 
-#### Running custom recipe to extract company description phrase and predicted SIC code
+#### Running custom recipe 
 
 In your prodigy environment with installed prodigy, run:
 
@@ -60,3 +60,18 @@ aws s3 cp dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/c
 ```
 
 You must provide the session url argument (with your name) when labelling the tasks if this is hosted on EC2, e.g. http://18.XXX:8080/?session=liz. This makes it so no two labellers will end up annotating the same task. Without it each time someone tried to label the stream of tasks will be exactly the same as another labeller.
+
+## Saving and converting labelled data
+
+To download the .jsonl training data:
+
+```
+aws s3 cp s3://prinz-green-jobs/outputs/data/labelled_job_adverts/company_desc_sic_labelled.jsonl dap_prinz_green_jobs/pipeline/green_measures/industries/data/labelled_data/company_desc_sic_labelled.jsonl
+```
+
+For binary classification downstream, you need to convert the .jsonl training data to sentences and labels:
+
+```
+python dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/convert_training_data.py -f company_desc_sic_labelled_170823.jsonl
+```
+If you would like to save the labelled data locally, pass a -l flag. 
