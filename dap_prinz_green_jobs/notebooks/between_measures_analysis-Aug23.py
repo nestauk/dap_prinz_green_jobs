@@ -1,25 +1,13 @@
-# ---
-# jupyter:
-#   jupytext:
-#     cell_metadata_filter: -all
-#     comment_magics: true
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.14.5
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
+#!/usr/bin/env python
+# coding: utf-8
 
-# %% [markdown]
 # This notebook contains initial analysis _between_ measures of skills-, industries- and occupations on a sample of 100k job adverts
 #
 # This has been modified for the new format of the output from running greenmeasures
 
-# %%
+# In[1]:
+
+
 from dap_prinz_green_jobs.getters.ojo_getters import (
     get_extracted_green_measures,
 )
@@ -35,21 +23,37 @@ import altair as alt
 import umap
 from sklearn.cluster import KMeans
 import random
+import os
 
-# %%
+
+# In[2]:
+
+
 # save graphs
 
 graph_dir = str(PROJECT_DIR / "outputs/figures/between_measure_analysis/160823/")
 
-# %% [markdown]
+# make dir if it doesn't exist
+if not os.path.exists(graph_dir):
+    print(f"creating {graph_dir}")
+    os.makedirs(graph_dir)
+else:
+    print(f"{graph_dir} already exists.")
+
+
 # ### 0. Load relevant data for analysis
 # Load extracted green measures at the skill-, occupation- and industry-level. Also load job titles to contextualise results.
 
-# %%
+# In[ ]:
+
+
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 from dap_prinz_green_jobs import BUCKET_NAME
 
-# %%
+
+# In[ ]:
+
+
 date_stamp = "20230816"
 production = "True"
 config = "base"
@@ -69,7 +73,10 @@ green_inds_outputs = load_s3_data(
     f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/ojo_sample_industry_green_measures_production_{production}_{config}.json",
 )
 
-# %%
+
+# In[ ]:
+
+
 skill_measures_df = (
     pd.DataFrame.from_dict(green_skills_outputs, orient="index")
     .reset_index()
@@ -87,20 +94,24 @@ inds_measures_df = (
 )
 
 
-# %%
+# In[ ]:
+
+
 soc_occ_dict = (
     load_job_title_soc()
     .set_index("SOC 2020")["SOC 2020 UNIT GROUP DESCRIPTIONS"]
     .to_dict()
 )
 
-# %% [markdown]
+
 # ### 1. Merge and clean data so green measures are in a df
 # Clean up green measures and produce two dataframes:
 # 1. numerical green measures;
 # 2. extracted green skills
 
-# %%
+# In[ ]:
+
+
 print(len(skill_measures_df))
 print(skill_measures_df["id"].nunique())
 print(len(occs_measures_df))
@@ -133,7 +144,10 @@ print(all_green_measures_df["job_id"].nunique())
 print(all_green_measures_df.columns)
 all_green_measures_df.head(2)
 
-# %%
+
+# In[ ]:
+
+
 # get occupations for which we have over 50 job adverts for
 representative_occs = (
     all_green_measures_df.groupby("SOC_2020_name")
@@ -151,7 +165,10 @@ all_green_measures_df = all_green_measures_df[
 ].reset_index(drop=True)
 print(len(all_green_measures_df))
 
-# %%
+
+# In[ ]:
+
+
 all_green_measures_df["ENTS_GREEN_ENTS"] = all_green_measures_df.apply(
     lambda x: x["ENTS"] + x["GREEN_ENTS"], axis=1
 )
@@ -183,7 +200,7 @@ print(len(green_skills_df))
 
 green_skills_df.head(2)
 
-# %% [markdown]
+
 # 2. Analyse green measures between occupations, industries and skills
 #
 # Look at:
@@ -194,7 +211,9 @@ green_skills_df.head(2)
 # Plot:
 # - relationships between occupational, skill and industry greenness
 
-# %%
+# In[ ]:
+
+
 # high occupation greenness (based on green share) and % of green skills
 mean_green_timeshare_per_occ = (
     all_green_measures_df.groupby("SOC_2020_name")["GREEN TIMESHARE"]
@@ -219,7 +238,10 @@ print(
     ),
 )
 
-# %%
+
+# In[ ]:
+
+
 # low occupation greenness and high % of green skills
 
 non_green_occ_green_skills = (
@@ -232,7 +254,10 @@ non_green_occ_green_skills = (
     .query("total_green_skills > 0")
 )
 
-# %%
+
+# In[ ]:
+
+
 non_green_occ_green_skills_list = non_green_occ_green_skills["SOC_2020_name"].to_list()
 
 (
@@ -246,7 +271,10 @@ non_green_occ_green_skills_list = non_green_occ_green_skills["SOC_2020_name"].to
 
 # looks like the green skills associated to non-green occupations relate primarily to health and safety regulations
 
-# %%
+
+# In[ ]:
+
+
 # low industry greeness aka high ghg emissions and high occupation greenness
 
 low_ind_high_occ_green = (
@@ -262,7 +290,10 @@ print(
     f'green occupations with high industry ghg emissions include: {low_ind_high_occ_green["SOC_2020_name"].to_list()}'
 )
 
-# %%
+
+# In[ ]:
+
+
 # generate a dataframe with summed green measures per occupation
 
 all_green_measures_df_occ = (
@@ -301,7 +332,10 @@ all_green_measures_df_occ["occ_green_category"] = all_green_measures_df_occ[
     "SOC_2020_name"
 ].map(occ_green_cat)
 
-# %%
+
+# In[ ]:
+
+
 # industry greenness vs. occupational greenness
 
 ind_occ_greeness = (
@@ -335,7 +369,10 @@ ind_occ_greeness = (
 # save graph
 ind_occ_greeness.save(f"{graph_dir}/ind_occ_greeness.html")
 
-# %%
+
+# In[ ]:
+
+
 # industry greenness vs. mean # of green skills requested
 
 ind_skills_greeness = (
@@ -363,7 +400,9 @@ ind_skills_greeness = (
 ind_skills_greeness.save(f"{graph_dir}/ind_skills_greeness.html")
 
 
-# %%
+# In[ ]:
+
+
 print("greening occupations:")
 (
     all_green_measures_df_occ.dropna(
@@ -378,7 +417,10 @@ print("greening occupations:")
     ]
 )
 
-# %%
+
+# In[ ]:
+
+
 print("green occupations based on industry + green skills:")
 (
     all_green_measures_df_occ.dropna(
@@ -393,7 +435,10 @@ print("green occupations based on industry + green skills:")
     ]
 )
 
-# %%
+
+# In[ ]:
+
+
 print("brown occupations based on industry + green skills:")
 (
     all_green_measures_df_occ.dropna(
@@ -408,7 +453,10 @@ print("brown occupations based on industry + green skills:")
     ]
 )
 
-# %%
+
+# In[ ]:
+
+
 # occupational greenness vs. # of green skills requested
 
 occ_skill_greeness = (
@@ -432,7 +480,10 @@ occ_skill_greeness.save(f"{graph_dir}/occ_skill_greeness.html")
 
 # list of "new" green occupations
 
-# %%
+
+# In[ ]:
+
+
 # new green occupations (high % of green skills, low occ greeness)
 print(
     "Occuptations with high % of green skills and low occupation greenness (based on green timeshare):"
@@ -448,7 +499,10 @@ print(
     )[:10]
 )["SOC_2020_name"].to_list()
 
-# %%
+
+# In[ ]:
+
+
 # new green occupations (high % of green skills, low occ greeness)
 print(
     "occupations with high % of green skills and low occupation greenness (based on green timeshare):"
@@ -465,10 +519,12 @@ high_green_skills_low_occ_list = (
 )["SOC_2020_name"].to_list()
 print(high_green_skills_low_occ_list)
 
-# %% [markdown]
+
 # ## NEW GREEN SKILLS
 
-# %%
+# In[ ]:
+
+
 new_green_skills = list(
     set(
         green_skills_df[
@@ -481,14 +537,20 @@ new_green_skills = list(
 bert_model = BertVectorizer().fit()
 new_green_skills_embeds = bert_model.transform(new_green_skills)
 
-# %%
+
+# In[ ]:
+
+
 # reduce embeds
 reducer = umap.UMAP()
 embedding = reducer.fit_transform(new_green_skills_embeds)
 kmeans = KMeans(n_clusters=30, random_state=0).fit(embedding)
 labels = kmeans.labels_
 
-# %%
+
+# In[ ]:
+
+
 new_skill_cluster_df = pd.DataFrame(
     {
         "skill": new_green_skills,
@@ -498,7 +560,10 @@ new_skill_cluster_df = pd.DataFrame(
     }
 )
 
-# %%
+
+# In[ ]:
+
+
 alt.data_transformers.disable_max_rows()
 
 new_green_skills = (
@@ -520,14 +585,20 @@ new_green_skills
 
 new_green_skills.save(f"{graph_dir}/new_green_skills.html")
 
-# %%
+
+# In[ ]:
+
+
 green_occs = list(
     all_green_measures_df_occ[
         all_green_measures_df_occ["occ_green_non_green"] == "Green"
     ]["SOC_2020_name"]
 )
 
-# %%
+
+# In[ ]:
+
+
 # #reduce embeds
 random.seed(50)
 green_occ = random.choice(green_occs)
@@ -573,7 +644,10 @@ occ1_new_skills = (
 
 occ1_new_skills.save(f"{graph_dir}/occ1_new_skills.html")
 
-# %%
+
+# In[ ]:
+
+
 # reduce embeds
 random.seed(57)
 green_occ = random.choice(green_occs)
@@ -619,7 +693,10 @@ occ2_new_skills = (
 
 occ2_new_skills.save(f"{graph_dir}/occ2_new_skills.html")
 
-# %%
+
+# In[ ]:
+
+
 # reduce embeds
 random.seed(12)
 green_occ = random.choice(green_occs)
@@ -665,7 +742,7 @@ occ3_new_skills = (
 
 occ3_new_skills.save(f"{graph_dir}/occ3_new_skills.html")
 
-# %% [markdown]
+
 # ### Next steps
 #
 # 1. **Skills improvement**: looks like the green skill 'health and safety regulation' heavily skews skills-based results. We will also need to develop a method to determine if unmatched skill clusters are indeed green, even if the occupation is considered green.
