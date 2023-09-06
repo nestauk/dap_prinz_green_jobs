@@ -2,22 +2,23 @@
 A Green Measures class that takes as input a job advert and outputs
     measures of greenness at the skill-, occupation- and industry-level.
 """
-from ojd_daps_skills.pipeline.extract_skills.extract_skills import (
-    ExtractSkills,
-)  # import the module
+
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import (
     OccupationMeasures,
 )
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     IndustryMeasures,
 )
-import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
+from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
+    SkillMeasures,
+)
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
 from typing import List, Union, Dict, Optional
 from uuid import uuid4
 import yaml
 import os
+from datetime import datetime as date
 
 
 class GreenMeasures(object):
@@ -57,10 +58,40 @@ class GreenMeasures(object):
         self.config_path = config_path
 
         # Skills config variables
-        self.skill_threshold = self.config["skills"]["skill_threshold"]
         self.skills_config_name = self.config["skills"]["skills_config_name"]
+        self.load_skills = self.config["skills"][
+            "load_skills"
+        ]  # Set to false if your job adverts or NER model changes
+        self.load_skills_embeddings = self.config["skills"][
+            "load_skills_embeddings"
+        ]  # Set to false if your job advert data, NER model or way to embed changes
+        self.load_taxonomy_embeddings = self.config["skills"][
+            "load_taxonomy_embeddings"
+        ]  # Set to false if your input taxonomy data or way to embed changes
+
+        date_stamp = str(date.today().date()).replace("-", "")
+
+        if self.load_skills:
+            self.skills_output = self.config["skills"]["skills_output"]
+        else:
+            self.skills_output = f"outputs/data/green_skill_lists/skills_data_ojo_mixed_{date_stamp}.json"
+
+        if self.load_skills_embeddings:
+            self.skill_embeddings_output = self.config["skills"][
+                "skill_embeddings_output"
+            ]
+        else:
+            self.skill_embeddings_output = f"outputs/data/green_skill_lists/extracted_skills_embeddings_{date_stamp}.json"
+
+        if self.load_taxonomy_embeddings:
+            self.green_tax_embedding_path = self.config["skills"][
+                "green_tax_embedding_path"
+            ]
+        else:
+            self.green_tax_embedding_path = f"outputs/data/green_skill_lists/green_esco_embeddings_{date_stamp}.json"
 
         # Input job advert data config variables
+        self.job_id_key = self.config["job_adverts"]["job_id_key"]
         self.job_text_key = self.config["job_adverts"]["job_text_key"]
         self.job_title_key = self.config["job_adverts"]["job_title_key"]
         self.company_name_key = self.config["job_adverts"]["company_name_key"]
@@ -73,79 +104,51 @@ class GreenMeasures(object):
         self.im = IndustryMeasures()
         self.im.load_ch()
 
-        try:
-            self.es = ExtractSkills(self.skills_config_name)
-        except FileNotFoundError:
-            logger.exception(
-                "*** Please run dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py to add custom config and data files to ojd-daps-skills library folder ***"
-            )
-        self.es.load()
-        self.es.taxonomy_skills.rename(columns={"Unnamed: 0": "id"}, inplace=True)
+        # Skills attributes
+        self.sm = SkillMeasures(config_name="extract_green_skills_esco")
+        self.sm.initiate_extract_skills(local=False, verbose=True)
 
     def get_skill_measures(
         self,
         job_advert: Optional[Dict[str, str]] = None,
-        skill_list: Optional[str] = None,
     ) -> List[dict]:
-        """
-        Extract measures of greenness at the skill-level. Measures include:
-            - GREEN_SKILL_PERCENT: the percentage of skills in the job advert that are green skills.
-            - GREEN_SKILL_COUNT: the number of skills in the job advert that are green skills.
-            - GREEN_SKILLS: the list of skills in the job advert that match to a green skill.
+        if type(job_advert) == dict:
+            job_advert = [job_advert]
 
-        Can also take as input the output of es.get_skills() (skill_list) to avoid re-extracting skills.
-        """
-        if (not job_advert) and (skill_list):
-            if isinstance(skill_list[0], str):
-                raw_skills = self.es.format_skills(skill_list)
-            raw_skills = skill_list
-        if (job_advert) and (not skill_list):
-            if type(job_advert) == dict:
-                job_advert = [job_advert]
-            raw_skills = self.es.get_skills(
-                [job[self.job_text_key] for job in job_advert]
-            )
+        predicted_entities = self.sm.get_entities(
+            job_advert,
+            output_path=self.skills_output,
+            load=self.load_skills,
+            job_text_key=self.job_text_key,
+            job_id_key=self.job_id_key,
+        )
+        skills_list = []
+        for p in predicted_entities.values():
+            for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
+                for skill in p[ent_type]:
+                    skills_list.append(skill)
 
-        job_skills, skill_hashes = self.es.skill_mapper.preprocess_job_skills(
-            {
-                "predictions": dict(
-                    zip(
-                        [str(uuid4()).replace("-", "") for _ in range(len(raw_skills))],
-                        [skill for skill in raw_skills],
-                    )
-                )
-            }
+        unique_skills_list = list(set(skills_list))
+
+        all_extracted_skills_embeddings_dict = self.sm.get_skill_embeddings(
+            unique_skills_list,
+            output_path=self.skill_embeddings_output,
+            load=self.load_skills_embeddings,
         )
 
-        extracted_green_skills = sm.get_green_skill_measures(
-            es=self.es,
-            raw_skills=raw_skills,
-            skill_hashes=skill_hashes,
-            job_skills=job_skills,
-            skill_threshold=self.skill_threshold,
+        taxonomy_skills_embeddings_dict = self.sm.get_green_taxonomy_embeddings(
+            output_path=self.green_tax_embedding_path,
+            load=self.load_taxonomy_embeddings,
         )
 
-        # create green measures for each job advert and save to dictionary
-        self.green_skill_measures = []
-        for i, _ in enumerate(raw_skills):
-            if "SKILL" in extracted_green_skills[i].keys():
-                matched_skills = [
-                    i for i in extracted_green_skills[i]["SKILL"] if i[1][0] != ""
-                ]
-                green_skill_percent = (
-                    len(matched_skills) / len(extracted_green_skills[i]["SKILL"])
-                ) * 100
-            else:
-                matched_skills = 0
-                green_skill_percent = 0
-            self.green_skill_measures.append(
-                {
-                    "GREEN SKILL PERCENT": round(green_skill_percent, 2),
-                    "GREEN SKILL COUNT": len(matched_skills),
-                    "GREEN SKILLS": matched_skills,
-                }
-            )
-        return self.green_skill_measures
+        all_extracted_green_skills_dict = self.sm.map_green_skills()
+
+        prop_green_skills = self.sm.get_measures(
+            job_advert_ids=[j[self.job_id_key] for j in job_advert],
+            predicted_entities=predicted_entities,
+            all_extracted_green_skills_dict=all_extracted_green_skills_dict,
+        )
+        return prop_green_skills
 
     def get_occupation_measures(self, job_advert: Dict[str, str]) -> List[dict]:
         """
@@ -171,8 +174,11 @@ class GreenMeasures(object):
         occ_green_measures_list = self.om.get_measures(
             job_adverts=job_advert, job_title_key=self.job_title_key
         )
+        green_occupation_measures_dict = dict(
+            zip([j[self.job_id_key] for j in job_advert], occ_green_measures_list)
+        )
 
-        return occ_green_measures_list
+        return green_occupation_measures_dict
 
     def get_industry_measures(self, job_advert: Dict[str, str]) -> List[dict]:
         """
@@ -187,30 +193,27 @@ class GreenMeasures(object):
             job_advert=job_advert, company_name_key=self.company_name_key
         )
 
-        return ind_green_measures_list
+        ind_green_measures_dict = dict(
+            zip([j[self.job_id_key] for j in job_advert], ind_green_measures_list)
+        )
+
+        return ind_green_measures_dict
 
     def get_green_measures(
-        self, job_advert: Dict[str, str], skill_list: Optional[List[str]] = None
+        self,
+        job_advert: Dict[str, str],
     ) -> Dict[str, List[dict]]:
         """
         Extract measures of greenness at the skill-, occupation- and industry-level. Measures include:
             - skills: green skill %, green skill count and the extracted green skills
             - occupations: O*NET green occupation categorisation and whether occupation name is considered green or not green
             - industry: random choice green or not green
-
-        Can also take as input the output of es.get_skills() (skill_list) to avoid re-extracting skills for
-            the .get_skill_measures method.
         """
         green_measures_dict = {}
-        if skill_list:
-            green_measures_dict["SKILL MEASURES"] = self.get_skill_measures(
-                skill_list=skill_list
-            )
-        else:
-            green_measures_dict["SKILL MEASURES"] = self.get_skill_measures(
-                job_advert=job_advert
-            )
 
+        green_measures_dict["SKILL MEASURES"] = self.get_skill_measures(
+            job_advert=job_advert
+        )
         green_measures_dict["INDUSTRY MEASURES"] = self.get_industry_measures(
             job_advert=job_advert
         )
