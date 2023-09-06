@@ -109,9 +109,11 @@ target/
 /inputs/*
 !/inputs/*.md
 /outputs/data/*
+/outputs/figures/*
 !/outputs/data/*.md
 /outputs/models/*
 !/outputs/models/*.md
+dap_prinz_green_jobs/pipeline/green_measures/industries/prodigy/data/*
 
 # Mac OS-specific storage files
 .DS_Store

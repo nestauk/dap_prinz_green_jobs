@@ -12,3 +12,4 @@ altair
 umap
 vega
 plac
+typing_extensions==4.4.0

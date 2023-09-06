@@ -16,6 +16,17 @@ dap_prinz_green_jobs/pipeline/green_measures/industries/industry_measures_utils.
 
 contains functions needed to see whether industries are green or not.
 
+Finally, the generate a dataset of SIC codes described as company descriptions for downstream mapping, run as a one off:
+
+```
+export OPENAI_API_KEY="sk-xxx" #expore your openAI key in your terminal
+python dap_prinz_green_jobs/pipeline/green_measures/industries/sic_data_processing.py
+```
+
+Please note that this script takes a long time to run in production. If you would like to run this on all SIC codes, you will need to pass the `--production` flag.
+
+As we are using an LLM to generate company descriptions of SIC codes, results will vary every time you run the script.
+
 ## Datasets used
 
 - `BasicCompanyDataAsOneFile-2023-05-01.csv`: A snapshot of the Companies House dataset was downloaded from the gov website [here](http://download.companieshouse.gov.uk/en_output.html). The "BasicCompanyDataAsOneFile-2023-05-01.zip (439Mb)" file was downloaded and unzipped as of 02/05/2023 and then uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/BasicCompanyDataAsOneFile-2023-05-01.csv`).
