@@ -241,7 +241,7 @@ class GreenSkillClassifier(object):
     def transform(
         self,
         skill_entity_list: Union[str, List[str]],
-        skills_list_embeddings_dict: Union[None, list],
+        skills_list_embeddings_dict: Union[None, list] = None,
     ):
         """
         Transform a list of skill entities into 3 numerical features;
@@ -332,7 +332,7 @@ class GreenSkillClassifier(object):
     def predict(
         self,
         skill_entity_list: Union[str, List[str]],
-        skills_list_embeddings_dict: Union[None, list],
+        skills_list_embeddings_dict: Union[None, list] = None,
         output_match: bool = True,
     ) -> list:
         """

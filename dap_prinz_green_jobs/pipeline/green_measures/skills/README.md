@@ -30,6 +30,54 @@ To add the custom config file, formatted skills taxonomy and taxonomy embeddings
 python dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py --config_name "extract_green_skills_esco"
 ```
 
+### Green skills classifier
+
+To train the green skills random forest classifier run:
+
+```
+python dap_prinz_green_jobs/pipeline/green_measures/skills/green_skill_classifier.py
+
+```
+
+The training data for this is `s3://prinz-green-jobs/inputs/data/training_data/green_skill_training_data.csv` - this was created by labelling a dataset of frequently occurring skills, as well as skills which are mapped to ESCO green skills with a high similarity score.
+
+This dataset contains 971 skills labelled as not-green and 743 labelled as green.
+
+The most recently saved model `s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib` has the following test metrics:
+
+```
+              precision    recall  f1-score   support
+
+       green       0.90      0.86      0.88       175
+   not_green       0.91      0.94      0.92       254
+
+    accuracy                           0.91       429
+   macro avg       0.91      0.90      0.90       429
+weighted avg       0.91      0.91      0.91       429
+
+```
+
+This trained model can be loaded and used by running:
+
+```python
+from dap_prinz_green_jobs.pipeline.green_measures.skills.green_skill_classifier import GreenSkillClassifier
+
+green_skills_classifier = GreenSkillClassifier()
+green_skills_classifier.load_esco_data()
+green_skills_classifier.load(
+    model_file="s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib"
+)
+
+pred_green_skill = green_skills_classifier.predict(
+    ["Excel skills", "Heat pump installation skills"]
+)
+
+>>> [('not_green', 1.0, ('carry out sample analysis', '82423b5c-486f-42e7-b00e-7358757a8de5', 0.2772792296638087)), ('green', 0.7191159533073931, ('heat pump installation', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.9072619656040537))]
+
+```
+
+As you can see, the closest green ESCO skill will always be outputted, even if the skill have been predicted as "not_green".
+
 ## Datasets used
 
 - `greenSkillsCollection_en.csv`: A dataset of ESCO's green skills as downloaded on the 24th April 2023. This is stored on S3 [here](`s3://prinz-green-jobs/inputs/data/green_skill_lists/esco/greenSkillsCollection_en.csv`).
