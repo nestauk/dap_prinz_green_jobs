@@ -43,10 +43,11 @@ class SOCMapper(object):
         Attributes
     ----------
 
-        :param local: Whether to read data from a local location or not, defaults to True
+    :param local: Whether to read data from a local location or not, defaults to True
     :type local: bool
 
-    :param embeddings_output_dir: (optional) The directory the embeddings are stored, or will be stored if saved
+    :param embeddings_output_dir: (optional) The directory the embeddings are stored, or will be stored if saved.
+    You are unlikely to need to change this from "outputs/data/green_occupations/soc_matching/" unless the SOC data changes
     :type embeddings_output_dir: str, None
 
     :param batch_size: How many job titles per batch for embedding, defaults to 500
@@ -89,10 +90,11 @@ class SOCMapper(object):
         ----------
     Usage
     ----------
+        from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
         soc_mapper = SOCMapper()
         soc_mapper.load()
         matches = soc_mapper.get_soc(job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"])
-
+        >>> [(('2433/02', '2433', '2425'), 'data scientist'), (('6131/99', '6131', '6141'), 'assistant nurse'), (('2422/02', '2422', '3534'), 'financial consultant')]
     """
 
     def __init__(
@@ -122,14 +124,6 @@ class SOCMapper(object):
         """
 
         jobtitle_soc_data = process_job_title_soc(load_job_title_soc())
-
-        # TO DO: Not sure this is 1:1
-        self.soc_2020_2010_mapper = dict(
-            zip(
-                jobtitle_soc_data["SOC_2020"].astype(str),
-                jobtitle_soc_data["SOC_2010"].astype(str),
-            )
-        )
 
         return jobtitle_soc_data
 
@@ -167,6 +161,7 @@ class SOCMapper(object):
                 job_title_2_soc6_4[job_title] = (
                     grouped_soc_data["SOC_2020_EXT"].unique()[0],
                     grouped_soc_data["SOC_2020"].unique()[0],
+                    grouped_soc_data["SOC_2010"].unique()[0],
                 )
             else:
                 for job_title_1, grouped_soc_data_1 in grouped_soc_data.groupby(
@@ -176,6 +171,7 @@ class SOCMapper(object):
                         job_title_2_soc6_4[job_title_1] = (
                             grouped_soc_data_1["SOC_2020_EXT"].unique()[0],
                             grouped_soc_data_1["SOC_2020"].unique()[0],
+                            grouped_soc_data_1["SOC_2010"].unique()[0],
                         )
                     else:
                         for (
@@ -188,9 +184,33 @@ class SOCMapper(object):
                                 job_title_2_soc6_4[job_title_2] = (
                                     grouped_soc_data_2["SOC_2020_EXT"].unique()[0],
                                     grouped_soc_data_2["SOC_2020"].unique()[0],
+                                    grouped_soc_data_2["SOC_2010"].unique()[0],
                                 )
 
         return job_title_2_soc6_4
+
+    def unique_soc_descriptions(self, soc_data: pd.DataFrame()) -> dict:
+        """
+        Taking the dataset of SOC and their descriptions - create a unique
+        dictionary where each key is a description and the value is the SOC code.
+        """
+        soc_data["SUB-UNIT GROUP DESCRIPTIONS"] = soc_data[
+            "SUB-UNIT GROUP DESCRIPTIONS"
+        ].apply(lambda x: x.replace(" n.e.c.", "").replace(" n.e.c", ""))
+
+        dd = soc_data[
+            ["SUB-UNIT GROUP DESCRIPTIONS", "SOC_2020_EXT", "SOC_2020", "SOC_2010"]
+        ].drop_duplicates()
+
+        # There can be multiple 2010 codes for each 6 digit, so just output the most common
+        soc_desc_2_code = {}
+        for description, soc_info in dd.groupby("SUB-UNIT GROUP DESCRIPTIONS"):
+            soc_2020_6 = soc_info["SOC_2020_EXT"].value_counts().index[0]
+            soc_2020_4 = soc_info["SOC_2020"].value_counts().index[0]
+            soc_2010 = list(soc_info["SOC_2010"].unique())
+            soc_desc_2_code[description] = (soc_2020_6, soc_2020_4, soc_2010)
+
+        return soc_desc_2_code
 
     def embed_texts(
         self,
@@ -206,13 +226,20 @@ class SOCMapper(object):
 
         return all_embeddings
 
-    def load(self, save_embeds=False):
+    def load(self, save_embeds=False, job_titles=True):
         self.bert_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         self.bert_model.max_seq_length = 512
 
         self.jobtitle_soc_data = self.load_process_soc_data()
 
-        self.job_title_2_soc6_4 = self.unique_soc_job_titles(self.jobtitle_soc_data)
+        if job_titles:
+            self.job_title_2_soc6_4 = self.unique_soc_job_titles(self.jobtitle_soc_data)
+        else:
+            # This is a bit of an appended use case - so I've called the variable the same
+            # so it fits in with the rest of the pipeline
+            self.job_title_2_soc6_4 = self.unique_soc_descriptions(
+                self.jobtitle_soc_data
+            )
 
         embeddings_path = os.path.join(
             self.embeddings_output_dir, "soc_job_embeddings.json"
@@ -275,6 +302,7 @@ class SOCMapper(object):
                         soc_text,
                         self.job_title_2_soc6_4[soc_text][0],  # 6 digit
                         self.job_title_2_soc6_4[soc_text][1],  # 4 digit
+                        self.job_title_2_soc6_4[soc_text][2],  # 2010 4 digit
                         similarities[job_title_ix][soc_ix],
                     ]
                 )
@@ -301,8 +329,12 @@ class SOCMapper(object):
         """
 
         top_soc_match = match_row["top_soc_matches"][0][0]
-        top_soc_match_code = match_row["top_soc_matches"][0][1]  # 6 digit
-        top_soc_match_score = match_row["top_soc_matches"][0][3]
+        top_soc_match_code = (
+            match_row["top_soc_matches"][0][1],
+            match_row["top_soc_matches"][0][2],
+            match_row["top_soc_matches"][0][3],
+        )  # 6 digit, 4 digit, 4 2010
+        top_soc_match_score = match_row["top_soc_matches"][0][4]  # The score
 
         if top_soc_match_score > self.sim_threshold:
             return (top_soc_match_code, top_soc_match)
@@ -310,7 +342,7 @@ class SOCMapper(object):
             all_good_socs = [
                 t[2]  # 4 digit
                 for t in match_row["top_soc_matches"]
-                if t[3] > self.top_n_sim_threshold
+                if t[4] > self.top_n_sim_threshold
             ]
             if len(all_good_socs) >= self.minimum_n:
                 common_soc, num_common_soc = Counter(all_good_socs).most_common(1)[0]
@@ -323,7 +355,7 @@ class SOCMapper(object):
                                 t[0]
                                 for t in match_row["top_soc_matches"]
                                 if (
-                                    (t[3] > self.top_n_sim_threshold)
+                                    (t[4] > self.top_n_sim_threshold)
                                     and (t[2] == common_soc)
                                 )
                             ]

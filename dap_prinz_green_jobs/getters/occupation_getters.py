@@ -44,3 +44,13 @@ def load_green_timeshare_soc() -> pd.DataFrame():
         converters={"SOC 2010 code": str},
     )
     return green_timeshares
+
+
+def load_onet_green_topics() -> pd.DataFrame():
+    """
+    Load ONETS green topics per occupation (US SOC)
+    """
+    green_topics = pd.read_csv(
+        "s3://prinz-green-jobs/inputs/data/occupation_data/onet/Occupations_for_all_green_topics.csv",
+    )
+    return green_topics
