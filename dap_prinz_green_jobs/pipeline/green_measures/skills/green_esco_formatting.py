@@ -31,11 +31,9 @@ if __name__ == "__main__":
         "escoe_extension/outputs/data/skill_ner_mapping/esco_data_formatted.csv",
     )
 
-    formatted_green_esco_skills = (
-        formatted_esco_skills[formatted_esco_skills["id"].isin(esco_green_skills["id"])]
-        .reset_index(drop=True)
-        .set_index("id")
-    )
+    formatted_green_esco_skills = formatted_esco_skills[
+        formatted_esco_skills["id"].isin(esco_green_skills["id"])
+    ].reset_index(drop=True)
 
     logger.info("uploading formatted esco green skills taxonomy")
     save_to_s3(
