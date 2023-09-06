@@ -11,6 +11,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures
 )
 from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
     SkillMeasures,
+    split_up_skill_entities,
 )
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
@@ -19,6 +20,7 @@ from uuid import uuid4
 import yaml
 import os
 from datetime import datetime as date
+from collections import defaultdict
 
 
 class GreenMeasures(object):
@@ -122,13 +124,23 @@ class GreenMeasures(object):
             job_text_key=self.job_text_key,
             job_id_key=self.job_id_key,
         )
-        skills_list = []
-        for p in predicted_entities.values():
+
+        ents_per_job = {}
+        job_benefits_dict = defaultdict(list)
+        for job_id, p in predicted_entities.items():
+            job_ents = []
             for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
                 for skill in p[ent_type]:
-                    skills_list.append(skill)
+                    split_ent_list = split_up_skill_entities(skill)
+                    job_ents.append((split_ent_list, ent_type))
+            ents_per_job[job_id] = job_ents
+            for benefit in p["BENEFIT"]:
+                job_benefits_dict[str(job_id)].append(benefit)
 
-        unique_skills_list = list(set(skills_list))
+        # Unique list of skills
+        unique_skills_list = list(
+            set([g for v in ents_per_job.values() for r in v for g in r[0]])
+        )
 
         all_extracted_skills_embeddings_dict = self.sm.get_skill_embeddings(
             unique_skills_list,
@@ -141,12 +153,14 @@ class GreenMeasures(object):
             load=self.load_taxonomy_embeddings,
         )
 
-        all_extracted_green_skills_dict = self.sm.map_green_skills()
+        all_extracted_green_skills_dict = self.sm.map_green_skills(
+            unique_skills_list, all_extracted_skills_embeddings_dict
+        )
 
         prop_green_skills = self.sm.get_measures(
-            job_advert_ids=[j[self.job_id_key] for j in job_advert],
-            predicted_entities=predicted_entities,
+            ents_per_job=ents_per_job,
             all_extracted_green_skills_dict=all_extracted_green_skills_dict,
+            job_benefits_dict=job_benefits_dict,
         )
         return prop_green_skills
 

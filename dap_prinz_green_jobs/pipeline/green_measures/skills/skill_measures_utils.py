@@ -1,7 +1,10 @@
-from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
+from dap_prinz_green_jobs.utils.bert_vectorizer import get_embeddings
 from dap_prinz_green_jobs import PROJECT_DIR, get_yaml_config, BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs.utils.processing import list_chunks
+from dap_prinz_green_jobs.pipeline.green_measures.skills.green_skill_classifier import (
+    GreenSkillClassifier,
+)
 
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import ExtractSkills
 from ojd_daps_skills.pipeline.skill_ner.ner_spacy import JobNER
@@ -14,120 +17,51 @@ from typing import List, Dict, Tuple
 from itertools import islice
 import yaml
 import os
+from collections import defaultdict
 
 
-def format_skills(skill_label: List[str]) -> List[Dict[str, list]]:
-    """Format extracted skills into a dictionary with the following keys:
-    EXPERIENCE, SKILL, MULTISKILL
-
-    Args:
-            skill_label (List[str]): List of extracted skills
-
-    Returns:
-            List[Dict[str, list]]: Formatted list of a dictionary of extracted skills
+def window_split(sentence, max_entity_size=10, window_overlap=5):
     """
-    if type(skill_label) == list:
-        return [{"SKILL": [], "MULTISKILL": skill_label, "EXPERIENCE": []}]
+    Split a sentence by a sliding window
+    e.g. "This is a sentence about cats" with max_entity_size=4, window_overlap=2
+    -> ['This is a sentence', 'a sentence about cats']
+    """
+    word_list = sentence.split()
+    if len(word_list) <= max_entity_size:
+        return [sentence]
     else:
-        return skill_label
-
-
-def get_green_skill_matches(
-    extracted_skill_list: List[str],
-    similarities: np.array,
-    green_skills_taxonomy: pd.DataFrame(),
-    skill_threshold: float = 0.7,
-) -> List[Tuple[str, Tuple[str, int]]]:
-    """Get green skill matches for a list of extracted skills - use this
-            in extract_green_measures flow instead of get_green_skill_measures
-
-            NOTE: this is because speeds up skills mapping considerably
-            and because the esco green taxonomy is not hierarchical so we are simply
-            matching the extracted skills to the green taxonomy based on a minimum
-            threshold cosine similarity.
-
-    Args:
-            extracted_skill_list (List[str]): List of extracted skills
-
-    Returns:
-            List[Tuple[str, Tuple[str, int]]]: List of tuples with the extracted
-                            skill; the mapped green skill and a green skill id
-    """
-    skill_top_green_skills = []
-    for skill_ix, skill in tqdm(enumerate(extracted_skill_list)):
-        top_skill_match = np.flip(np.sort(similarities[skill_ix]))[0:1]
-        if top_skill_match[0] > skill_threshold:
-            green_skill_ix = np.flip(np.argsort(similarities[skill_ix]))[0:1]
-            green_skill = green_skills_taxonomy.iloc[green_skill_ix].description.values[
-                0
-            ]
-            skill_top_green_skills.append((skill, (green_skill, skill_ix)))
-        else:
-            skill_top_green_skills.append((skill, None))
-
-    return skill_top_green_skills
-
-
-def get_green_skill_measures(
-    es: ExtractSkills,
-    raw_skills,
-    skill_hashes: Dict[int, str],
-    job_skills: Dict[str, Dict[str, int]],
-    skill_threshold: int = 0.5,
-) -> List[dict]:
-    """Extract green skills for job adverts.
-
-    Args:
-            es (ExtractSkills): instantiated ExtractSkills class
-            skill_hashes (Dict[int, str]): Dictionary of skill hashes and skill names
-            job_skills (Dict[str, Dict[str, int]]): dictionary of ids and extracted raw skills
-            skill_threshold (int, optional): skill semantic similarity. Defaults to 0.5.
-
-    Returns:
-            List[dict]: list of dictionaries of green skills
-    """
-
-    # to get the output with the top ten closest skills
-    mapped_skills = es.skill_mapper.map_skills(
-        es.taxonomy_skills,
-        skill_hashes,
-        es.taxonomy_info.get("num_hier_levels"),
-        es.taxonomy_info.get("skill_type_dict"),
-    )
-
-    matched_skills = []
-    for i, (_, skill_info) in enumerate(job_skills.items()):
-        job_skill_hashes = skill_info["skill_hashes"]
-        job_skill_info = [
-            sk for sk in mapped_skills if sk["ojo_skill_id"] in job_skill_hashes
+        return [
+            " ".join(word_list[i : i + max_entity_size])
+            for i in range(0, len(word_list), max_entity_size - window_overlap)
+            if len(word_list[i : i + max_entity_size]) > window_overlap
         ]
-        matched_skills_formatted = []
-        for job_skill in job_skill_info:
-            if job_skill["top_tax_skills"][0][2] > skill_threshold:
-                matched_skills_formatted.append(
-                    (
-                        job_skill["ojo_ner_skill"],
-                        (
-                            job_skill["top_tax_skills"][0][0],
-                            job_skill["top_tax_skills"][0][1],
-                        ),
-                    )
-                )
-            else:
-                matched_skills_formatted.append(
-                    (
-                        job_skill["ojo_ner_skill"],
-                        ("", 0),
-                    )
-                )
-        matched_skills.append(
-            {
-                "SKILL": matched_skills_formatted,
-                "EXPERIENCE": raw_skills[i]["EXPERIENCE"],
-            }
-        )
 
-    return matched_skills
+
+def split_up_skill_entities(
+    entity: str, max_entity_size: int = 10, window_overlap: int = 5
+) -> list:
+    """
+    Split up an entity into smaller chunks if it's long.
+    Some predicted entities can be quite long, so mapping to a taxonomy can be hard.
+    """
+
+    split_entities = entity.split(";")
+    # Remove blank "skills" and double spaces [" ", "This is a    sentence"] -> ["This is a sentence"]
+    split_entities = [w for w in [" ".join(s.split()) for s in split_entities] if w]
+
+    # Window split for long entities
+    split_ent_list = []
+    for entity_sentence in split_entities:
+        entity_sentence_words = entity_sentence.split()
+        split_sentences = window_split(
+            entity_sentence,
+            max_entity_size=max_entity_size,
+            window_overlap=window_overlap,
+        )
+        for split_sentence in split_sentences:
+            split_ent_list.append(split_sentence)
+
+    return split_ent_list
 
 
 class SkillMeasures(object):
@@ -255,22 +189,8 @@ class SkillMeasures(object):
             )
         else:
             logger.info(f"Calculating skill embeddings for {len(skills_list)} skills")
-            # instantiate bert model
-            bert_model = BertVectorizer(verbose=True, multi_process=True).fit()
 
-            all_extracted_skills_embeddings = []
-            for batch_texts in tqdm(list_chunks(skills_list, 1000)):
-                all_extracted_skills_embeddings.append(
-                    bert_model.transform(batch_texts)
-                )
-            all_extracted_skills_embeddings = np.concatenate(
-                all_extracted_skills_embeddings
-            )
-
-            # create dict
-            self.all_extracted_skills_embeddings_dict = dict(
-                zip(skills_list, all_extracted_skills_embeddings)
-            )
+            self.all_extracted_skills_embeddings_dict = get_embeddings(skills_list)
 
             if output_path:
                 logger.info(f"Saving skill embeddings to {output_path}")
@@ -309,20 +229,9 @@ class SkillMeasures(object):
                 f"Calculating embeddings for {len(self.formatted_taxonomy)} taxonomy skills"
             )
 
-            # instantiate bert model
-            bert_model = BertVectorizer(verbose=True, multi_process=True).fit()
-
-            # embed clean skills
-            taxonomy_skills_embeddings = bert_model.transform(
-                self.formatted_taxonomy["description"].to_list()
-            )
-
-            # create dict
-            self.taxonomy_skills_embeddings_dict = dict(
-                zip(
-                    list(self.formatted_taxonomy.index),
-                    np.array(taxonomy_skills_embeddings),
-                )
+            self.taxonomy_skills_embeddings_dict = get_embeddings(
+                self.formatted_taxonomy["description"].to_list(),
+                id_list=list(self.formatted_taxonomy.index),
             )
 
             if output_path:
@@ -333,38 +242,44 @@ class SkillMeasures(object):
 
         return self.taxonomy_skills_embeddings_dict
 
-    def map_green_skills(self) -> dict:
+    def map_green_skills(
+        self, skill_ents: list, all_extracted_skills_embeddings_dict: dict
+    ) -> dict:
         """
-        Map skills to the green taxonomy of skills
+        Use a trained classifier to find out whether extracted skills are likely to be green or not,
+        and map them to the most semantically similar green ESCO skill if so
+
+        Args:
+            skill_ents: a list of skills
+            all_extracted_skills_embeddings_dict: the associated embeddings for the skills in skill_ents
 
         Returns:
-                        dict: A dictionary of skills to the green taxonomy skill they map to (if any)
+            dict: The skill and green skill information:
+                 [[green/not-green, probability of this prediction, closest green ESCO skill]]
+
         """
 
-        logger.info("Mapping green skills...")
-        similarities = cosine_similarity(
-            np.array(list(self.all_extracted_skills_embeddings_dict.values())),
-            np.array(list(self.taxonomy_skills_embeddings_dict.values())),
+        green_skills_classifier = GreenSkillClassifier()
+        green_skills_classifier.taxonomy_skills_embeddings_dict = (
+            self.taxonomy_skills_embeddings_dict
         )
-        # Top matches for skill chunk
-        top_green_skills = get_green_skill_matches(
-            extracted_skill_list=list(self.all_extracted_skills_embeddings_dict.keys()),
-            similarities=similarities,
-            green_skills_taxonomy=self.formatted_taxonomy,
-            skill_threshold=self.skill_threshold,
+        green_skills_classifier.formatted_taxonomy = self.formatted_taxonomy
+
+        green_skills_classifier.load(
+            model_file="s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib"
         )
 
-        all_extracted_green_skills_dict = {
-            sk[0]: sk[1] for sk in top_green_skills if sk[1]
-        }
+        pred_green_skill = green_skills_classifier.predict(
+            skill_ents, skills_list_embeddings_dict=all_extracted_skills_embeddings_dict
+        )
 
-        return all_extracted_green_skills_dict
+        return dict(zip(skill_ents, pred_green_skill))
 
     def get_measures(
         self,
-        job_advert_ids: list,
-        predicted_entities: dict,
+        ents_per_job: defaultdict(),
         all_extracted_green_skills_dict: dict,
+        job_benefits_dict: dict,
     ) -> dict:
         """
         Get skills measures using job advert ids.
@@ -372,50 +287,49 @@ class SkillMeasures(object):
         so convert them all to strings
 
         Args:
-                        job_advert_ids (list): A list of job advert ids
-                        predicted_entities (dict): A dictionary of job advert id to predicted entities
+                        ents_per_job (dict): The job advert ids (keys) and the skill entities predicted
                         all_extracted_green_skills_dict (dict): A dictionary of skills to which green skills they map to
+                        job_benefits_dict (dict): The job adverts ids (keys) and the job benefit entities predicted
         Returns:
                         dict: A dictionary of job advert ids and green measures information
         """
-        if isinstance(job_advert_ids[0], int):
-            job_advert_ids = [str(j) for j in job_advert_ids]
-        if isinstance(next(iter(predicted_entities)), int):
-            predicted_entities = {str(k): v for k, v in predicted_entities.items()}
         if isinstance(next(iter(all_extracted_green_skills_dict)), int):
             all_extracted_green_skills_dict = {
                 str(k): v for k, v in all_extracted_green_skills_dict.items()
             }
 
         prop_green_skills = {}
-        for job_id in job_advert_ids:
-            pred_skills = predicted_entities.get(job_id)
-            if pred_skills:
-                ent_types = []
-                ents = []
+        for job_id, split_skill_ents in ents_per_job.items():
+            if split_skill_ents:
+                num_orig_ents = len(split_skill_ents)
+                split_ents = [r for v in split_skill_ents for r in v[0]]
+                num_split_ents = len(split_ents)
+
                 green_ents = []
-                for ent_name in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
-                    for ent in pred_skills[ent_name]:
-                        ent_types.append(ent_name)
-                        ents.append(ent)
-                        if all_extracted_green_skills_dict.get(ent):
-                            green_ents.append(
-                                (ent, all_extracted_green_skills_dict.get(ent))
-                            )
+                for skill in split_ents:
+                    if all_extracted_green_skills_dict[skill][0] == "green":
+                        green_ents.append(
+                            (skill, all_extracted_green_skills_dict.get(skill))
+                        )
+
                 prop_green_skills[job_id] = {
-                    "NUM_ENTS": len(ents),
-                    "ENTS": ents,
-                    "ENT_TYPES": ent_types,
+                    "NUM_ORIG_ENTS": num_orig_ents,
+                    "NUM_SPLIT_ENTS": num_split_ents,
+                    "ENTS": split_skill_ents,
                     "GREEN_ENTS": green_ents,
-                    "PROP_GREEN": len(green_ents) / len(ents) if len(ents) != 0 else 0,
+                    "PROP_GREEN": len(green_ents) / num_split_ents
+                    if num_split_ents != 0
+                    else 0,
+                    "BENEFITS": job_benefits_dict.get(job_id),
                 }
             else:
                 prop_green_skills[job_id] = {
-                    "NUM_ENTS": None,
+                    "NUM_ORIG_ENTS": 0,
+                    "NUM_SPLIT_ENTS": 0,
                     "ENTS": None,
-                    "ENT_TYPE": None,
                     "GREEN_ENTS": None,
-                    "PROP_GREEN": None,
+                    "PROP_GREEN": 0,
+                    "BENEFITS": job_benefits_dict.get(job_id),
                 }
 
         return prop_green_skills
