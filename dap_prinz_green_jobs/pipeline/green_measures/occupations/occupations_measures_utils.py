@@ -18,7 +18,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_p
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 
-from dap_prinz_green_jobs import logger
+from dap_prinz_green_jobs import logger, BUCKET_NAME
 
 
 def clean_job_title(job_title: str) -> str:

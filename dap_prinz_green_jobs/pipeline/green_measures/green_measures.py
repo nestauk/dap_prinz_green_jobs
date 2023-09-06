@@ -174,8 +174,11 @@ class GreenMeasures(object):
         occ_green_measures_list = self.om.get_measures(
             job_adverts=job_advert, job_title_key=self.job_title_key
         )
+        green_occupation_measures_dict = dict(
+            zip([j[self.job_id_key] for j in job_advert], occ_green_measures_list)
+        )
 
-        return occ_green_measures_list
+        return green_occupation_measures_dict
 
     def get_industry_measures(self, job_advert: Dict[str, str]) -> List[dict]:
         """
@@ -190,4 +193,32 @@ class GreenMeasures(object):
             job_advert=job_advert, company_name_key=self.company_name_key
         )
 
-        return ind_green_measures_list
+        ind_green_measures_dict = dict(
+            zip([j[self.job_id_key] for j in job_advert], ind_green_measures_list)
+        )
+
+        return ind_green_measures_dict
+
+    def get_green_measures(
+        self,
+        job_advert: Dict[str, str],
+    ) -> Dict[str, List[dict]]:
+        """
+        Extract measures of greenness at the skill-, occupation- and industry-level. Measures include:
+            - skills: green skill %, green skill count and the extracted green skills
+            - occupations: O*NET green occupation categorisation and whether occupation name is considered green or not green
+            - industry: random choice green or not green
+        """
+        green_measures_dict = {}
+
+        green_measures_dict["SKILL MEASURES"] = self.get_skill_measures(
+            job_advert=job_advert
+        )
+        green_measures_dict["INDUSTRY MEASURES"] = self.get_industry_measures(
+            job_advert=job_advert
+        )
+        green_measures_dict["OCCUPATION MEASURES"] = self.get_occupation_measures(
+            job_advert=job_advert
+        )
+
+        return green_measures_dict

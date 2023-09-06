@@ -71,7 +71,7 @@ for p in predicted_entities.values():
 all_extracted_skills_embeddings_dict = sm.get_skill_embeddings(list(set(skills_list)))
 
 # We will load the green taxonomy embeddings from S3 since they have already been calculated
-taxonomy_skills_embeddings_dict = sm.get_green_taxonomy_embeddings(output_path="outputs/data/green_skill_lists/green_esco_embeddings_20230815.json",load=True,)
+taxonomy_skills_embeddings_dict = sm.get_green_taxonomy_embeddings(output_path="outputs/data/green_skill_lists/green_esco_embeddings_20230815.json", load=True)
 
 # Map the newly extracted skills to the green skills taxonomy
 

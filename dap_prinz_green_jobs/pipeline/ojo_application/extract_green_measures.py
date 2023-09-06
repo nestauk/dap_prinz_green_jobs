@@ -19,11 +19,6 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
     get_mixed_ojo_sample,
 )
 
-from dap_prinz_green_jobs.getters.skill_getters import (
-    get_green_skills_taxonomy,
-    get_green_skills_taxonomy_embeddings,
-)
-
 from dap_prinz_green_jobs import logger
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME
@@ -82,15 +77,11 @@ if __name__ == "__main__":
     green_skills_outputs = gm.get_skill_measures(job_advert=ojo_sample_raw)
 
     logger.info("extracting green industries...")
-    green_industry_outputs = gm.get_industry_measures(job_advert=ojo_sample_raw)
-    green_industry_outputs_dict = dict(
-        zip([j[gm.job_id_key] for j in ojo_sample_raw], green_industry_outputs)
-    )
+    green_industry_outputs_dict = gm.get_industry_measures(job_advert=ojo_sample_raw)
 
     logger.info("extracting green occupations...")
-    green_occupation_outputs = gm.get_occupation_measures(job_advert=ojo_sample_raw)
-    green_occupation_outputs_dict = dict(
-        zip([j[gm.job_id_key] for j in ojo_sample_raw], green_occupation_outputs)
+    green_occupation_outputs_dict = gm.get_occupation_measures(
+        job_advert=ojo_sample_raw
     )
 
     logger.info("saving green measures to s3...")
