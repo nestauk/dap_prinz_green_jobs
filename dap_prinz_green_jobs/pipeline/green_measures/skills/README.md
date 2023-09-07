@@ -85,53 +85,38 @@ As you can see, the closest green ESCO skill will always be outputted, even if t
 
 ## Green measures
 
-- NUM_ENTS: The total number of entities found in this job advert
-- ENTS: The predicted entities
-- ENT_TYPES: Which entity type each entity corresponds to (usually SKILL or EXPERIENCE)
-- GREEN_ENTS: The green skills entities are mapped to (if any). In the format [(entity_as_in_advert, (esco_green_skill_name, esco_green_skill_id)),].
-- PROP_GREEN: The proportion of entities which were mapped to green skills (len(GREEN_ENTS)/NUM_ENTS)
+- NUM_ORIG_ENTS: The total number of entities found in this job advert
+- NUM_SPLIT_ENTS: The number of entities after splitting up long ones
+- ENTS: The predicted entities. In the format `[(['communication'], 'SKILL'), (['this skill', 'was split up'], 'SKILL')]`
+- GREEN_ENTS: The green skills entities are mapped to (if any). In the format `[(entity, (green/not-green, probability of green/not-green, (most similar ESCO green skill, most similar ESCO green skill ID, most similar ESCO green skill similarity score)))]` for example `[('Heat pump installation skills', ('green', 0.72, ('heat pump installation', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.91)))]`.
+- PROP_GREEN: The proportion of entities which were mapped to green skills (len(GREEN_ENTS)/NUM_SPLIT_ENTS)
+- BENEFITS: The list of all benefit entities predicted for this job
 
 ## Usage
 
 Note: predicting skill entities and embedding them for comparison with the green skills taxonomy can take a long time if you are inputting many job adverts.
 
-```
-from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import SkillMeasures
-
+```python
 sm = SkillMeasures(config_name="extract_green_skills_esco")
 sm.initiate_extract_skills(local=False, verbose=True)
 
-job_adverts = [{"id": 1, "job_text": "This job requires communication and Excel skills. We want someone with experience in sustainability. Heat pump installation skills would be useful. We have a pension scheme benefit."}]
-
-# We will predict entities using our NER model
-predicted_entities = sm.get_entities(job_adverts)
-
-# this gives {1: {'SKILL': ['communication', 'Excel', 'Heat pump installation skills'], 'MULTISKILL': [], 'EXPERIENCE': ['experience in sustainability'], 'BENEFIT': ['pension scheme']}}
-
-# Just take the predicted entities which are to do with skills
-skills_list = []
-for p in predicted_entities.values():
-    for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
-        for skill in p[ent_type]:
-            skills_list.append(skill)
-
-# Embed these skills
-all_extracted_skills_embeddings_dict = sm.get_skill_embeddings(list(set(skills_list)))
+job_adverts = [
+    {"id": 1, "job_text": "This job requires communication and Excel skills. We want someone with experience in sustainability. Heat pump installation skills would be useful. We have a pension scheme benefit."},
+    {"id": 55, "job_text": "This job contains no skills."},
+    {"id": 3, "job_text": "This job contains Excel skills."},
+    {"id": 8, "job_text": "This job contains a really long sentence. Promote good practice of material sustainability (reuse and or recycle) initiatives to reduce waste and save costs."},
+    ]
 
 # We will load the green taxonomy embeddings from S3 since they have already been calculated
-taxonomy_skills_embeddings_dict = sm.get_green_taxonomy_embeddings(output_path="outputs/data/green_skill_lists/green_esco_embeddings_20230815.json", load=True)
+taxonomy_skills_embeddings_dict = sm.get_green_taxonomy_embeddings(
+    output_path="outputs/data/green_skill_lists/green_esco_embeddings_20230815.json", load=True)
 
-# Map the newly extracted skills to the green skills taxonomy
+prop_green_skills = sm.get_measures(job_adverts)
 
-all_extracted_green_skills_dict = sm.map_green_skills()
-
-prop_green_skills = sm.get_measures(
-    job_advert_ids=[j["id"] for j in job_adverts],
-    predicted_entities=predicted_entities,
-    all_extracted_green_skills_dict=all_extracted_green_skills_dict,
-)
-
-prop_green_skills
->>> {'1': {'NUM_ENTS': 4, 'ENTS': ['communication', 'Excel', 'Heat pump installation skills', 'experience in sustainability'], 'ENT_TYPES': ['SKILL', 'SKILL', 'SKILL', 'EXPERIENCE'], 'GREEN_ENTS': [('Heat pump installation skills', ('heat pump installation', 2)), ('experience in sustainability', ('sustainability', 1))], 'PROP_GREEN': 0.5}}
+# {
+# 1: {'NUM_ORIG_ENTS': 4, 'NUM_SPLIT_ENTS': 4, 'ENTS': [(['communication'], 'SKILL'), (['Excel'], 'SKILL'), (['Heat pump installation skills'], 'SKILL'), (['experience in sustainability'], 'EXPERIENCE')], 'GREEN_ENTS': [('Heat pump installation skills', ('green', 0.7191159533073931, ('heat pump installation', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.9072619656040537))), ('experience in sustainability', ('green', 0.992, ('sustainability', 'b1b118c4-3291-484e-b64d-6d51fd5da8b3', 0.7593304913709202)))], 'PROP_GREEN': 0.5, 'BENEFITS': None},
+# 55: {'NUM_ORIG_ENTS': 0, 'NUM_SPLIT_ENTS': 0, 'ENTS': None, 'GREEN_ENTS': None, 'PROP_GREEN': 0, 'BENEFITS': None},
+#  3: {'NUM_ORIG_ENTS': 1, 'NUM_SPLIT_ENTS': 1, 'ENTS': [(['Excel'], 'SKILL')], 'GREEN_ENTS': [], 'PROP_GREEN': 0.0, 'BENEFITS': None},
+#  8: {'NUM_ORIG_ENTS': 1, 'NUM_SPLIT_ENTS': 3, 'ENTS': [(['Promote good practice of material sustainability (reuse and or recycle)', 'sustainability (reuse and or recycle) initiatives to reduce waste and', 'initiatives to reduce waste and save costs'], 'MULTISKILL')], 'GREEN_ENTS': [('Promote good practice of material sustainability (reuse and or recycle)', ('green', 0.982, ('promote sustainability', '469e19ed-a0bd-445a-ae2d-4ba9430e296b', 0.7094095115887558))), ('sustainability (reuse and or recycle) initiatives to reduce waste and', ('green', 1.0, ('analyse  new recycling opportunities', '89f5fa96-ae45-4906-902c-d50ca51009c6', 0.7682701732964252))), ('initiatives to reduce waste and save costs', ('green', 0.828, ('managing waste', '40f65a56-ccbe-4601-9f32-1cc6cdd24f28', 0.7851462257390638)))], 'PROP_GREEN': 1.0, 'BENEFITS': None}}
 
 ```

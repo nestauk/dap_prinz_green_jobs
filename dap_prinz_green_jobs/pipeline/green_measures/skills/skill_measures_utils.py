@@ -134,6 +134,7 @@ class SkillMeasures(object):
                 output_path (str): The output path if you want to save/load the predicted entities
                 load (bool): If you want to load entities from output_path (True) or predict them again (False)
                 job_text_key (str): the key for the job text
+                job_id_key (str): the key for the job advert id
         Returns:
                 dict: A dictionary of job advert ids to the predicted entities
         """
@@ -275,7 +276,7 @@ class SkillMeasures(object):
 
         return dict(zip(skill_ents, pred_green_skill))
 
-    def get_measures(
+    def calculate_measures(
         self,
         ents_per_job: defaultdict(),
         all_extracted_green_skills_dict: dict,
@@ -331,5 +332,78 @@ class SkillMeasures(object):
                     "PROP_GREEN": 0,
                     "BENEFITS": job_benefits_dict.get(job_id),
                 }
+
+        return prop_green_skills
+
+    def get_measures(
+        self,
+        job_adverts: list,
+        skills_output_path: str = "",
+        load_skills: bool = False,
+        job_text_key: str = "job_text",
+        job_id_key: str = "id",
+        skill_embeddings_output_path: str = "",
+        load_skills_embeddings: bool = False,
+    ):
+        """
+        Get skills measures for a list of job adverts.
+
+        Args:
+            job_adverts (list): A list of structured job adverts
+                in the format [{"id": 1, "job_text": "ddd"}, {"id": 2, "job_text": "ppp"}]
+            skills_output_path (str): The output path if you want to save/load the predicted entities
+            load_skills (bool): If you want to load entities from skills_output_path (True) or predict them again (False)
+            job_text_key (str): the key for the job text
+            job_id_key (str): the key for the job advert id
+            skill_embeddings_output_path (str): The output path if you want to save/load the embeddings
+            load_skills_embeddings (bool): If you want to load embeddings from output_path (True) or create them again (False)
+        Returns:
+            dict: A dictionary of job advert ids and green measures information
+        """
+
+        # We will predict entities using our NER model
+        predicted_entities = self.get_entities(
+            job_adverts,
+            output_path=skills_output_path,
+            load=load_skills,
+            job_text_key=job_text_key,
+            job_id_key=job_id_key,
+        )
+
+        ents_per_job = {}
+        job_benefits_dict = defaultdict(list)
+        for job_id, p in predicted_entities.items():
+            job_ents = []
+            for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
+                for skill in p[ent_type]:
+                    split_ent_list = split_up_skill_entities(skill)
+                    job_ents.append((split_ent_list, ent_type))
+            ents_per_job[job_id] = job_ents
+            for benefit in p["BENEFIT"]:
+                job_benefits_dict[str(job_id)].append(benefit)
+
+        # Unique list of skills
+        unique_skills_list = list(
+            set([g for v in ents_per_job.values() for r in v for g in r[0]])
+        )
+
+        # Embed these skills
+        all_extracted_skills_embeddings_dict = self.get_skill_embeddings(
+            unique_skills_list,
+            output_path=skill_embeddings_output_path,
+            load=load_skills_embeddings,
+        )
+
+        # Map the newly extracted skills to the green skills taxonomy
+
+        all_extracted_green_skills_dict = self.map_green_skills(
+            unique_skills_list, all_extracted_skills_embeddings_dict
+        )
+
+        prop_green_skills = self.calculate_measures(
+            ents_per_job=ents_per_job,
+            all_extracted_green_skills_dict=all_extracted_green_skills_dict,
+            job_benefits_dict=job_benefits_dict,
+        )
 
         return prop_green_skills

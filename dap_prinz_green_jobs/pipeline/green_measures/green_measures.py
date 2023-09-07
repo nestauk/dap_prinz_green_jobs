@@ -117,51 +117,21 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        predicted_entities = self.sm.get_entities(
-            job_advert,
-            output_path=self.skills_output,
-            load=self.load_skills,
-            job_text_key=self.job_text_key,
-            job_id_key=self.job_id_key,
-        )
-
-        ents_per_job = {}
-        job_benefits_dict = defaultdict(list)
-        for job_id, p in predicted_entities.items():
-            job_ents = []
-            for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
-                for skill in p[ent_type]:
-                    split_ent_list = split_up_skill_entities(skill)
-                    job_ents.append((split_ent_list, ent_type))
-            ents_per_job[job_id] = job_ents
-            for benefit in p["BENEFIT"]:
-                job_benefits_dict[str(job_id)].append(benefit)
-
-        # Unique list of skills
-        unique_skills_list = list(
-            set([g for v in ents_per_job.values() for r in v for g in r[0]])
-        )
-
-        all_extracted_skills_embeddings_dict = self.sm.get_skill_embeddings(
-            unique_skills_list,
-            output_path=self.skill_embeddings_output,
-            load=self.load_skills_embeddings,
-        )
-
         taxonomy_skills_embeddings_dict = self.sm.get_green_taxonomy_embeddings(
             output_path=self.green_tax_embedding_path,
             load=self.load_taxonomy_embeddings,
         )
 
-        all_extracted_green_skills_dict = self.sm.map_green_skills(
-            unique_skills_list, all_extracted_skills_embeddings_dict
+        prop_green_skills = self.sm.get_measures(
+            job_advert,
+            skills_output_path=self.skills_output,
+            load_skills=self.load_skills,
+            job_text_key=self.job_text_key,
+            job_id_key=self.job_id_key,
+            skill_embeddings_output_path=self.skill_embeddings_output,
+            load_skills_embeddings=self.load_skills_embeddings,
         )
 
-        prop_green_skills = self.sm.get_measures(
-            ents_per_job=ents_per_job,
-            all_extracted_green_skills_dict=all_extracted_green_skills_dict,
-            job_benefits_dict=job_benefits_dict,
-        )
         return prop_green_skills
 
     def get_occupation_measures(self, job_advert: Dict[str, str]) -> List[dict]:
