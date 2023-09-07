@@ -118,3 +118,15 @@ def clean_text(text: str) -> List[str]:
         List[str]: List of cleaned job description sentences
     """
     return pipe(text, detect_camelcase, replacements)
+
+
+def split_sentences(text: str) -> List[str]:
+    """Split a job description into sentences
+
+    Args:
+        text (str): job description
+
+    Returns:
+        List[str]: List of job description sentences
+    """
+    return re.split(r"[\.?!\n]", text)
