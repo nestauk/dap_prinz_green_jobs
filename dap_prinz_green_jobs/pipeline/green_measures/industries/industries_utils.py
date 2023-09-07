@@ -11,6 +11,9 @@ from dap_prinz_green_jobs.getters.industry_getters import (
     load_industry_ghg,
     load_industry_ghg_intensity,
 )
+import pandas as pd
+from tqdm import tqdm
+import ast
 
 # Found using the most common words in CH data
 company_stop_words = set(
@@ -235,6 +238,28 @@ def get_clean_ghg_data():
     ghg_unit_emissions_dict_cleaned = clean_unit_emissions_dict(ghg_unit_emissions_dict)
 
     return ghg_emissions_dict_cleaned, ghg_unit_emissions_dict_cleaned
+
+
+def convert_indx_to_sic(
+    top_k_indices: List[int], sic_company_descriptions: pd.DataFrame
+) -> List[str]:
+    """Convert indx to SIC codes.
+
+    Args:
+        top_k_indices (List[int]): List of indices
+        sic_company_descriptions (pd.DataFrame): Dataframe containing SIC codes
+
+    Returns:
+        List[str]: List of SIC codes
+    """
+    top_sic_codes = (
+        sic_company_descriptions.iloc[top_k_indices]
+        .sic_code.apply(ast.literal_eval)
+        .tolist()
+    )
+    # get the first element in list of lists
+    # (grouped only becuse different SIC codes have the same definition)
+    return [str(i[0]) for i in top_sic_codes]
 
 
 def convert_faiss_distance_to_score(faiss_distance: float) -> float:
