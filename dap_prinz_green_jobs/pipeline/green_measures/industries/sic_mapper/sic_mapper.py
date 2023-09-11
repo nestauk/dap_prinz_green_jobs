@@ -136,7 +136,7 @@ class SicMapper(object):
             )
             self.comp_sic_mapper = pd.read_csv(self.full_comp_sic_mapper_path)
         else:
-            self.comp_sic_mapper = None
+            self.comp_sic_mapper = {}
 
         if comp_desc_emb_path:
             self.full_comp_desc_emb_path = os.path.join(
@@ -144,7 +144,7 @@ class SicMapper(object):
             )
             self.comp_desc_emb_mapper = pd.read_csv(self.full_comp_desc_emb_path)
         else:
-            self.comp_desc_emb_mapper = None
+            self.comp_desc_emb_mapper = {}
 
         # things you need to load
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
@@ -159,9 +159,8 @@ class SicMapper(object):
             )
             self.sic_company_desc_dict = load_json_dict(full_sic_company_desc_path)
         else:
-            full_sic_company_desc_path = f"{self.data_path}{self.sic_comp_desc_path}"
             self.sic_company_desc_dict = load_s3_data(
-                BUCKET_NAME, full_sic_company_desc_path
+                BUCKET_NAME, f"{self.data_path}{self.sic_comp_desc_path}"
             )
         # load your FAISS SIC company description index - this must be local for now
         full_sic_db_path = os.path.join(PROJECT_DIR, self.data_path, self.sic_db)
@@ -227,7 +226,7 @@ class SicMapper(object):
                 {
                     self.job_id_key: job_advert[self.job_id_key],
                     self.company_name_key: job_advert[self.company_name_key],
-                    "company_description": company_description,
+                    "company_description": company_description.strip(),
                 }
             )
 
@@ -242,11 +241,6 @@ class SicMapper(object):
             company_descriptions_dict (Dict[str, str]): A dictionary
                 of company description hashes and company descriptions.
         """
-        self.comp_desc_emb_mapper = (
-            self.comp_desc_emb_mapper
-            if isinstance(self.comp_desc_emb_mapper, dict)
-            else {}
-        )
         comps_to_embed = {
             hash: desc
             for hash, desc in company_descriptions_dict.items()
