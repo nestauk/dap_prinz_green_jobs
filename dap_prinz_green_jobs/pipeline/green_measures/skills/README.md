@@ -97,6 +97,10 @@ As you can see, the closest green ESCO skill will always be outputted, even if t
 Note: predicting skill entities and embedding them for comparison with the green skills taxonomy can take a long time if you are inputting many job adverts.
 
 ```python
+
+from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
+    SkillMeasures,
+)
 sm = SkillMeasures(config_name="extract_green_skills_esco")
 sm.initiate_extract_skills(local=False, verbose=True)
 

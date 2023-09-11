@@ -11,16 +11,13 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures
 )
 from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
     SkillMeasures,
-    split_up_skill_entities,
 )
 from dap_prinz_green_jobs import logger, PROJECT_DIR
 
 from typing import List, Union, Dict, Optional
-from uuid import uuid4
 import yaml
 import os
 from datetime import datetime as date
-from collections import defaultdict
 
 
 class GreenMeasures(object):

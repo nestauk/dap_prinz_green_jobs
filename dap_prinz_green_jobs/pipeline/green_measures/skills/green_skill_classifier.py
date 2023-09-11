@@ -10,7 +10,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
-from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics.pairwise import cosine_similarity
 import spacy
 
@@ -23,7 +22,6 @@ from dap_prinz_green_jobs.getters.occupation_getters import (
 )
 
 from tqdm import tqdm
-import pickle
 from typing import List, Union, Tuple
 import joblib
 import s3fs

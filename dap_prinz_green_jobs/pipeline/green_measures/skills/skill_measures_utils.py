@@ -1,21 +1,14 @@
 from dap_prinz_green_jobs.utils.bert_vectorizer import get_embeddings
 from dap_prinz_green_jobs import PROJECT_DIR, get_yaml_config, BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
-from dap_prinz_green_jobs.utils.processing import list_chunks
 from dap_prinz_green_jobs.pipeline.green_measures.skills.green_skill_classifier import (
     GreenSkillClassifier,
 )
 
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import ExtractSkills
 from ojd_daps_skills.pipeline.skill_ner.ner_spacy import JobNER
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
 
 from typing import List, Dict, Tuple
-from itertools import islice
-import yaml
 import os
 from collections import defaultdict
 
@@ -73,8 +66,7 @@ class SkillMeasures(object):
             "skill_match_thresh"
         ]
 
-        formatted_taxonomy_path = self.config["taxonomy_path"]
-        self.formatted_taxonomy = load_s3_data(BUCKET_NAME, formatted_taxonomy_path)
+        self.formatted_taxonomy_path = self.config["taxonomy_path"]
 
     def initiate_extract_skills(self, local=True, verbose=True):
         """
@@ -216,6 +208,10 @@ class SkillMeasures(object):
                         dict: A dictionary of taxonomy skills to their embeddings
         """
 
+        self.formatted_taxonomy = load_s3_data(
+            BUCKET_NAME, self.formatted_taxonomy_path
+        )
+
         if load and not output_path:
             logger.info(f"You need to specify a path to load from in output_path")
 
@@ -299,6 +295,7 @@ class SkillMeasures(object):
                 str(k): v for k, v in all_extracted_green_skills_dict.items()
             }
 
+        not_found_skills = 0
         prop_green_skills = {}
         for job_id, split_skill_ents in ents_per_job.items():
             if split_skill_ents:
@@ -308,10 +305,12 @@ class SkillMeasures(object):
 
                 green_ents = []
                 for skill in split_ents:
-                    if all_extracted_green_skills_dict[skill][0] == "green":
-                        green_ents.append(
-                            (skill, all_extracted_green_skills_dict.get(skill))
-                        )
+                    green_skill_info = all_extracted_green_skills_dict.get(skill)
+                    if green_skill_info:
+                        if green_skill_info[0] == "green":
+                            green_ents.append((skill, green_skill_info))
+                    else:
+                        not_found_skills += 1
 
                 prop_green_skills[job_id] = {
                     "NUM_ORIG_ENTS": num_orig_ents,
@@ -332,6 +331,10 @@ class SkillMeasures(object):
                     "PROP_GREEN": 0,
                     "BENEFITS": job_benefits_dict.get(job_id),
                 }
+        if not_found_skills != 0:
+            logger.warning(
+                f"{not_found_skills} skills were not found in all_extracted_green_skills_dict - has this been formed properly?"
+            )
 
         return prop_green_skills
 
@@ -377,7 +380,8 @@ class SkillMeasures(object):
             for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
                 for skill in p[ent_type]:
                     split_ent_list = split_up_skill_entities(skill)
-                    job_ents.append((split_ent_list, ent_type))
+                    if len(split_ent_list) != 0:  # Sometimes the skill is empty
+                        job_ents.append((split_ent_list, ent_type))
             ents_per_job[job_id] = job_ents
             for benefit in p["BENEFIT"]:
                 job_benefits_dict[str(job_id)].append(benefit)
