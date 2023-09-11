@@ -35,7 +35,11 @@ industries:
   verbose: True
   multi_process: False
   local: False
+  save_updated_outputs: True
   model_path: "ihk/jobbert-base-cased-compdecs"
   sic_comp_desc_path: "green_industries/20230906_sic_company_descriptions_production_True_chunksize_50.csv"
   k: 5
   sim_threshold: 0.5
+  bert_model_name: "all-MiniLM-L6-v2"
+  comp_sic_mapper_path: "green_industries/comp_sic_mappings.json"
+  comp_desc_emb_path: "green_industries/comp_desc_embeddings.json"

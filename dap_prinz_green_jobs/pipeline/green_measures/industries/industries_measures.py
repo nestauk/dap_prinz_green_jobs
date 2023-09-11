@@ -12,7 +12,7 @@ from dap_prinz_green_jobs.getters.industry_getters import (
     load_green_tasks_prop_workers_20,
 )
 
-from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_utils import (
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     create_section_dict,
     get_clean_ghg_data,
     clean_company_name,
