@@ -1,7 +1,8 @@
 """
-Class to extract company descriptions and map them SIC codes.
+Class to extract company descriptions and map them to SIC codes.
 
 Usage:
+    from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper import SicMapper
 
     job_ads = {'id': 1, 'company_name': GreenJobs, 'job_text:' 'We are looking for a data scientist to join our team at Green Jobs.'}
     sm = SicMapper()
