@@ -1,12 +1,12 @@
 """
 Class to map company descriptions to SIC codes.
 
-    Usage:
+Usage:
 
     job_ads = {'id': 1, 'company_name': GreenJobs, 'job_text:' 'We are looking for a data scientist to join our team at Green Jobs.'}
     sm = SicMapper()
     sm.load() # load relevant models, tokenizers and datasets
-    sic_codes = sm.get_sic_codes(job_ads) # get SIC codes for job adverts
+    sic_code = sm.get_sic_code(job_ads) # get SIC codes for job adverts
 """
 import faiss
 
@@ -52,8 +52,8 @@ class SicMapper(object):
         Gets the BERT embeddings for company descriptions.
     predict_sic_code(company_description):
         Predicts the SIC code for a company description.
-    get_sic_codes(preprocessed_job_adverts):
-        Predicts the SIC code for a list of preprocessed job adverts.
+    get_sic_code(preprocessed_job_adverts):
+        Predicts the SIC code for a job advert or list of preprocessed job adverts.
     ----------
     """
 
@@ -281,7 +281,7 @@ class SicMapper(object):
 
         return sic_code
 
-    def get_sic_codes(self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]):
+    def get_sic_code(self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]):
         """Finds the SIC code for a job advert or list of job adverts.
 
         Args:
