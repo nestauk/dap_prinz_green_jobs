@@ -67,27 +67,37 @@ class GreenMeasures(object):
         self.load_taxonomy_embeddings = self.config["skills"][
             "load_taxonomy_embeddings"
         ]  # Set to false if your input taxonomy data or way to embed changes
+        self.green_skills_classifier_model_file = self.config["skills"][
+            "green_skills_classifier_model_file"
+        ]
 
         date_stamp = str(date.today().date()).replace("-", "")
 
+        skills_output_folder = f"outputs/data/green_skill_lists/{date_stamp}"
         if self.load_skills:
             self.skills_output = self.config["skills"]["skills_output"]
         else:
-            self.skills_output = f"outputs/data/green_skill_lists/skills_data_ojo_mixed_{date_stamp}.json"
+            self.skills_output = os.path.join(
+                skills_output_folder, "skills_data_ojo_mixed.json"
+            )
 
         if self.load_skills_embeddings:
             self.skill_embeddings_output = self.config["skills"][
                 "skill_embeddings_output"
             ]
         else:
-            self.skill_embeddings_output = f"outputs/data/green_skill_lists/extracted_skills_embeddings_{date_stamp}.json"
+            self.skill_embeddings_output = os.path.join(
+                skills_output_folder, "extracted_skills_embeddings.json"
+            )
 
         if self.load_taxonomy_embeddings:
             self.green_tax_embedding_path = self.config["skills"][
                 "green_tax_embedding_path"
             ]
         else:
-            self.green_tax_embedding_path = f"outputs/data/green_skill_lists/green_esco_embeddings_{date_stamp}.json"
+            self.green_tax_embedding_path = os.path.join(
+                skills_output_folder, "green_esco_embeddings.json"
+            )
 
         # Input job advert data config variables
         self.job_id_key = self.config["job_adverts"]["job_id_key"]
@@ -104,7 +114,10 @@ class GreenMeasures(object):
         self.im.load_ch()
 
         # Skills attributes
-        self.sm = SkillMeasures(config_name="extract_green_skills_esco")
+        self.sm = SkillMeasures(
+            config_name="extract_green_skills_esco",
+            green_skills_classifier_model_file=self.green_skills_classifier_model_file,
+        )
         self.sm.initiate_extract_skills(local=False, verbose=True)
 
     def get_skill_measures(
