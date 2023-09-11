@@ -8,27 +8,20 @@ import ast
 import itertools
 
 
-# THIS NEEDS TO BE RE-WORKED
 def convert_indx_to_sic(
-    top_k_indices: List[int], sic_company_descriptions: pd.DataFrame
+    top_k_indices: List[int], sic_company_descriptions: List[Dict[str, str]]
 ) -> List[str]:
     """Convert indx to SIC codes.
 
     Args:
         top_k_indices (List[int]): List of indices
-        sic_company_descriptions (pd.DataFrame): Dataframe containing SIC codes
+        sic_company_descriptions (List[Dict[str, str]]): List of SIC code description dictionaries
 
     Returns:
         List[str]: List of SIC codes
     """
-    top_sic_codes = (
-        sic_company_descriptions.iloc[top_k_indices]
-        .sic_code.apply(ast.literal_eval)
-        .tolist()
-    )  # let's pull this out
+    top_sic_codes = [sic_company_descriptions[i]["sic code"] for i in top_k_indices]
 
-    # get the first element in list of lists
-    # (grouped only becuse different SIC codes have the same definition)
     return [str(i[0]) for i in top_sic_codes]
 
 

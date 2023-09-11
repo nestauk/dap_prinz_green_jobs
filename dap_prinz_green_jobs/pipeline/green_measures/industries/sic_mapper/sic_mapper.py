@@ -1,5 +1,5 @@
 """
-Class to map company descriptions to SIC codes.
+Class to extract company descriptions and map them SIC codes.
 
 Usage:
 
@@ -23,6 +23,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import pipeline
 
 from dap_prinz_green_jobs import PROJECT_DIR, BUCKET_NAME, logger
+from dap_prinz_green_jobs.getters.data_getters import load_s3_data, load_json_dict
 
 # utils imports
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
@@ -77,9 +78,9 @@ class SicMapper(object):
         else:
             logger.setLevel("ERROR")
         self.local = self.config["industries"]["local"]
+        self.data_path = self.config["job_adverts"]["data_folder_name"]
         if self.local:
-            data_path_name = self.config["industries"]["data_path_name"]
-            self.data_dir = os.path.join(PROJECT_DIR, data_path_name)
+            self.data_dir = os.path.join(PROJECT_DIR, self.data_path)
             logger.info(f"Loading data from {self.data_dir}/")
             if not os.path.exists(self.data_dir):
                 logger.warning(
@@ -87,7 +88,7 @@ class SicMapper(object):
                 )
                 os.system(f"aws s3 sync s3://{BUCKET_NAME}/data {self.data_dir}")
         else:
-            self.data_dir = f"s3://{os.path.join(BUCKET_NAME, data_path_name)}"
+            self.data_dir = f"s3://{os.path.join(BUCKET_NAME, self.data_path)}"
             logger.info(f"Loading data from open {BUCKET_NAME} s3 bucket.")
         self.save_updated_outputs = self.config["industries"]["save_updated_outputs"]
         # get job id and job description keys
@@ -116,27 +117,34 @@ class SicMapper(object):
 
     def load(
         self,
-        comp_sic_mapper_path: str = Optional[None],
-        comp_desc_emb_path: str = Optional[None],
+        comp_sic_mapper_path: str = None,
+        comp_desc_emb_path: str = None,
     ):
         """
         Loads relevant models, tokenizers and datasets.
         """
+        logger.info("Loading relevant models, tokenizers and datasets.")
         # things that will make things faster - company name to SIC code mapper, comp desc hash to embeddings
         if (not comp_sic_mapper_path) and (self.comp_sic_mapper_path):
             comp_sic_mapper_path = self.comp_sic_mapper_path
         if (not comp_desc_emb_path) and (self.comp_desc_emb_path):
             comp_desc_emb_path = self.comp_desc_emb_path
 
-        self.full_comp_sic_mapper_path = os.path.join(
-            self.data_dir, self.comp_sic_mapper_path
-        )
-        self.comp_sic_mapper = pd.read_csv(self.full_comp_sic_mapper_path)
+        if comp_sic_mapper_path:
+            self.full_comp_sic_mapper_path = os.path.join(
+                self.data_dir, comp_sic_mapper_path
+            )
+            self.comp_sic_mapper = pd.read_csv(self.full_comp_sic_mapper_path)
+        else:
+            self.comp_sic_mapper = None
 
-        self.full_comp_desc_emb_path = os.path.join(
-            self.data_dir, self.comp_desc_emb_path
-        )
-        self.comp_desc_emb_mapper = pd.read_csv(self.full_comp_desc_emb_path)
+        if comp_desc_emb_path:
+            self.full_comp_desc_emb_path = os.path.join(
+                self.data_dir, comp_desc_emb_path
+            )
+            self.comp_desc_emb_mapper = pd.read_csv(self.full_comp_desc_emb_path)
+        else:
+            self.comp_desc_emb_mapper = None
 
         # things you need to load
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
@@ -145,17 +153,18 @@ class SicMapper(object):
             "text-classification", model=self.model, tokenizer=self.tokenizer
         )
 
-        full_sic_company_desc_path = os.path.join(
-            self.data_dir, self.sic_comp_desc_path
-        )
-        self.sic_company_desc_dict = (
-            pd.read_csv(full_sic_company_desc_path)
-            .assign(sic_code=lambda x: x.sic_code.apply(ast.literal_eval))
-            .to_dict("records")
-        )
-
-        # load your FAISS SIC company description index
-        full_sic_db_path = os.path.join(self.data_dir, self.sic_db)
+        if self.local:
+            full_sic_company_desc_path = os.path.join(
+                self.data_dir, self.sic_comp_desc_path
+            )
+            self.sic_company_desc_dict = load_json_dict(full_sic_company_desc_path)
+        else:
+            full_sic_company_desc_path = f"{self.data_path}{self.sic_comp_desc_path}"
+            self.sic_company_desc_dict = load_s3_data(
+                BUCKET_NAME, full_sic_company_desc_path
+            )
+        # load your FAISS SIC company description index - this must be local for now
+        full_sic_db_path = os.path.join(PROJECT_DIR, self.data_path, self.sic_db)
         self.sic_db = faiss.read_index(full_sic_db_path)
 
     def preprocess_job_adverts(
@@ -176,7 +185,7 @@ class SicMapper(object):
         preprocessed_job_adverts = []
         for job_advert in job_adverts:
             job_description_clean = tc.clean_text(job_advert[self.job_description_key])
-            job_description_sentences = tc.split_into_sentences(job_description_clean)
+            job_description_sentences = tc.split_sentences(job_description_clean)
             preprocessed_job_adverts.append(
                 {
                     self.job_id_key: job_advert[self.job_id_key],
@@ -245,7 +254,7 @@ class SicMapper(object):
         }
 
         logger.info(
-            f"Computing embeddings for {len(len(company_descriptions_dict) - len(comps_to_embed))} company descriptions..."
+            f"Computing embeddings for {len(comps_to_embed)} company descriptions..."
         )
 
         comp_embeds = self.bert_model.transform(list(comps_to_embed.values()))
@@ -308,6 +317,9 @@ class SicMapper(object):
                 for job_advert in job_adverts
                 if not comp_sic_mapper_filtered.get(job_advert[self.company_name_key])
             ]
+        else:
+            comp_sic_mapper_filtered = None  # no filtering
+            job_adverts = job_adverts
 
         # now lets get company descriptions for the filtered job adverts
         preprocessed_job_adverts = self.preprocess_job_adverts(job_adverts)
