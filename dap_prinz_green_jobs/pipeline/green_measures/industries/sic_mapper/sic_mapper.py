@@ -1,19 +1,24 @@
 """
-Class to extract company descriptions and map them to SIC codes.
+Class to extract company descriptions and map them SIC codes.
 
 Usage:
-    from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper import SicMapper
 
     job_ads = {'id': 1, 'company_name': GreenJobs, 'job_text:' 'We are looking for a data scientist to join our team at Green Jobs.'}
     sm = SicMapper()
     sm.load() # load relevant models, tokenizers and datasets
     sic_code = sm.get_sic_code(job_ads) # get SIC codes for job adverts
+
+  >>  [{'id': '1',
+      'company_name': 'Google',
+      'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.',
+      'company_description': 'We are a fast growing company in the software engineering industry.',
+      'sic_code': ['582']}]
 """
 import faiss
 
 import os
 import yaml
-from typing import List, Union, Dict, Optional
+from typing import List, Union, Dict
 
 from tqdm import tqdm
 import pandas as pd
@@ -30,7 +35,6 @@ from dap_prinz_green_jobs.getters.data_getters import load_s3_data, load_json_di
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
 import dap_prinz_green_jobs.utils.text_cleaning as tc
 import dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper_utils as su
-import dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils as iu
 
 
 class SicMapper(object):
@@ -227,6 +231,9 @@ class SicMapper(object):
                 {
                     self.job_id_key: job_advert[self.job_id_key],
                     self.company_name_key: job_advert[self.company_name_key],
+                    f"{self.job_description_key}_clean": job_advert.get(
+                        f"{self.job_description_key}_clean"
+                    ),
                     "company_description": company_description.strip(),
                 }
             )
@@ -247,15 +254,14 @@ class SicMapper(object):
             for hash, desc in company_descriptions_dict.items()
             if not self.comp_desc_emb_mapper.get(hash)
         }
-
         logger.info(
             f"Computing embeddings for {len(comps_to_embed)} company descriptions..."
         )
 
         comp_embeds = self.bert_model.transform(list(comps_to_embed.values()))
-        self.comp_desc_emb_mapper.update(
-            dict(zip(list(comps_to_embed.keys()), comp_embeds))
-        )
+        comp_embeds_dict = dict(zip(list(comps_to_embed.keys()), comp_embeds))
+
+        return comp_embeds_dict
 
     def predict_sic_code(self, company_embedding: np.ndarray) -> List[int]:
         """Predicts the SIC code for a company description.
@@ -266,7 +272,7 @@ class SicMapper(object):
         Returns:
             List[int]: The predicted SIC code(s).
         """
-        D, I = self.sic_db.search(company_embedding, self.k)  # search
+        D, I = self.sic_db.search(np.array([company_embedding]), self.k)  # search
 
         closest_distance = D[0][0]
         top_k_indices = I[0]
@@ -274,10 +280,10 @@ class SicMapper(object):
         # convert to similarity score
         sim_score = su.convert_faiss_distance_to_score(closest_distance)
 
-        if sim_score < self.sim_threshold:
+        if sim_score > self.sim_threshold:
             sic_code_indx = top_k_indices[0]
             sics = self.sic_company_desc_dict[sic_code_indx]["sic_code"]
-            sic_code = [code.strip() for code in sics]
+            sic_code = [str(code).strip() for code in sics]
 
         else:
             # get majority sic based on standard deviation of k
@@ -301,20 +307,17 @@ class SicMapper(object):
         company_names = list(
             set([job_advert[self.company_name_key] for job_advert in job_adverts])
         )
-        if self.comp_sic_mapper:
-            comp_sic_mapper_filtered = {
-                comp_name: sic_code
-                for comp_name, sic_code in self.comp_sic_mapper.items()
-                if comp_name in company_names
-            }
-            job_adverts = [
-                job_advert
-                for job_advert in job_adverts
-                if not comp_sic_mapper_filtered.get(job_advert[self.company_name_key])
-            ]
-        else:
-            comp_sic_mapper_filtered = None  # no filtering
-            job_adverts = job_adverts
+
+        comp_sic_mapper_filtered = {
+            comp_name: sic_code
+            for comp_name, sic_code in self.comp_sic_mapper.items()
+            if comp_name in company_names
+        }
+        job_adverts = [
+            job_advert
+            for job_advert in job_adverts
+            if not comp_sic_mapper_filtered.get(job_advert[self.company_name_key])
+        ]
 
         # now lets get company descriptions for the filtered job adverts
         preprocessed_job_adverts = self.preprocess_job_adverts(job_adverts)
@@ -339,7 +342,7 @@ class SicMapper(object):
             zip(company_description_hashes, company_descriptions)
         )
 
-        self.get_company_description_embeddings(
+        comp_embeds = self.get_company_description_embeddings(
             company_description_dict
         )  # update comp_desc_emb_mapper
         sic_codes = []
@@ -349,7 +352,7 @@ class SicMapper(object):
                 sic_code = comp_sic_mapper_filtered.get(company_name)
             else:
                 company_desc_hash = tc.short_hash(job_ad["company_description"])
-                comp_embed = self.comp_desc_emb_mapper.get(company_desc_hash)
+                comp_embed = comp_embeds.get(company_desc_hash)
                 sic_code = self.predict_sic_code(np.array(comp_embed))
             sic_codes.append(
                 {
@@ -359,7 +362,7 @@ class SicMapper(object):
                         f"{self.job_description_key}_clean"
                     ],
                     "company_description": job_ad["company_description"],
-                    "SIC code": sic_code,
+                    "sic_code": sic_code,
                 }
             )
 

@@ -7,6 +7,18 @@ import pandas as pd
 import ast
 import itertools
 
+from dap_prinz_green_jobs.getters.industry_getters import load_sic
+
+# loading sic information
+sic_data = load_sic()
+
+sic_to_section = {
+    k: v.strip()
+    for k, v in dict(
+        zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
+    ).items()
+}
+
 
 def convert_indx_to_sic(
     top_k_indices: List[int], sic_company_descriptions: List[Dict[str, str]]
@@ -40,7 +52,7 @@ def convert_faiss_distance_to_score(faiss_distance: float) -> float:
 
 def add_sic_section(
     input_list: List[str],
-    sic_to_section: Dict[str, str],
+    sic_to_section: Dict[str, str] = sic_to_section,
 ) -> List[str]:
     """Appends the SIC section to the SIC code.
 
@@ -74,6 +86,9 @@ def longest_common_prefix(str1: str, str2: str) -> str:
             the two strings
     """
     common_prefix = []
+
+    if not isinstance(str1, str) or not isinstance(str2, str):
+        str1, str2 = str(str1), str(str2)
 
     # Find the minimum length of the two strings
     min_len = min(len(str1), len(str2))
