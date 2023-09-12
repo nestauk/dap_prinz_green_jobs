@@ -3,27 +3,34 @@ Functions and variables to map company descriptions
     to SIC codes.
 """
 from typing import List, Dict, Union
-import pandas as pd
-import ast
 import itertools
 
-from dap_prinz_green_jobs.getters.industry_getters import load_sic
 
-# loading sic information
-sic_data = load_sic()
+def clean_sic_code(sic_code: str) -> str:
+    """Cleans a SIC code.
 
-sic_to_section = {
-    k: v.strip()
-    for k, v in dict(
-        zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
-    ).items()
-}
+    Args:
+        sic_code (str): SIC code to clean.
+
+    Returns:
+        str: clean SIC code
+    """
+    if not isinstance(sic_code, str):
+        sic_code = str(sic_code)
+
+    if sic_code.isdigit():
+        if len(sic_code) == 4:
+            return f"{sic_code}0"
+        else:
+            return sic_code
+    else:
+        return sic_code
 
 
 def convert_indx_to_sic(
     top_k_indices: List[int], sic_company_descriptions: List[Dict[str, str]]
 ) -> List[str]:
-    """Convert indx to SIC codes.
+    """Convert indx to cleaned SIC codes.
 
     Args:
         top_k_indices (List[int]): List of indices
@@ -32,9 +39,9 @@ def convert_indx_to_sic(
     Returns:
         List[str]: List of SIC codes
     """
-    top_sic_codes = [sic_company_descriptions[i]["sic code"] for i in top_k_indices]
+    top_sic_codes = [sic_company_descriptions[i]["sic_code"] for i in top_k_indices]
 
-    return [str(i[0]) for i in top_sic_codes]
+    return [str(i[0]).strip() for i in top_sic_codes]
 
 
 def convert_faiss_distance_to_score(faiss_distance: float) -> float:
@@ -48,30 +55,6 @@ def convert_faiss_distance_to_score(faiss_distance: float) -> float:
         float: Similarity score
     """
     return 1 / (1 + faiss_distance)
-
-
-def add_sic_section(
-    input_list: List[str],
-    sic_to_section: Dict[str, str] = sic_to_section,
-) -> List[str]:
-    """Appends the SIC section to the SIC code.
-
-    Args:
-        input_list (List[str]): List of SIC codes
-        sic_to_section (Dict[str, str]): Dictionary mapping SIC codes to SIC sections
-
-    Returns:
-        List[str]: List of SIC codes with the section appended
-    """
-    sic_code_section = []
-    for sic_code in input_list:
-        sic_section = sic_to_section.get(sic_code, None)
-        if sic_section:
-            sic_code_section.append(f"{sic_section.strip()}{sic_code.strip()}")
-        else:
-            sic_code_section.append(sic_code)
-
-    return sic_code_section
 
 
 def longest_common_prefix(str1: str, str2: str) -> str:
@@ -103,23 +86,34 @@ def longest_common_prefix(str1: str, str2: str) -> str:
     return common_prefix
 
 
-def find_majority_sic(input_list: List[str]) -> Union[List[str], List[None]]:
-    """Finds the majority SIC code from a list of SIC codes.
+# triple check that the majority sic codes are ordered i.e. closest first
+def find_majority_sic(input_sics: List[str]) -> Union[List[str], List[None]]:
+    """Finds the majority SIC codes from a list of SIC codes.
 
     Args:
-        input_list (List[str]): The list of SIC codes
+        input_sics (List[str]): The list of SIC codes
 
     Returns:
-        Union[List[str], List[None]]: The majority SIC code(s)
+        Union[List[str], List[None]]: The majority SIC codes
     """
-    # add SIC sections to the SIC codes
-    input_list_section = add_sic_section(input_list)
-
     # generate all possible unique combinations of the SIC codes
     # of length 2
-    sic_combos = list(set(list(itertools.combinations(input_list_section, 2))))
+    sic_combos = list(set(list(itertools.combinations(input_sics, 2))))
 
     # identify the longest common prefix between each combination
     sic_dists = [longest_common_prefix(sic1, sic2) for sic1, sic2 in sic_combos]
 
-    return ["".join(sic_dist) for sic_dist in sic_dists if sic_dist != []]
+    # get the longest common prefix
+    dist_len = 0
+    for dist in sic_dists:
+        if len(dist) > dist_len:
+            dist_len = len(dist)
+
+    top_sic_codes = ["".join(sic) for sic in sic_dists if len(sic) == dist_len]
+
+    # if its greater than 0
+    if len(top_sic_codes) > 0:
+        clean_sic_code = clean_sic_code(top_sic_codes[0])  # assuming order
+        return clean_sic_code
+    else:
+        return None

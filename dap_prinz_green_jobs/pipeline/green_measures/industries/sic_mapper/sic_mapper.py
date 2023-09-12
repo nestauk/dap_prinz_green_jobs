@@ -12,7 +12,7 @@ Usage:
       'company_name': 'Google',
       'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.',
       'company_description': 'We are a fast growing company in the software engineering industry.',
-      'sic_code': ['582']}]
+      'sic_code': '582'}]
 """
 import faiss
 
@@ -58,7 +58,7 @@ class SicMapper(object):
         Gets the BERT embeddings for company descriptions.
     predict_sic_code(company_description):
         Predicts the SIC code for a company description.
-    get_sic_code(preprocessed_job_adverts):
+    get_sic_codes(preprocessed_job_adverts):
         Predicts the SIC code for a job advert or list of preprocessed job adverts.
     ----------
     """
@@ -255,7 +255,7 @@ class SicMapper(object):
                 ):  # Only predict on reasonable length sentences
                     pred = self.company_description_classifier(sentence)[0]
                     if pred["label"] == "LABEL_1":
-                        company_description += sentence + ". "
+                        company_description += sentence + "."
 
             company_descriptions.append(
                 {
@@ -316,19 +316,25 @@ class SicMapper(object):
         if sim_score > self.sim_threshold:
             sic_code_indx = top_k_indices[0]
             sics = self.sic_company_desc_dict[sic_code_indx]["sic_code"]
-            sic_code = [str(code).strip() for code in sics]
-
+            sic_clean = [str(code).strip() for code in sics]
+            # as some of the same sic definitions have multiple sic codes,
+            # we just take the first one
+            sic_code = sic_clean[0]
         else:
             std = np.std(D)
             std_threshold = (
                 closest_distance + 2 * std
             )  # use a std threshold instead of a similarity threshold
             top_k = len([d for d in top_k_distances if d < std_threshold])
-            sic_code = su.find_majority_sic(top_k_indices[:top_k])
+            top_sics = su.convert_indx_to_sic(
+                top_k_indices[:top_k], self.sic_company_desc_dict
+            )
+
+            sic_code = su.find_majority_sic(top_sics)
 
         return sic_code
 
-    def get_sic_code(self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]):
+    def get_sic_codes(self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]):
         """Finds the SIC code for a job advert or list of job adverts.
 
         Args:
@@ -383,12 +389,14 @@ class SicMapper(object):
         sic_codes = []
         for job_ad in preprocessed_job_adverts_comp_desc:
             company_name = job_ad.get(self.company_name_key)
-            if comp_sic_mapper_filtered:
-                sic_code = comp_sic_mapper_filtered.get(company_name)
-            else:
-                company_desc_hash = tc.short_hash(job_ad["company_description"])
-                comp_embed = comp_embeds.get(company_desc_hash)
-                sic_code = self.predict_sic_code(np.array(comp_embed))
+            sic_code = comp_sic_mapper_filtered.get(company_name)
+            if not sic_code:
+                if job_ad["company_description"] != "":
+                    company_desc_hash = tc.short_hash(job_ad["company_description"])
+                    comp_embed = comp_embeds.get(company_desc_hash)
+                    sic_code = self.predict_sic_code(np.array(comp_embed))
+                else:
+                    sic_code = None
             sic_codes.append(
                 {
                     self.job_id_key: job_ad[self.job_id_key],

@@ -35,9 +35,11 @@ sic_code = sm.get_sic_code(job_ad) # get SIC codes for job advert
     'company_name': 'Google',
     'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.',
     'company_description': 'We are a fast growing company in the software engineering industry.',
-    'sic_code': ['582']}]
+    'sic_code': '582'}]
 ```
 
 ### High-level methodological pipeline
 
 ### Evaluation
+
+We apply the pipeline to **279** job adverts and manually label both the extracted company description and assigned SIC code as `bad`, `good` or `excellent`. The results are as follows:

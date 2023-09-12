@@ -82,6 +82,29 @@ def create_section_dict(data):
     return dict(zip(data["SIC 2007 section code"], data[2019]))
 
 
+def clean_sic(sic_name: str) -> str:
+    """Cleans the SIC code.
+
+    Args:
+        sic_name (str): The SIC code
+
+    Returns:
+        str: The cleaned SIC code
+    """
+
+    if not isinstance(sic_name, str):
+        sic_name = str(sic_name)
+
+    if sic_name:
+        sic = str(sic_name.split(" - ")[0])
+        if len(sic) == 4:
+            return "0" + sic
+        else:
+            return sic
+    else:
+        return None
+
+
 def clean_company_name(
     name: str,
     word_mapper: dict = {},
@@ -118,17 +141,6 @@ def clean_company_name(
         name = " ".join(words)
 
         return name
-    else:
-        return None
-
-
-def clean_sic(sic_name):
-    if sic_name:
-        sic = str(sic_name.split(" - ")[0])
-        if len(sic) == 4:
-            return "0" + sic
-        else:
-            return sic
     else:
         return None
 
