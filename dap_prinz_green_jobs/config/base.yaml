@@ -35,10 +35,9 @@ industries:
   verbose: True
   multi_process: False
   local: False
-  save_updated_outputs: True
-  sic_comp_desc_path: "green_industries/20230911_sic_company_descriptions_dict_production_True_chunksize_50.json"
-  sic_db: "green_industries/20230911_sic_company_descriptions_faiss_index_production_True_chunksize_50.index"
+  sic_comp_desc_path: "20230911_sic_company_descriptions_dict_production_True_chunksize_50.json"
+  sic_db: "20230911_sic_company_descriptions_faiss_index_production_True_chunksize_50.index"
   model_path: "ihk/jobbert-base-cased-compdecs"
   bert_model_name: "all-MiniLM-L6-v2"
-  k: 5
+  k: 100
   sim_threshold: 0.5

@@ -51,7 +51,7 @@ class SicMapper(object):
     load():
         Loads relevant models, tokenizers and datasets necessary for the SicMapper class.
     preprocess_job_advert(job_advert):
-        Preprocesses a job advert or list of job adverts to extract the company description.
+        Preprocesses a list of job adverts to extract the company description.
     extract_company_descriptions(preprocessed_job_adverts):
         Extracts the company description from a list of job adverts.
     get_company_description_embeddings(company_description_dict):
@@ -84,18 +84,39 @@ class SicMapper(object):
             logger.setLevel("ERROR")
         self.local = self.config["industries"]["local"]
         self.data_path = self.config["job_adverts"]["data_folder_name"]
+        # for now self.local downloads ALL files in the green_industries folder
+        # in a private bucket - we will change this later
         if self.local:
-            self.data_dir = os.path.join(PROJECT_DIR, self.data_path)
+            self.data_dir = os.path.join(
+                PROJECT_DIR, self.data_path, "green_industries"
+            )
             logger.info(f"Loading data from {self.data_dir}/")
             if not os.path.exists(self.data_dir):
                 logger.warning(
                     "Neccessary data files are not downloaded. Downloading neccessary files..."
                 )
-                os.system(f"aws s3 sync s3://{BUCKET_NAME}/data {self.data_dir}")
+                os.system(
+                    f"aws s3 sync s3://{BUCKET_NAME}/data {self.data_dir}/green_industries"
+                )
+            else:
+                # count the number of files in the directory to check if all files are there
+                file_num = len(
+                    [
+                        name
+                        for name in os.listdir(self.data_dir)
+                        if os.path.isfile(os.path.join(self.data_dir, name))
+                    ]
+                )
+                if file_num < 5:
+                    logger.warning(
+                        "Neccessary data files are not downloaded. Downloading neccessary files..."
+                    )
+                    os.system(
+                        f"aws s3 sync s3://{BUCKET_NAME}/outputs/data/green_industries {self.data_dir}"
+                    )
         else:
-            self.data_dir = f"s3://{os.path.join(BUCKET_NAME, self.data_path)}"
+            self.data_dir = os.path.join(self.data_path, "green_industries")
             logger.info(f"Loading data from open {BUCKET_NAME} s3 bucket.")
-        self.save_updated_outputs = self.config["industries"]["save_updated_outputs"]
         # get job id and job description keys
         self.job_id_key = self.config["job_adverts"]["job_id_key"]
         self.job_description_key = self.config["job_adverts"]["job_text_key"]
@@ -115,10 +136,31 @@ class SicMapper(object):
             bert_model_name=f"sentence-transformers/{self.bert_model_name}",
         ).fit()
         # load pre-defined company name hash to SIC codes, company description hash to embeddings
+        # these files don't exist right now but would be created to make the pipeline more efficient
         self.comp_sic_mapper_path = self.config["industries"].get(
             "comp_sic_mapper_path"
         )
         self.comp_desc_emb_path = self.config["industries"].get("comp_desc_emb_path")
+
+    def _fetch_data(self, file_name: str = None):
+        """Wrapper to fetch data from local or s3.
+
+        Args:
+            data_path (str, optional): Path to load data. Defaults to None.
+
+        Returns:
+            Data in the form of a dictionary.
+        """
+        full_path = os.path.join(self.data_dir, file_name)
+        if file_name.endswith(".json"):
+            if self.local:
+                data = load_json_dict(full_path)
+            else:
+                data = load_s3_data(BUCKET_NAME, full_path)
+            return data
+        else:
+            assert file_name.endswith(".json"), "File type not supported."
+            logger.error("Data path must be a .json file.")
 
     def load(
         self,
@@ -135,21 +177,14 @@ class SicMapper(object):
         if (not comp_desc_emb_path) and (self.comp_desc_emb_path):
             comp_desc_emb_path = self.comp_desc_emb_path
 
-        if comp_sic_mapper_path:
-            self.full_comp_sic_mapper_path = os.path.join(
-                self.data_dir, comp_sic_mapper_path
-            )
-            self.comp_sic_mapper = pd.read_csv(self.full_comp_sic_mapper_path)
-        else:
-            self.comp_sic_mapper = {}
-
-        if comp_desc_emb_path:
-            self.full_comp_desc_emb_path = os.path.join(
-                self.data_dir, comp_desc_emb_path
-            )
-            self.comp_desc_emb_mapper = pd.read_csv(self.full_comp_desc_emb_path)
-        else:
-            self.comp_desc_emb_mapper = {}
+        self.comp_sic_mapper = (
+            self._fetch_data(self.full_comp_sic_mapper_path)
+            if comp_sic_mapper_path
+            else {}
+        )
+        self.comp_desc_emb_mapper = (
+            self._fetch_data(self.full_comp_desc_emb_path) if comp_desc_emb_path else {}
+        )
 
         # things you need to load
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
@@ -157,18 +192,13 @@ class SicMapper(object):
         self.company_description_classifier = pipeline(
             "text-classification", model=self.model, tokenizer=self.tokenizer
         )
+        self.sic_company_desc_dict = self._fetch_data(self.sic_comp_desc_path)
 
-        if self.local:
-            full_sic_company_desc_path = os.path.join(
-                self.data_dir, self.sic_comp_desc_path
-            )
-            self.sic_company_desc_dict = load_json_dict(full_sic_company_desc_path)
-        else:
-            self.sic_company_desc_dict = load_s3_data(
-                BUCKET_NAME, f"{self.data_path}{self.sic_comp_desc_path}"
-            )
         # load your FAISS SIC company description index - this must be local for now
-        full_sic_db_path = os.path.join(PROJECT_DIR, self.data_path, self.sic_db)
+        # we will need to change this eventually
+        full_sic_db_path = os.path.join(
+            PROJECT_DIR, self.data_path, "green_industries", self.sic_db
+        )
         self.sic_db = faiss.read_index(full_sic_db_path)
 
     def preprocess_job_adverts(
@@ -261,21 +291,24 @@ class SicMapper(object):
         comp_embeds = self.bert_model.transform(list(comps_to_embed.values()))
         comp_embeds_dict = dict(zip(list(comps_to_embed.keys()), comp_embeds))
 
+        # here, we may want to update the comp_desc_emb_mapper with the new embeddings
+        # to save for later - to deal with next sprint when we focus on speed
+
         return comp_embeds_dict
 
-    def predict_sic_code(self, company_embedding: np.ndarray) -> List[int]:
-        """Predicts the SIC code for a company description.
+    def predict_sic_code(self, company_embedding: np.ndarray) -> List[str]:
+        """Predicts the SIC code for a company description embedding.
 
         Args:
             company_embedding (str): An embedding of a company description.
 
         Returns:
-            List[int]: The predicted SIC code(s).
+            List[str]: The predicted SIC code(s).
         """
         D, I = self.sic_db.search(np.array([company_embedding]), self.k)  # search
 
         closest_distance = D[0][0]
-        top_k_indices = I[0]
+        top_k_indices, top_k_distances = I[0], D[0]
 
         # convert to similarity score
         sim_score = su.convert_faiss_distance_to_score(closest_distance)
@@ -286,8 +319,12 @@ class SicMapper(object):
             sic_code = [str(code).strip() for code in sics]
 
         else:
-            # get majority sic based on standard deviation of k
-            sic_code = su.find_majority_sic(top_k_indices)
+            std = np.std(D)
+            std_threshold = (
+                closest_distance + 2 * std
+            )  # use a std threshold instead of a similarity threshold
+            top_k = len([d for d in top_k_distances if d < std_threshold])
+            sic_code = su.find_majority_sic(top_k_indices[:top_k])
 
         return sic_code
 
@@ -342,9 +379,7 @@ class SicMapper(object):
             zip(company_description_hashes, company_descriptions)
         )
 
-        comp_embeds = self.get_company_description_embeddings(
-            company_description_dict
-        )  # update comp_desc_emb_mapper
+        comp_embeds = self.get_company_description_embeddings(company_description_dict)
         sic_codes = []
         for job_ad in preprocessed_job_adverts_comp_desc:
             company_name = job_ad.get(self.company_name_key)
