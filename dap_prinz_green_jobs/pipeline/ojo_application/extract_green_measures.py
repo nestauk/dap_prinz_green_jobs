@@ -32,11 +32,16 @@ if __name__ == "__main__":
     parser.add_argument("--config_name", default="base", type=str)
 
     args = parser.parse_args()
+    production = args.production
 
     # instantiate GreenMeasures class here
-    gm = GreenMeasures(config_name=args.config_name)
-
-    production = args.production
+    if production:
+        gm = GreenMeasures(config_name=args.config_name)
+    else:
+        gm = GreenMeasures(
+            config_name=args.config_name,
+            skills_output_folder="outputs/data/green_skill_lists/test",
+        )
 
     # load and reformat relevant data
     logger.info("loading and reformatting datasets...")

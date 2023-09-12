@@ -27,6 +27,8 @@ class GreenMeasures(object):
     Attributes
     ----------
     config_name (str): the name of the config file to use.
+    skills_output_folder (str): If given, this will be the folder where all skills outputs are stored,
+        if not given it will default to f"outputs/data/green_skill_lists/{date_stamp}"
     ----------
     Methods
     ----------
@@ -42,10 +44,7 @@ class GreenMeasures(object):
             you can also pass a skill list to avoid re-extracting skills.
     """
 
-    def __init__(
-        self,
-        config_name: str = "base",
-    ):
+    def __init__(self, config_name: str = "base", skills_output_folder: str = ""):
         # Set variables from the config file
         if ".yaml" not in config_name:
             config_name += ".yaml"
@@ -71,9 +70,10 @@ class GreenMeasures(object):
             "green_skills_classifier_model_file"
         ]
 
-        date_stamp = str(date.today().date()).replace("-", "")
+        if not skills_output_folder:
+            date_stamp = str(date.today().date()).replace("-", "")
+            skills_output_folder = f"outputs/data/green_skill_lists/{date_stamp}"
 
-        skills_output_folder = f"outputs/data/green_skill_lists/{date_stamp}"
         if self.load_skills:
             self.skills_output = self.config["skills"]["skills_output"]
         else:
@@ -98,6 +98,11 @@ class GreenMeasures(object):
             self.green_tax_embedding_path = os.path.join(
                 skills_output_folder, "green_esco_embeddings.json"
             )
+
+        # Where to output the mappings of skills to all of ESCO (not just green)
+        self.skill_mappings_output_path = os.path.join(
+            skills_output_folder, "full_esco_skill_mappings.json"
+        )
 
         # Input job advert data config variables
         self.job_id_key = self.config["job_adverts"]["job_id_key"]
@@ -140,6 +145,7 @@ class GreenMeasures(object):
             job_id_key=self.job_id_key,
             skill_embeddings_output_path=self.skill_embeddings_output,
             load_skills_embeddings=self.load_skills_embeddings,
+            skill_mappings_output_path=self.skill_mappings_output_path,
         )
 
         return prop_green_skills
