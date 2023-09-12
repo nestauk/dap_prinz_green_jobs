@@ -4,6 +4,9 @@ from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs.pipeline.green_measures.skills.green_skill_classifier import (
     GreenSkillClassifier,
 )
+from dap_prinz_green_jobs.pipeline.green_measures.skills.map_skills_utils import (
+    map_esco_skills,
+)
 
 from ojd_daps_skills.pipeline.extract_skills.extract_skills import ExtractSkills
 from ojd_daps_skills.pipeline.skill_ner.ner_spacy import JobNER
@@ -183,10 +186,37 @@ class SkillMeasures(object):
 
         if load:
             logger.info(f"Loading skill embeddings from {output_path}")
-            self.all_extracted_skills_embeddings_dict = load_s3_data(
+            loaded_extracted_skills_embeddings_dict = load_s3_data(
                 BUCKET_NAME,
                 output_path,
             )
+            # Are there any skill embeddings not given in this download?
+            needed_embeddings = list(
+                set(skills_list).difference(
+                    set(loaded_extracted_skills_embeddings_dict.keys())
+                )
+            )
+            if len(needed_embeddings) != 0:
+                logger.info(
+                    f"Calculating skill embeddings for {len(needed_embeddings)} skills"
+                )
+                new_extracted_skills_embeddings_dict = get_embeddings(needed_embeddings)
+
+                self.all_extracted_skills_embeddings_dict = (
+                    loaded_extracted_skills_embeddings_dict.update(
+                        new_extracted_skills_embeddings_dict
+                    )
+                )
+                self.all_extracted_skills_embeddings_dict = {
+                    k: v
+                    for k, v in self.all_extracted_skills_embeddings_dict.items()
+                    if k in set(skills_list)
+                }
+            else:
+                self.all_extracted_skills_embeddings_dict = (
+                    loaded_extracted_skills_embeddings_dict
+                )
+
         else:
             logger.info(f"Calculating skill embeddings for {len(skills_list)} skills")
 
@@ -352,6 +382,7 @@ class SkillMeasures(object):
         job_id_key: str = "id",
         skill_embeddings_output_path: str = "",
         load_skills_embeddings: bool = False,
+        skill_mappings_output_path: str = "",
     ):
         """
         Get skills measures for a list of job adverts.
@@ -365,6 +396,7 @@ class SkillMeasures(object):
             job_id_key (str): the key for the job advert id
             skill_embeddings_output_path (str): The output path if you want to save/load the embeddings
             load_skills_embeddings (bool): If you want to load embeddings from output_path (True) or create them again (False)
+            skill_mappings_output_path (str): The location to save all the skill mapped to all of ESCO (not just green)
         Returns:
             dict: A dictionary of job advert ids and green measures information
         """
@@ -414,5 +446,20 @@ class SkillMeasures(object):
             all_extracted_green_skills_dict=all_extracted_green_skills_dict,
             job_benefits_dict=job_benefits_dict,
         )
+
+        if skill_mappings_output_path:
+            logger.info(
+                "Calculating the similar ESCO skills from the full ESCO taxonomy"
+            )
+
+            # Map the newly extracted skills to all the ESCO skills taxonomy
+            all_extracted_skills_dict = map_esco_skills(
+                unique_skills_list, all_extracted_skills_embeddings_dict
+            )
+            save_to_s3(
+                BUCKET_NAME,
+                all_extracted_skills_dict,
+                skill_mappings_output_path,
+            )
 
         return prop_green_skills
