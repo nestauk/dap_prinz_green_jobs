@@ -1,5 +1,5 @@
 """
-Class to extract company descriptions and map them SIC codes.
+Class to extract company descriptions and map them to SIC codes.
 
 Usage:
 
