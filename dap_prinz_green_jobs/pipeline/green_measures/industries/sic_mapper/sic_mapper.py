@@ -3,7 +3,7 @@ Class to extract company descriptions and map them to SIC codes.
 
 Usage:
 
-    job_ads = {'id': 1, 'company_name': GreenJobs, 'job_text:' 'We are looking for a data scientist to join our team at Green Jobs.'}
+    job_ads = {'id': 1, 'company_name': Google, 'job_text:' 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
     sm = SicMapper()
     sm.load() # load relevant models, tokenizers and datasets
     sic_code = sm.get_sic_code(job_ads) # get SIC codes for job adverts
