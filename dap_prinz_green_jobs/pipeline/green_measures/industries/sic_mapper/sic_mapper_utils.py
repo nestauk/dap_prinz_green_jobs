@@ -113,7 +113,7 @@ def find_majority_sic(input_sics: List[str]) -> Union[List[str], List[None]]:
 
     # if its greater than 0
     if len(top_sic_codes) > 0:
-        clean_sic_code = clean_sic_code(top_sic_codes[0])  # assuming order
-        return clean_sic_code
+        top_sic_code = clean_sic_code(top_sic_codes[0])  # assuming order
+        return top_sic_code
     else:
         return None
