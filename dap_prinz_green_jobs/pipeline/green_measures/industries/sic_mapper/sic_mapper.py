@@ -1,5 +1,5 @@
 """
-Class to extract company descriptions and map them to SIC codes.
+Class to extract company descriptions and map them to up to a 4-digit SIC code.
 
 Usage:
 
@@ -127,6 +127,7 @@ class SicMapper(object):
         self.sic_comp_desc_path = self.config["industries"]["sic_comp_desc_path"]
         self.k = self.config["industries"]["k"]
         self.sim_threshold = self.config["industries"]["sim_threshold"]
+        self.sic_levels = self.config["industries"]["sic_levels"]
         self.sic_db = self.config["industries"]["sic_db"]
         # load relevant information for BertVectorizer
         self.multi_process = self.config["industries"]["multi_process"]
@@ -216,6 +217,7 @@ class SicMapper(object):
         Returns:
             List[Dict[str, str]]: A job advert with a pre-processed job description.
         """
+        logger.info(f"preprocessing {len(job_adverts)} job adverts...")
         preprocessed_job_adverts = []
         for job_advert in job_adverts:
             job_description_clean = tc.clean_text(job_advert[self.job_description_key])
@@ -246,7 +248,6 @@ class SicMapper(object):
             f"Extracting company descriptions from {len(preprocessed_job_adverts)} job adverts..."
         )
         company_descriptions = []
-
         for job_advert in tqdm(preprocessed_job_adverts):
             company_description = ""
             for sentence in job_advert[f"{self.job_description_key}_sentences"]:
@@ -255,7 +256,7 @@ class SicMapper(object):
                 ):  # Only predict on reasonable length sentences
                     pred = self.company_description_classifier(sentence)[0]
                     if pred["label"] == "LABEL_1":
-                        company_description += sentence + "."
+                        company_description += f"{sentence}. "
 
             company_descriptions.append(
                 {
@@ -291,46 +292,48 @@ class SicMapper(object):
         comp_embeds = self.bert_model.transform(list(comps_to_embed.values()))
         comp_embeds_dict = dict(zip(list(comps_to_embed.keys()), comp_embeds))
 
-        # here, we may want to update the comp_desc_emb_mapper with the new embeddings
-        # to save for later - to deal with next sprint when we focus on speed
-
         return comp_embeds_dict
 
-    def predict_sic_code(self, company_embedding: np.ndarray) -> List[str]:
-        """Predicts the SIC code for a company description embedding.
+    def predict_sic_code(self, company_embedding: np.ndarray) -> Union[str, None]:
+        """Predicts the majority SIC code at a given level for a company description embedding.
 
         Args:
             company_embedding (str): An embedding of a company description.
 
         Returns:
-            List[str]: The predicted SIC code(s).
+            Union[str, None]: The predicted SIC code or None if not found.
         """
-        D, I = self.sic_db.search(np.array([company_embedding]), self.k)  # search
+
+        _vector = np.array([company_embedding])
+        faiss.normalize_L2(_vector)
+
+        D, I = self.sic_db.search(_vector, self.k)  # search
 
         closest_distance = D[0][0]
         top_k_indices, top_k_distances = I[0], D[0]
 
-        # convert to similarity score
-        sim_score = su.convert_faiss_distance_to_score(closest_distance)
-
-        if sim_score > self.sim_threshold:
+        if closest_distance > self.sim_threshold:
             sic_code_indx = top_k_indices[0]
             sics = self.sic_company_desc_dict[sic_code_indx]["sic_code"]
-            sic_clean = [str(code).strip() for code in sics]
-            # as some of the same sic definitions have multiple sic codes,
-            # we just take the first one
-            sic_code = sic_clean[0]
+            sic_code = [str(code).strip() for code in sics][0]
         else:
             std = np.std(D)
-            std_threshold = (
-                closest_distance + 2 * std
-            )  # use a std threshold instead of a similarity threshold
-            top_k = len([d for d in top_k_distances if d < std_threshold])
+            std_threshold = closest_distance + 2 * std  # Use a std threshold
+            top_dists = [d for d in top_k_distances if d < std_threshold]
             top_sics = su.convert_indx_to_sic(
-                top_k_indices[:top_k], self.sic_company_desc_dict
+                top_k_indices[: len(top_dists)], self.sic_company_desc_dict
             )
 
-            sic_code = su.find_majority_sic(top_sics)
+            # find the majority sic at sic levels 2-,3- and 4-
+            top_candidate_sics = [
+                su.find_majority_sic(top_sics, lvl) for lvl in self.sic_levels
+            ]
+            all_maj_sics = {k: v for d in top_candidate_sics for k, v in d.items()}
+
+            # for now, get the sic code with the highest count across levels
+            sic_code = sorted(all_maj_sics.items(), key=lambda x: x[1], reverse=True)[
+                0
+            ][0]
 
         return sic_code
 

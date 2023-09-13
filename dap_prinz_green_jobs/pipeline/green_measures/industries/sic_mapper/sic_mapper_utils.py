@@ -2,8 +2,16 @@
 Functions and variables to map company descriptions
     to SIC codes.
 """
-from typing import List, Dict, Union
-import itertools
+from typing import List, Dict
+from dap_prinz_green_jobs.getters.industry_getters import load_sic
+
+sic_data = load_sic()
+sic_to_section = {
+    str(k).strip(): v.strip()
+    for k, v in dict(
+        zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
+    ).items()
+}
 
 
 def clean_sic_code(sic_code: str) -> str:
@@ -19,7 +27,9 @@ def clean_sic_code(sic_code: str) -> str:
         sic_code = str(sic_code)
 
     if sic_code.isdigit():
-        if len(sic_code) == 4:
+        if len(sic_code) == 1:
+            return f"0{sic_code}"
+        elif len(sic_code) == 4:
             return f"{sic_code}0"
         else:
             return sic_code
@@ -44,76 +54,70 @@ def convert_indx_to_sic(
     return [str(i[0]).strip() for i in top_sic_codes]
 
 
-def convert_faiss_distance_to_score(faiss_distance: float) -> float:
-    """Converts a faiss distance to a
-    similarity score between 0 and 1.
+def add_sic_section(
+    sic_codes: List[str], sic_section_dict: Dict[str, str] = sic_to_section
+) -> List[str]:
+    """Adds the SIC section to the SIC code.
 
     Args:
-        faiss_distance (float): Distance
+        sic_codes (List[str, str]): List of SIC codes
+        sic_section (Dict[str,str]): Dictionary of SIC sections
 
     Returns:
-        float: Similarity score
+        List[str]: List of SIC codes with sections
     """
-    return 1 / (1 + faiss_distance)
 
+    if not isinstance(sic_codes, list):
+        sic_codes = [sic_codes]
 
-def longest_common_prefix(str1: str, str2: str) -> str:
-    """Finds the longest common prefix between two strings.
-
-    Args:
-        str1 (str): the first string
-        str2 (str): the second string
-
-    Returns:
-        str: the longest common prefix between
-            the two strings
-    """
-    common_prefix = []
-
-    if not isinstance(str1, str) or not isinstance(str2, str):
-        str1, str2 = str(str1), str(str2)
-
-    # Find the minimum length of the two strings
-    min_len = min(len(str1), len(str2))
-
-    # Iterate through the characters of both strings up to the minimum length
-    for i in range(min_len):
-        if str1[i] == str2[i]:
-            common_prefix.append(str1[i])
+    sic_code_section = []
+    for sic_code in sic_codes:
+        if sic_code.isdigit():
+            sic_section = sic_section_dict.get(sic_code)
+            if sic_section:
+                sic_code_section.append(f"{str(sic_section).strip()}{sic_code}")
+            else:
+                sic_code_section.append(str(sic_code))
         else:
-            break
+            sic_code_section.append(str(sic_code))
 
-    return common_prefix
+    return sic_codes
 
 
-# triple check that the majority sic codes are ordered i.e. closest first
-def find_majority_sic(input_sics: List[str]) -> Union[List[str], List[None]]:
-    """Finds the majority SIC codes from a list of SIC codes.
+def find_majority_sic(input_list: List[str], length: int) -> Dict[str, int]:
+    """Finds the majority SIC code, weighted by distance.
 
     Args:
-        input_sics (List[str]): The list of SIC codes
+        input_list (List[str]): List of SIC codes
+        length (int): Length of SIC code to count
 
     Returns:
-        Union[List[str], List[None]]: The majority SIC codes
+        Dict[str, int]: Dictionary of SIC codes and weighted counts
     """
-    # generate all possible unique combinations of the SIC codes
-    # of length 2
-    sic_combos = list(set(list(itertools.combinations(input_sics, 2))))
+    if not input_list or length <= 0:
+        return {}
 
-    # identify the longest common prefix between each combination
-    sic_dists = [longest_common_prefix(sic1, sic2) for sic1, sic2 in sic_combos]
+    subelement_count = {}
+    current_subelement = None
 
-    # get the longest common prefix
-    dist_len = 0
-    for dist in sic_dists:
-        if len(dist) > dist_len:
-            dist_len = len(dist)
+    # add SIC sections and convert distances to scores to weigh
+    input_sics_sections = add_sic_section(input_list)
 
-    top_sic_codes = ["".join(sic) for sic in sic_dists if len(sic) == dist_len]
+    for element in input_sics_sections:
+        if len(element) >= length:
+            substring = element[:length]
+            if substring != current_subelement:
+                if substring in subelement_count:
+                    subelement_count[substring] += 1
+                else:
+                    subelement_count[substring] = 1
+                current_subelement = substring
 
-    # if its greater than 0
-    if len(top_sic_codes) > 0:
-        top_sic_code = clean_sic_code(top_sic_codes[0])  # assuming order
-        return top_sic_code
-    else:
-        return None
+    sorted_substring_count = {
+        k: v
+        for k, v in sorted(
+            subelement_count.items(), key=lambda item: item[1], reverse=True
+        )
+    }
+
+    return sorted_substring_count

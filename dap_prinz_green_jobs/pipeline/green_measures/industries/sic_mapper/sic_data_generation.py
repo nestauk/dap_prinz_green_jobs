@@ -1,7 +1,6 @@
 """
 This one-off script generates a SIC dataset to map to that uses
-LLMs to describe SIC codes as company descriptions. It also creates
-and saves a faiss index of SIC company descriptions.
+LLMs to describe SIC codes as company descriptions.
 
 python dap_prinz_green_jobs/pipeline/green_measures/industries/sic_mapper/sic_data_processing.py --production
 """
@@ -25,17 +24,11 @@ from typing import Tuple, Dict
 from tqdm import tqdm
 from argparse import ArgumentParser
 from datetime import datetime
-import yaml
 
 from dap_prinz_green_jobs import logger, BUCKET_NAME, PROJECT_DIR
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
-
-# load config
-config_path = os.path.join(PROJECT_DIR, "dap_prinz_green_jobs/config/base.yaml")
-with open(config_path, "r") as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
 
 load_dotenv()  # load the openAI key
 
@@ -166,7 +159,7 @@ if __name__ == "__main__":
     # let's get the sic names that are unique to generate
     # company descriptions for
     logger.info(
-        "Generating company descriptions for SIC codes...This will take a while"
+        "Generating company descriptions for SIC codes...This will take an hour is production"
     )
     sic_names_unique = sic_df_grouped.sic_name.str.lower().tolist()
     # here if production is false, we will only generate company descriptions for sic codes of
@@ -208,31 +201,3 @@ if __name__ == "__main__":
         sic_df_grouped_dict,
         f"outputs/data/green_industries/{date_today}_sic_company_descriptions_dict_production_{production}_chunksize_{chunk_size}.json",
     )
-
-    logger.info("creating and saving FAISS index...")
-    bert_model_name = f"sentence-transformers/{config['industries']['bert_model_name']}"
-    bert_model = BertVectorizer(
-        bert_model_name=bert_model_name,
-        multi_process=config["industries"]["multi_process"],
-    ).fit()
-    sic_embeds = bert_model.transform(
-        list(sic_df_grouped.sic_company_description.tolist())
-    )
-
-    d = sic_embeds.shape[1]  # define the dimensionality of the vectors
-    # lets just use brute force L2 for now
-    llm_index = faiss.IndexFlatL2(d)
-    llm_index.add(sic_embeds)  # add vectors to the index
-
-    faiss_index_path = f"{config['job_adverts']['data_folder_name']}/green_industries"
-    full_faiss_index_path = os.path.join(
-        faiss_index_path,
-        f"{date_today}_sic_company_descriptions_faiss_index_production_{production}_chunksize_{chunk_size}.index",
-    )
-    save_to_s3(BUCKET_NAME, llm_index, full_faiss_index_path)
-
-    # if it doesn't exist, create it
-    if not os.path.exists(faiss_index_path):
-        logger.info(f"{faiss_index_path} directory does not exist. Creating it now...")
-        os.makedirs(faiss_index_path)
-    faiss.write_index(llm_index, full_faiss_index_path)

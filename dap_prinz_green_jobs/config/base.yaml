@@ -40,4 +40,5 @@ industries:
   model_path: "ihk/jobbert-base-cased-compdecs"
   bert_model_name: "all-MiniLM-L6-v2"
   k: 100
-  sim_threshold: 0.65
+  sim_threshold: 0.55
+  sic_levels: [2, 3, 4]
