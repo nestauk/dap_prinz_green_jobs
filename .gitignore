@@ -108,7 +108,10 @@ target/
 # exclude /inputs and /outputs/data except top-level markdown
 /inputs/*
 !/inputs/*.md
-/outputs/data/*
+/outputs/data/green_industries/*.json
+/outputs/data/green_industries/*.csv
+/outputs/data/*.json
+/outputs/data/*.csv
 /outputs/figures/*
 !/outputs/data/*.md
 /outputs/models/*
