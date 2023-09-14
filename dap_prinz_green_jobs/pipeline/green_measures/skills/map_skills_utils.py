@@ -13,15 +13,18 @@ from ojd_daps_skills.pipeline.skill_ner_mapping.skill_ner_mapper_utils import (
     get_most_common_code,
 )
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
+from dap_prinz_green_jobs.utils.processing import list_chunks
+from dap_prinz_green_jobs import logger
 
-import re
-import time
-import itertools
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
-import os
+from tqdm import tqdm
 
+import os
+import re
+import time
+import itertools
 import ast
 
 
@@ -153,7 +156,6 @@ def map_esco_skills(
         "hier_types": ["level_2", "level_3"],
     }
     skill_types = skill_type_dict.get("skill_types", [])
-    skill_hashes_filtered = dict(zip(range(len(skill_ents)), skill_ents))
     skill_name_col = "description"
     skill_id_col = "id"
     skill_hier_info_col = "hierarchy_levels"
@@ -186,97 +188,118 @@ def map_esco_skills(
         for embed_indx, embedding in saved_taxonomy_embeds.items()
     }
 
-    clean_ojo_skill_embeddings = list(all_extracted_skills_embeddings_dict.values())
+    all_clean_ojo_skill_embeddings = list(all_extracted_skills_embeddings_dict.values())
 
-    # -----------------------------------------------------------------------
-    # THE FOLLOWING IS COPIED FROM `skill_ner_mapper.py` (with self. removed)
-    # -----------------------------------------------------------------------
-
-    tax_skills_ix = taxonomy_skills[
-        taxonomy_skills[skill_type_col].isin(skill_types)
-    ].index
-
-    (skill_top_sim_indxs, skill_top_sim_scores) = get_top_comparisons(
-        clean_ojo_skill_embeddings,
-        [taxonomy_skills_embeddings_dict[i] for i in tax_skills_ix],
-        match_sim_thresh=0.5,
+    # NEW Chunk up skills to match to since otherwise it takes too much memory
+    chunk_size = 5000
+    logger.info(
+        f"Finding most similar ESCO skills for {len(all_clean_ojo_skill_embeddings)} skills in chunks of {chunk_size}"
     )
 
-    # Find the closest matches to the hierarchy levels information
-    hier_types = {i: v for i, v in enumerate(skill_type_dict.get("hier_types", []))}
-    hier_types_top_sims = {}
-    for hier_type_num, hier_type in hier_types.items():
-        taxonomy_skills_ix = taxonomy_skills[
-            taxonomy_skills[skill_type_col] == hier_type
-        ].index
-        top_sim_indxs, top_sim_scores = get_top_comparisons(
-            clean_ojo_skill_embeddings,
-            [taxonomy_skills_embeddings_dict[i] for i in taxonomy_skills_ix],
-        )
-        hier_types_top_sims[hier_type_num] = {
-            "top_sim_indxs": top_sim_indxs,
-            "top_sim_scores": top_sim_scores,
-            "taxonomy_skills_ix": taxonomy_skills_ix,
-        }
+    skill_ents_chunks = list_chunks(skill_ents, chunk_size=chunk_size)
+    all_clean_ojo_skill_embeddings_chunks = list_chunks(
+        all_clean_ojo_skill_embeddings, chunk_size=chunk_size
+    )
 
-    # Output the top matches (using the different metrics) for each OJO skill
-    # Need to match indexes back correctly (hence all the ix variables)
     skill_mapper_list = []
-    for i, (match_i, match_text) in enumerate(skill_hashes_filtered.items()):
-        # Top highest matches (any threshold)
-        match_results = {
-            "ojo_skill_id": match_i,
-            "ojo_ner_skill": match_text,
-            "top_tax_skills": list(
-                zip(
-                    [
-                        taxonomy_skills.iloc[tax_skills_ix[top_ix]][skill_name_col]
-                        for top_ix in skill_top_sim_indxs[i]
-                    ],
-                    [
-                        taxonomy_skills.iloc[tax_skills_ix[top_ix]][skill_id_col]
-                        for top_ix in skill_top_sim_indxs[i]
-                    ],
-                    skill_top_sim_scores[i],
-                )
-            ),
-        }
-        # Using the top matches, find the most common codes for each level of the
-        # hierarchy (if hierarchy details are given), weighted by their similarity score
-        if skill_hier_info_col:
-            high_hier_codes = []
-            for sim_ix, sim_score in zip(
-                skill_top_sim_indxs[i], skill_top_sim_scores[i]
-            ):
-                tax_info = taxonomy_skills.iloc[tax_skills_ix[sim_ix]]
-                if tax_info[skill_hier_info_col]:
-                    hier_levels = tax_info[skill_hier_info_col]
-                    for hier_level in hier_levels:
-                        high_hier_codes += [hier_level] * round(sim_score * 10)
-            high_tax_skills_results = {}
-            for hier_level in range(num_hier_levels):
-                high_tax_skills_results[
-                    "most_common_level_" + str(hier_level)
-                ] = get_most_common_code(high_hier_codes, hier_level)
-            if high_tax_skills_results:
-                match_results["high_tax_skills"] = high_tax_skills_results
-        # Now get the top matches using the hierarchy descriptions (if hier_types isnt empty)
+    for skill_ents_chunk, clean_ojo_skill_embeddings in tqdm(
+        zip(skill_ents_chunks, all_clean_ojo_skill_embeddings_chunks)
+    ):
+        skill_hashes_filtered = dict(
+            zip(range(len(skill_ents_chunk)), skill_ents_chunk)
+        )
+
+        # -----------------------------------------------------------------------
+        # THE FOLLOWING IS COPIED FROM `skill_ner_mapper.py` (with self. removed)
+        # -----------------------------------------------------------------------
+
+        tax_skills_ix = taxonomy_skills[
+            taxonomy_skills[skill_type_col].isin(skill_types)
+        ].index
+
+        (skill_top_sim_indxs, skill_top_sim_scores) = get_top_comparisons(
+            clean_ojo_skill_embeddings,
+            [taxonomy_skills_embeddings_dict[i] for i in tax_skills_ix],
+            match_sim_thresh=0.5,
+        )
+
+        # Find the closest matches to the hierarchy levels information
+        hier_types = {i: v for i, v in enumerate(skill_type_dict.get("hier_types", []))}
+        hier_types_top_sims = {}
         for hier_type_num, hier_type in hier_types.items():
-            hier_sims_info = hier_types_top_sims[hier_type_num]
-            taxonomy_skills_ix = hier_sims_info["taxonomy_skills_ix"]
-            tax_info = taxonomy_skills.iloc[
-                taxonomy_skills_ix[hier_sims_info["top_sim_indxs"][i][0]]
-            ]
-            match_results["top_" + hier_type + "_tax_level"] = (
-                tax_info[skill_name_col],
-                tax_info[skill_id_col],
-                hier_sims_info["top_sim_scores"][i][0],
+            taxonomy_skills_ix = taxonomy_skills[
+                taxonomy_skills[skill_type_col] == hier_type
+            ].index
+            top_sim_indxs, top_sim_scores = get_top_comparisons(
+                clean_ojo_skill_embeddings,
+                [taxonomy_skills_embeddings_dict[i] for i in taxonomy_skills_ix],
             )
-        skill_mapper_list.append(match_results)
+            hier_types_top_sims[hier_type_num] = {
+                "top_sim_indxs": top_sim_indxs,
+                "top_sim_scores": top_sim_scores,
+                "taxonomy_skills_ix": taxonomy_skills_ix,
+            }
+
+        # Output the top matches (using the different metrics) for each OJO skill
+        # Need to match indexes back correctly (hence all the ix variables)
+        # skill_mapper_list = []
+        for i, (match_i, match_text) in enumerate(skill_hashes_filtered.items()):
+            # Top highest matches (any threshold)
+            match_results = {
+                "ojo_skill_id": match_i,  # Not important
+                "ojo_ner_skill": match_text,
+                "top_tax_skills": list(
+                    zip(
+                        [
+                            taxonomy_skills.iloc[tax_skills_ix[top_ix]][skill_name_col]
+                            for top_ix in skill_top_sim_indxs[i]
+                        ],
+                        [
+                            taxonomy_skills.iloc[tax_skills_ix[top_ix]][skill_id_col]
+                            for top_ix in skill_top_sim_indxs[i]
+                        ],
+                        skill_top_sim_scores[i],
+                    )
+                ),
+            }
+            # Using the top matches, find the most common codes for each level of the
+            # hierarchy (if hierarchy details are given), weighted by their similarity score
+            if skill_hier_info_col:
+                high_hier_codes = []
+                for sim_ix, sim_score in zip(
+                    skill_top_sim_indxs[i], skill_top_sim_scores[i]
+                ):
+                    tax_info = taxonomy_skills.iloc[tax_skills_ix[sim_ix]]
+                    if tax_info[skill_hier_info_col]:
+                        hier_levels = tax_info[skill_hier_info_col]
+                        for hier_level in hier_levels:
+                            high_hier_codes += [hier_level] * round(sim_score * 10)
+                high_tax_skills_results = {}
+                for hier_level in range(num_hier_levels):
+                    high_tax_skills_results[
+                        "most_common_level_" + str(hier_level)
+                    ] = get_most_common_code(high_hier_codes, hier_level)
+                if high_tax_skills_results:
+                    match_results["high_tax_skills"] = high_tax_skills_results
+            # Now get the top matches using the hierarchy descriptions (if hier_types isnt empty)
+            for hier_type_num, hier_type in hier_types.items():
+                hier_sims_info = hier_types_top_sims[hier_type_num]
+                taxonomy_skills_ix = hier_sims_info["taxonomy_skills_ix"]
+                tax_info = taxonomy_skills.iloc[
+                    taxonomy_skills_ix[hier_sims_info["top_sim_indxs"][i][0]]
+                ]
+                match_results["top_" + hier_type + "_tax_level"] = (
+                    tax_info[skill_name_col],
+                    tax_info[skill_id_col],
+                    hier_sims_info["top_sim_scores"][i][0],
+                )
+            skill_mapper_list.append(match_results)
 
     # -----------------------------------------------------------------------
     # THE FOLLOWING IS NEW
     # -----------------------------------------------------------------------
+
+    logger.info("Getting final matches")
 
     hier_name_mapper = load_s3_data(
         "open-jobs-lake",
