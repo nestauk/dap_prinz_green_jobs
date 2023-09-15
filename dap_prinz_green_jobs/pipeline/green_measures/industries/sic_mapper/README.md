@@ -20,7 +20,7 @@ To map job adverts to SIC codes, you can use the `SicMapper` class in `sic_mappe
 ```
 from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper import SicMapper
 
-job_ad = {'id': 1, 'company_name': "Google", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+job_ad = {'id': 1, 'company_name': "Company A", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
 
 sm = SicMapper()
 sm.load() # load relevant models, tokenizers and datasets
