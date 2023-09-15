@@ -1,5 +1,5 @@
 """
-This one-off script generates a SIC dataset to map to that uses
+This one-off script generates a SIC dataset and embeddings to map to that uses
 LLMs to describe SIC codes as company descriptions.
 
 python dap_prinz_green_jobs/pipeline/green_measures/industries/sic_mapper/sic_data_generation.py --production
@@ -27,6 +27,8 @@ from datetime import datetime
 from dap_prinz_green_jobs import logger, BUCKET_NAME, PROJECT_DIR
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
+import yaml
+
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
 
 load_dotenv()  # load the openAI key
@@ -40,6 +42,11 @@ if not os.getenv("OPENAI_API_KEY"):
 # let's use a chat model with a larger context window to 'stuff' in
 # the SIC code list chunks via prompting
 chat_model = ChatOpenAI(model="gpt-3.5-turbo-16k")
+
+# load config
+config_path = os.path.join(PROJECT_DIR, "dap_prinz_green_jobs/config/base.yaml")
+with open(config_path, "r") as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 
 def _create_prompt() -> ChatPromptTemplate:
@@ -192,7 +199,7 @@ if __name__ == "__main__":
     sic_df_grouped.dropna(subset=["sic_company_description"], inplace=True)
     sic_df_grouped_dict = sic_df_grouped.to_dict(orient="records")
 
-    logger.info("saving curated SIC dataset and dictionary...")
+    logger.info("saving curated SIC dataset, SIC embedding and dictionary...")
     date_today = datetime.today().strftime("%Y-%m-%d").replace("-", "")
     sic_comp_desc_path = f"s3://{BUCKET_NAME}/outputs/data/green_industries/{date_today}_sic_company_descriptions_production_{production}_chunksize_{chunk_size}.csv"
     sic_df_grouped.to_csv(sic_comp_desc_path, index=False)
@@ -200,4 +207,23 @@ if __name__ == "__main__":
         BUCKET_NAME,
         sic_df_grouped_dict,
         f"outputs/data/green_industries/{date_today}_sic_company_descriptions_dict_production_{production}_chunksize_{chunk_size}.json",
+    )
+
+    bert_model_name = f"sentence-transformers/{config['industries']['bert_model_name']}"
+    bert_model = BertVectorizer(
+        bert_model_name=bert_model_name,
+        multi_process=config["industries"]["multi_process"],
+    ).fit()
+
+    sic_embeds = bert_model.transform(
+        list(sic_df_grouped.sic_company_description.tolist())
+    )
+    # save the embeddings to s3
+    sic_comp_desc_embeds_path = config["industries"]["sic_comp_desc_embeds_path"]
+    data_outputs_path = config["job_adverts"]["data_folder_name"]
+
+    save_to_s3(
+        BUCKET_NAME,
+        sic_embeds,
+        os.path.join(data_outputs_path, "green_industries", sic_comp_desc_embeds_path),
     )

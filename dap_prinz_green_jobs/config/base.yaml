@@ -36,9 +36,9 @@ industries:
   multi_process: False
   local: False
   sic_comp_desc_path: "20230911_sic_company_descriptions_dict_production_True_chunksize_50.json"
-  sic_db: "20230911_sic_company_descriptions_faiss_index_production_True_chunksize_50.index"
+  sic_comp_desc_embeds_path: "20230911_sic_company_descriptions_embeds_production_True_chunksize_50.json"
   model_path: "ihk/jobbert-base-cased-compdecs"
   bert_model_name: "all-MiniLM-L6-v2"
   k: 100
-  sim_threshold: 0.55
+  sim_threshold: 0.48
   sic_levels: [2, 3, 4]

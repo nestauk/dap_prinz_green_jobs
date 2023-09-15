@@ -1,6 +1,5 @@
 """
-Functions and variables to clean up industries
-    data.
+Functions and variables to clean up industries data.
 """
 from typing import List, Dict
 import re
@@ -8,30 +7,6 @@ import re
 from dap_prinz_green_jobs.getters.industry_getters import (
     load_industry_ghg,
     load_industry_ghg_intensity,
-)
-
-# Found using the most common words in CH data
-company_stop_words = set(
-    [
-        "limited",
-        "inc",
-        "llc",
-        "ltd",
-        "apps",
-        "co",
-        "the",
-        "services",
-        "management",
-        "company",
-        "uk",
-        "c",
-        "llp",
-        "lp",
-        "international",
-        "group",
-        "cic",
-        "plc",
-    ]
 )
 
 sic_ghg_per_unit_cleaner = {
@@ -80,70 +55,6 @@ def create_section_dict(data):
     data.columns = data.iloc[0]
     data = data.iloc[1:]
     return dict(zip(data["SIC 2007 section code"], data[2019]))
-
-
-def clean_sic(sic_name: str) -> str:
-    """Cleans the SIC code.
-
-    Args:
-        sic_name (str): The SIC code
-
-    Returns:
-        str: The cleaned SIC code
-    """
-
-    if not isinstance(sic_name, str):
-        sic_name = str(sic_name)
-
-    if sic_name:
-        sic = str(sic_name.split(" - ")[0])
-        if len(sic) == 4:
-            return "0" + sic
-        else:
-            return sic
-    else:
-        return None
-
-
-def clean_company_name(
-    name: str,
-    word_mapper: dict = {},
-    company_stop_words: set = company_stop_words,
-) -> str:
-    """Clean the company name so it can be matched across datasets
-
-    There is lots of different ways to write company names, so this normalises
-    across datasets for matching. e.g. "Apple ltd." and "apple limited"
-
-    :param name: A company name
-    :type: str
-    :param word_mapper: A dict of words to replace with others (e.g. {"ltd": "limited"})
-    :type: dict
-    :param company_stop_words: words to be removed from the name
-    :type: set
-    :return: A cleaned company name
-    :rtype: str
-    """
-
-    if name:
-        name = str(name)
-        name = re.sub(r"[^\w\s]", "", name)
-        name = " ".join(name.split())  # sort out double spaces and trailing spaces
-        name = name.lower()
-
-        name_words = name.split()
-        words = [
-            word_mapper.get(word, word)
-            for word in name_words
-            if word not in company_stop_words
-        ]
-
-        name = " ".join(words)
-
-        return name
-    else:
-        return None
-
 
 def get_ghg_sic(sic, ghg_emissions_dict: Dict[str, float]):
     """

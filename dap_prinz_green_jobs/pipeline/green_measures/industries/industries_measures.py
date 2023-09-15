@@ -15,33 +15,27 @@ from dap_prinz_green_jobs.getters.industry_getters import (
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     create_section_dict,
     get_clean_ghg_data,
-    clean_company_name,
     clean_sic,
-    get_ghg_sic,
 )
 
 
 class IndustryMeasures(object):
     """
     Class to extract industry measures for a given job advert or list of job adverts.
-    Currently just based off the company name field.
-
     ----------
     Methods
     ----------
-    get_measures(job_advert, company_name_key):
+    get_measures(job_advert):
         for a given job advert (dict) or list of job adverts (list of dicts), extract the industry-level green measures.
-
+        
     ----------
     Usage
     ----------
+    job_ad = {}
+    
     im = IndustryMeasures()
-    im.load_ch()
-    im.get_green_measure_for_company("Boots")
-
-    or
-    im.get_measures(job_advert= [{'description': 'We are looking for a sales ...', 'company_name': 'Boots'}], company_name_key='company_name')
-
+    
+    im.get_measures("Boots")
     """
 
     def __init__(
@@ -73,44 +67,6 @@ class IndustryMeasures(object):
         self.sic_section_2_prop_workers_20 = create_section_dict(
             load_green_tasks_prop_workers_20()
         )
-
-    def load_ch(self):
-        """
-        Keep this separate from init since it takes a while to load
-        """
-        # Dictionary of company names and companies house SIC data
-        self.ojo_companies_house_dict = load_companies_house_dict()
-
-    def get_ch_sic(
-        self,
-        cleaned_name: str,
-    ) -> str:
-        """
-        Pick one 5 digit SIC for each cleaned name using the Companies House data.
-        If there are multiple SICs given for a name then pick one randomly.
-
-        TO DO: Pick based off semantic similarity?
-
-        :type companies_house_cleaned_in_ojo_dict: dict
-
-        :param cleaned_name: The cleaned company name
-        :type cleaned_name: str
-
-        :return: A SIC or None
-        :rtype: str or None
-
-        """
-        companies_house_data = self.ojo_companies_house_dict.get(cleaned_name)
-        if companies_house_data:
-            sic_options = [
-                c["SICCode.SicText_1"]
-                for c in companies_house_data
-                if c["SICCode.SicText_1"]
-            ]
-            random.seed(42)
-            return random.choice(sic_options)
-        else:
-            return None
 
     def get_green_measure_for_company(
         self,
