@@ -49,6 +49,8 @@ def clean_sic(sic_name: str) -> str:
     Returns:
         str: The cleaned SIC code
     """
+    if sic_name is None:
+        return None
 
     if not isinstance(sic_name, str):
         sic_name = str(sic_name)
@@ -103,9 +105,8 @@ def clean_company_name(
         return None
 
 
-# We can modify this slightly to not neet to get SIC options
-# when we use a company name to SIC mapper instead of
-# companies house data
+# We can modify this slightly when we use a company name to SIC mapper
+# instead of companies house data
 def get_ch_sic(company_name: str, ojo_companies_house_dict: Dict) -> str:
     """
     Pick the first 5 digit SIC for each cleaned name

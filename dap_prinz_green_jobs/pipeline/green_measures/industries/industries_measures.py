@@ -1,20 +1,50 @@
 """
 Industries Measures class to extract industry measures for a given job advert or list of job adverts.
-"""
-import random
-from typing import List, Union, Dict
 
+Usage:
+
+    from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures
+
+    job_ads = {'id': 1, 'company_name': "Fake Company", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+
+    im = IndustryMeasures()
+    im.get_measures(job_ads)
+
+    >>  [{'SIC': '582',
+    'SIC_name': 'Software publishing',
+    'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
+    'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
+    'INDUSTRY PROP HOURS GREEN TASKS': None,
+    'INDUSTRY PROP WORKERS GREEN TASKS': None,
+    'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': None}]
+
+
+"""
+from typing import List, Union, Dict, Union
+import yaml
+import os
+import pandas as pd
+
+from dap_prinz_green_jobs import PROJECT_DIR, logger
+
+# load industry-level green job measures from yaml file
 from dap_prinz_green_jobs.getters.industry_getters import (
-    load_companies_house_dict,
-    load_sic,
     load_green_tasks_prop_hours,
     load_green_tasks_prop_workers,
     load_green_tasks_prop_workers_20,
+    load_sic,
 )
 
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
-    create_section_dict,
     get_clean_ghg_data,
+    create_section_dict,
+    get_ghg_sic,
+)
+
+from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper import (
+    SicMapper,
+)
+from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper_utils import (
     clean_sic,
 )
 
@@ -23,38 +53,57 @@ class IndustryMeasures(object):
     """
     Class to extract industry measures for a given job advert or list of job adverts.
     ----------
+    Parameters
+    ----------
+    config_name: str
+        Name of the config file to use. Default is "base.yaml".
+    ----------
     Methods
     ----------
     get_measures(job_advert):
-        for a given job advert (dict) or list of job adverts (list of dicts), extract the industry-level green measures.
-        
+        For a given job advert (dict) or list of job adverts (list of dicts),
+            extract the industry-level green measures.
     ----------
-    Usage
-    ----------
-    job_ad = {}
-    
+    Usage:
+
+    job_ads = {'id': 1, 'company_name': "Company A", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+
     im = IndustryMeasures()
-    
-    im.get_measures("Boots")
+
+    im.load()
+    im.get_measures(job_ads)
     """
 
     def __init__(
         self,
+        config_name: str = "base",
     ):
+        # Set variables from the config file
+        if ".yaml" not in config_name:
+            config_name += ".yaml"
+        config_path = os.path.join(
+            PROJECT_DIR, "dap_prinz_green_jobs/config/", config_name
+        )
+        with open(config_path, "r") as f:
+            self.config = yaml.load(f, Loader=yaml.FullLoader)
+        self.config_path = config_path
+
+        self.closest_distance_threshold = self.config["industries"][
+            "closest_distance_threshold"
+        ]
+        self.majority_sic_threshold = self.config["industries"][
+            "majority_sic_threshold"
+        ]
+
+    def load(self):
+        """
+        Method to load necessary SIC mapper class and
+            Industry-level greenness datasets.
+        """
+        self.sm = SicMapper()
+        self.sm.load()
         # Dictionary of SIC codes and total GHG emissions and GHG emissions per unit of economy activity
         self.ghg_emissions_dict, self.ghg_unit_emissions_dict = get_clean_ghg_data()
-
-        # Dictionary of 5 digit SIC codes to their SIC section code ({'01621': 'A','01629': 'A','05101': 'B',..})
-        sic_data = load_sic()
-        self.sic_names = dict(
-            zip(sic_data["Most disaggregated level"], sic_data["Description"])
-        )
-        self.sic_to_section = {
-            k: v.strip()
-            for k, v in dict(
-                zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
-            ).items()
-        }
         # Dictionary of SIC sector (e.g. "A") to proportion of hours worked spent doing green tasks
         self.sic_section_2_prop_hours = create_section_dict(
             load_green_tasks_prop_hours()
@@ -63,42 +112,69 @@ class IndustryMeasures(object):
         self.sic_section_2_prop_workers = create_section_dict(
             load_green_tasks_prop_workers()
         )
-        # Dictionary of SIC sector (e.g. "A") to proportion of workers spending at least 20% of their time doing green tasks per SIC
+        # Dictionary of SIC sector (e.g. "A") to proportion of workers spending at least 20% of
+        # their time doing green tasks per SIC
         self.sic_section_2_prop_workers_20 = create_section_dict(
             load_green_tasks_prop_workers_20()
         )
 
-    def get_green_measure_for_company(
-        self,
-        company_name: str,
-    ) -> Union[float, None]:
-        """Gets SIC GHG emissions for a given company name.
+        sic_data = load_sic()
+        self.sic_names = dict(
+            zip(sic_data["Most disaggregated level"], sic_data["Description"])
+        )
+        self.sic_names = {str(k).strip(): v for k, v in self.sic_names.items()}
+
+        self.sic_to_section = {
+            k: v.strip()
+            for k, v in dict(
+                zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
+            ).items()
+        }
+
+    def get_measures(
+        self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]
+    ) -> List[Dict[str, float]]:
+        """Extract industry-level green measures for a given job advert
+            or list of job adverts.
 
         Args:
-            company_name (str): Company name to get SIC GHG emissions for
+            job_adverts Union[Dict[str, str], List[Dict[str, str]]]: A job advert
+                as a dictionary or list of dictionaries.
 
         Returns:
-            Union[float, None]: Returns SIC GHG emissions for a given company name
-                or None if no match
+            Dict[str, float]: Industry-level green measures
+                for a given job advert or list of job adverts.
         """
-        # clean company name
-        company_name_clean = clean_company_name(company_name)
+        sic_codes = self.sm.get_sic_codes(job_adverts)
 
-        ch_sic = self.get_ch_sic(
-            cleaned_name=company_name_clean,
-        )
-        # if sic match then clean sic and get ghg emissions
-        if ch_sic:
-            clean_ch_sic = clean_sic(ch_sic)
-            sic_section = self.sic_to_section.get(clean_ch_sic)
-            return {
-                "SIC": clean_ch_sic,
-                "SIC_name": self.sic_names.get(clean_ch_sic),
+        industry_measures_list = []
+        for sic_info in sic_codes:
+            confidence_threshold = None
+            if sic_info["sic_method"] == "closest distance":
+                confidence_threshold = self.closest_distance_threshold
+            elif sic_info["sic_method"] == "majority":
+                confidence_threshold = self.majority_sic_threshold
+
+            if (
+                confidence_threshold is not None
+                and sic_info["sic_confidence"] > confidence_threshold
+            ):
+                sic = sic_info["sic_code"]
+            elif sic_info["sic_method"] == "companies house":
+                sic = sic_info["sic_code"]
+            else:
+                sic = None
+
+            sic_clean = clean_sic(sic)
+            sic_section = self.sic_to_section.get(sic_clean)
+            industry_measures = {
+                "SIC": sic,
+                "SIC_name": self.sic_names.get(sic),
                 "INDUSTRY TOTAL GHG EMISSIONS": get_ghg_sic(
-                    clean_ch_sic, self.ghg_emissions_dict
+                    sic_clean, self.ghg_emissions_dict
                 ),
                 "INDUSTRY GHG PER UNIT EMISSIONS": get_ghg_sic(
-                    clean_ch_sic, self.ghg_unit_emissions_dict
+                    sic_clean, self.ghg_unit_emissions_dict
                 ),
                 "INDUSTRY PROP HOURS GREEN TASKS": self.sic_section_2_prop_hours.get(
                     sic_section
@@ -110,29 +186,6 @@ class IndustryMeasures(object):
                     sic_section
                 ),
             }
+        industry_measures_list.append(industry_measures)
 
-        else:
-            return {
-                "SIC": None,
-                "INDUSTRY TOTAL GHG EMISSIONS": None,
-                "INDUSTRY GHG PER UNIT EMISSIONS": None,
-                "INDUSTRY PROP HOURS GREEN TASKS": None,
-                "INDUSTRY PROP WORKERS GREEN TASKS": None,
-                "INDUSTRY PROP WORKERS 20PERC GREEN TASKS": None,
-            }
-
-    def get_measures(
-        self, job_advert: Dict[str, str], company_name_key: str
-    ) -> Dict[str, List[dict]]:
-        if type(job_advert) == dict:
-            job_advert = [job_advert]
-
-        ind_green_measures_list = []
-        for job in job_advert:
-            comp_name = job.get(company_name_key)
-
-            ind_green_measures_list.append(
-                self.get_green_measure_for_company(company_name=comp_name)
-            )
-            # Could add more measures here if we want to use company information from the job advert description
-        return ind_green_measures_list
+        return industry_measures_list

@@ -1,5 +1,7 @@
 # Industry Green Measures
 
+## Industry data processing
+
 As a one-off run:
 
 ```
@@ -8,13 +10,26 @@ python dap_prinz_green_jobs/pipeline/green_measures/industries/industries_data_p
 
 This will save out just the key columns from the full Companies House dataset to `s3://prinz-green-jobs/inputs/data/industry_data/BasicCompanyDataAsOneFile-2023-05-01_key_columns_only.csv`. This speeds up the rest of the pipeline as loading the full dataset is slow. NOTE: this script will take a long time to run.
 
-The script
+## Industry Measures
+
+To map job adverts to SIC codes, you can use the `IndustryMeasures` class in `industries_measures.py`:
 
 ```
-dap_prinz_green_jobs/pipeline/green_measures/industries/industry_measures_utils.py
-```
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures
 
-contains functions needed to see whether industries are green or not.
+ job_ads = {'id': 1, 'company_name': "Fake Company", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+
+im = IndustryMeasures()
+im.get_measures(job_ads)
+
+>>  [{'SIC': '582',
+  'SIC_name': 'Software publishing',
+  'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
+  'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
+  'INDUSTRY PROP HOURS GREEN TASKS': None,
+  'INDUSTRY PROP WORKERS GREEN TASKS': None,
+  'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': None}]
+```
 
 ## Datasets used
 
@@ -34,15 +49,3 @@ Measures based of the job adverts predicted SIC:
 - INDUSTRY PROP HOURS GREEN TASKS : The 2019 proportion of hours worked spent doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
 - INDUSTRY PROP WORKERS GREEN TASKS : The 2019 proportion of workers doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
 - INDUSTRY PROP WORKERS 20PERC GREEN TASKS : Thw 2019 proportion of workers spending at least 20% of their time doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
-
-## Usage
-
-```
-from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import IndustryMeasures
-im = IndustryMeasures()
-im.load_ch()
-im.get_green_measure_for_company("Global British Petroleum")
->>> {'SIC': '09100', 'SIC_name': 'Support activities for petroleum and natural gas extraction', 'INDUSTRY TOTAL GHG EMISSIONS': 28.2, 'INDUSTRY GHG PER UNIT EMISSIONS': 0.05, 'INDUSTRY PROP HOURS GREEN TASKS': 17, 'INDUSTRY PROP WORKERS GREEN TASKS': 85.7, 'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 22.5}
-im.get_green_measure_for_company("Boots")
->>> {'SIC': '46450', 'SIC_name': 'Wholesale of perfume and cosmetics', 'INDUSTRY TOTAL GHG EMISSIONS': 6299.6, 'INDUSTRY GHG PER UNIT EMISSIONS': 0.11, 'INDUSTRY PROP HOURS GREEN TASKS': 9.4, 'INDUSTRY PROP WORKERS GREEN TASKS': 39.7, 'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 17.4}
-```

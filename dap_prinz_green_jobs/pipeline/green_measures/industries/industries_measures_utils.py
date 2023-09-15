@@ -1,7 +1,7 @@
 """
 Functions and variables to clean up industries data.
 """
-from typing import List, Dict
+from typing import Dict
 import re
 
 from dap_prinz_green_jobs.getters.industry_getters import (
@@ -55,6 +55,7 @@ def create_section_dict(data):
     data.columns = data.iloc[0]
     data = data.iloc[1:]
     return dict(zip(data["SIC 2007 section code"], data[2019]))
+
 
 def get_ghg_sic(sic, ghg_emissions_dict: Dict[str, float]):
     """

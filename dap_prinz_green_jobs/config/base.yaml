@@ -42,3 +42,5 @@ industries:
   k: 100
   sim_threshold: 0.48
   sic_levels: [2, 3, 4]
+  closest_distance_threshold: 0.5
+  majority_sic_threshold: 0.3
