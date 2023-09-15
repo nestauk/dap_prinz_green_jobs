@@ -28,17 +28,19 @@ sic_df_grouped = pd.read_csv(
 
 if __name__ == "__main__":
     logger.info("creating and saving FAISS index...")
+
     bert_model_name = f"sentence-transformers/{config['industries']['bert_model_name']}"
     bert_model = BertVectorizer(
         bert_model_name=bert_model_name,
         multi_process=config["industries"]["multi_process"],
     ).fit()
+
     sic_embeds = bert_model.transform(
         list(sic_df_grouped.sic_company_description.tolist())
     )
 
     d = sic_embeds.shape[1]  # define the dimensionality of the vectors
-    # lets just use brute force L2 for now
+    # lets use brute force L2
     llm_index = faiss.IndexFlatL2(d)
     faiss.normalize_L2(sic_embeds)  # normalize vectors
     llm_index.add(sic_embeds)  # add vectors to the index

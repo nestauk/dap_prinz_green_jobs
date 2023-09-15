@@ -2,7 +2,7 @@
 This one-off script generates a SIC dataset to map to that uses
 LLMs to describe SIC codes as company descriptions.
 
-python dap_prinz_green_jobs/pipeline/green_measures/industries/sic_mapper/sic_data_processing.py --production
+python dap_prinz_green_jobs/pipeline/green_measures/industries/sic_mapper/sic_data_generation.py --production
 """
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts.chat import (
@@ -13,7 +13,6 @@ from langchain.prompts.chat import (
 from langchain import PromptTemplate
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 
-import faiss
 import numpy as np
 import toolz
 import ast
@@ -190,6 +189,7 @@ if __name__ == "__main__":
     )[["id", "sic_code", "sic_name", "sic_company_description"]]
 
     sic_df_grouped["sic_code"] = sic_df_grouped.sic_code.apply(ast.literal_eval)
+    sic_df_grouped.dropna(subset=["sic_company_description"], inplace=True)
     sic_df_grouped_dict = sic_df_grouped.to_dict(orient="records")
 
     logger.info("saving curated SIC dataset and dictionary...")

@@ -5,6 +5,8 @@ Functions and variables to map company descriptions
 from typing import List, Dict
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
 
+import numpy as np
+
 sic_data = load_sic()
 sic_to_section = {
     str(k).strip(): v.strip()
@@ -85,7 +87,7 @@ def add_sic_section(
 
 
 def find_majority_sic(input_list: List[str], length: int) -> Dict[str, int]:
-    """Finds the majority SIC code, weighted by distance.
+    """Finds the majority SIC code.
 
     Args:
         input_list (List[str]): List of SIC codes
@@ -97,21 +99,17 @@ def find_majority_sic(input_list: List[str], length: int) -> Dict[str, int]:
     if not input_list or length <= 0:
         return {}
 
-    subelement_count = {}
-    current_subelement = None
-
-    # add SIC sections and convert distances to scores to weigh
     input_sics_sections = add_sic_section(input_list)
 
-    for element in input_sics_sections:
-        if len(element) >= length:
-            substring = element[:length]
-            if substring != current_subelement:
-                if substring in subelement_count:
-                    subelement_count[substring] += 1
-                else:
-                    subelement_count[substring] = 1
-                current_subelement = substring
+    subelement_count = {}
+
+    for sic_code in input_sics_sections:
+        if len(sic_code) >= length:
+            substring = sic_code[:length]
+            if substring in subelement_count:
+                subelement_count[substring] += 1
+            else:
+                subelement_count[substring] = 1
 
     sorted_substring_count = {
         k: v
@@ -120,4 +118,26 @@ def find_majority_sic(input_list: List[str], length: int) -> Dict[str, int]:
         )
     }
 
-    return sorted_substring_count
+    return {k: v for k, v in sorted_substring_count.items() if v > 1}
+
+
+def calculate_average_distance(
+    top_sic_code: str, top_sic_codes: List[str], top_sic_distances: List[int]
+) -> int:
+    """Returns the average distance of the top k SIC codes to the input SIC code.
+
+    Args:
+        top_sic_code (str): Top SIC code
+        top_sic_codes (List[str]): List of top k SIC codes
+        top_sic_distances (List[int]): List of top k distances
+
+    Returns:
+        int: Average top SIC code distance
+    """
+    top_sic_probs = [
+        top_sic_distances[i]
+        for i, sic_code in enumerate(top_sic_codes)
+        if sic_code.startswith(top_sic_code)
+    ]
+
+    return round(np.mean(top_sic_probs), 2)

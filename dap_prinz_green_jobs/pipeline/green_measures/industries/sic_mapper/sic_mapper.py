@@ -12,7 +12,8 @@ Usage:
       'company_name': 'Google',
       'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.',
       'company_description': 'We are a fast growing company in the software engineering industry.',
-      'sic_code': '582'}]
+      'sic_code': '582',
+      'sic_confidence': 0.8}]
 """
 import faiss
 
@@ -256,7 +257,13 @@ class SicMapper(object):
                 ):  # Only predict on reasonable length sentences
                     pred = self.company_description_classifier(sentence)[0]
                     if pred["label"] == "LABEL_1":
-                        company_description += f"{sentence}. "
+                        # let's just add the sentence if it contains the word industry or sector
+                        if ("industry" in sentence.lower()) | (
+                            "sector" in sentence.lower()
+                        ):
+                            company_description = sentence
+                        else:
+                            company_description += f"{sentence}. "
 
             company_descriptions.append(
                 {
@@ -313,7 +320,7 @@ class SicMapper(object):
         top_k_indices, top_k_distances = I[0], D[0]
 
         if closest_distance > self.sim_threshold:
-            sic_code_indx = top_k_indices[0]
+            sic_code_indx, sic_prob = top_k_indices[0], top_k_distances[0]
             sics = self.sic_company_desc_dict[sic_code_indx]["sic_code"]
             sic_code = [str(code).strip() for code in sics][0]
         else:
@@ -330,12 +337,14 @@ class SicMapper(object):
             ]
             all_maj_sics = {k: v for d in top_candidate_sics for k, v in d.items()}
 
-            # for now, get the sic code with the highest count across levels
             sic_code = sorted(all_maj_sics.items(), key=lambda x: x[1], reverse=True)[
                 0
             ][0]
 
-        return sic_code
+            # calculate the average distance of the top majority SIC
+            sic_prob = su.calculate_average_distance(sic_code, top_sics, top_dists)
+
+        return sic_code, sic_prob
 
     def get_sic_codes(self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]):
         """Finds the SIC code for a job advert or list of job adverts.
@@ -397,9 +406,9 @@ class SicMapper(object):
                 if job_ad["company_description"] != "":
                     company_desc_hash = tc.short_hash(job_ad["company_description"])
                     comp_embed = comp_embeds.get(company_desc_hash)
-                    sic_code = self.predict_sic_code(np.array(comp_embed))
+                    sic_code, sic_prob = self.predict_sic_code(np.array(comp_embed))
                 else:
-                    sic_code = None
+                    sic_code, sic_prob = None, None
             sic_codes.append(
                 {
                     self.job_id_key: job_ad[self.job_id_key],
@@ -409,6 +418,7 @@ class SicMapper(object):
                     ],
                     "company_description": job_ad["company_description"],
                     "sic_code": sic_code,
+                    "sic_confidence": sic_prob,
                 }
             )
 
