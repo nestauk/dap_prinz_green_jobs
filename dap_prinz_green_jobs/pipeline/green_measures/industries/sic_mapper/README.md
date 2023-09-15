@@ -27,6 +27,11 @@ python dap_prinz_green_jobs/pipeline/green_measures/industries/sic_mapper/sic_da
 
 ## High level overview
 
+The high level overview of the **SIC Mapper pipeline** is as follows:
+
+<img width="825" alt="Screenshot 2023-09-15 at 12 56 34" src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/a0c11f34-4843-4dd8-8ba4-70f3acd9881b">
+
+
 ### Core functionality
 
 To map job adverts to SIC codes, you can use the `SicMapper` class in `sic_mapper.py`:
@@ -68,3 +73,5 @@ We then further verified **85** matches and found…
 - **40%** of matches were worse than the LLM
 
 - In **11%** of cases, both the LLM and the current approach were bad
+
+To learn more about the evaluation results of the company description classifier, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the `OJD DAPs language models repo`.  
