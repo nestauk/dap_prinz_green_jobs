@@ -170,6 +170,8 @@ class IndustryMeasures(object):
             industry_measures = {
                 "SIC": sic,
                 "SIC_name": self.sic_names.get(sic),
+                "SIC_confidence": sic_info["sic_confidence"],
+                "SIC_method": sic_info["sic_method"],
                 "INDUSTRY TOTAL GHG EMISSIONS": get_ghg_sic(
                     sic_clean, self.ghg_emissions_dict
                 ),
