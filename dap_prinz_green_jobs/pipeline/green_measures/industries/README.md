@@ -17,13 +17,17 @@ To map job adverts to SIC codes, you can use the `IndustryMeasures` class in `in
 ```
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures
 
- job_ads = {'id': 1, 'company_name': "Fake Company", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+job_ads = {'id': 1, 'company_name': "fake_company_name", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
 
 im = IndustryMeasures()
+im.load()
+
 im.get_measures(job_ads)
 
 >>  [{'SIC': '582',
   'SIC_name': 'Software publishing',
+  'SIC_confidence': 0.77,
+  'SIC_method': 'closest distance',
   'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
   'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
   'INDUSTRY PROP HOURS GREEN TASKS': None,
