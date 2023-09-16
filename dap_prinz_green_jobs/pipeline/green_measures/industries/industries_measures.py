@@ -186,6 +186,6 @@ class IndustryMeasures(object):
                     sic_section
                 ),
             }
-        industry_measures_list.append(industry_measures)
+            industry_measures_list.append(industry_measures)
 
         return industry_measures_list

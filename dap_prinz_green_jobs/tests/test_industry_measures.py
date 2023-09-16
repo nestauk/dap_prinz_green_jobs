@@ -1,13 +1,39 @@
 import pytest
 
-from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import (
     IndustryMeasures,
-    clean_sic,
-    clean_company_name,
+)
+
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     get_ghg_sic,
     clean_total_emissions_dict,
     clean_unit_emissions_dict,
 )
+
+from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper_utils import (
+    clean_sic,
+    clean_company_name,
+)
+
+
+job_ads = [
+    {
+        "id": 1,
+        "company_name": "Apple ltd.",
+        "job_text": "We are a technology company that makes phones. We are hiring a software engineer.",
+    },
+    {
+        "id": 2,
+        "company_name": "fake_company_name",
+        "job_text": "We are a major jewellery brand. We are hiring a sales assistant.",
+    },
+    {
+        "id": 3,
+        "company_name": "fake_company_name",
+        "job_text": "Our business is selling cars. We need a car salesman.",
+    },
+    {"id": 4, "company_name": "fake_company_name", "job_text": "Nothing helpful here."},
+]
 
 
 def test_clean_sic():
@@ -49,56 +75,23 @@ def test_clean_unit_emissions_dict():
 
 def test_industry_measures():
     im = IndustryMeasures()
+    im.load()
 
-    # Just use a very small replicated part of the data so we can see it's working as we'd like
-    im.ojo_companies_house_dict = {
-        "boots": [
-            {
-                "CompanyName": "BOOTS INTERNATIONAL LIMITED",
-                "SICCode.SicText_1": "46450 - Wholesale of perfume and cosmetics",
-            }
-        ],
-        "j sainsbury": [
-            {
-                "CompanyName": "J SAINSBURY PLC",
-                "SICCode.SicText_1": "47110 - Retail sale in non-specialised stores with food, beverages or tobacco predominating",
-            }
-        ],
-        "global british petroleum": [
-            {
-                "CompanyName": "GLOBAL BRITISH PETROLEUM LTD",
-                "SICCode.SicText_1": "09100 - Support activities for petroleum and natural gas extraction",
-                "SICCode.SicText_2": "46120 - Agents involved in the sale of fuels, ores, metals and industrial chemicals",
-                "SICCode.SicText_3": "46690 - Wholesale of other machinery and equipment",
-                "SICCode.SicText_4": "46750 - Wholesale of chemical products",
-            }
-        ],
-    }
+    industry_measures = im.get_measures(job_ads)
 
-    im.ghg_emissions_dict = {"464": 6299.6, "09": 28.2}
-    im.sic_section_2_prop_hours = {"G": 9.4}
+    assert len(industry_measures) == len(job_ads)
+    assert industry_measures[0]["SIC"] == "62090"
+    assert industry_measures[1]["SIC"] == "32130"
+    assert industry_measures[3]["SIC"] == None
 
-    assert im.get_green_measure_for_company("Boots")["SIC"] == "46450"
     assert (
-        im.get_green_measure_for_company("Boots")["INDUSTRY TOTAL GHG EMISSIONS"]
-        == 6299.6
+        industry_measures[2]["SIC_name"]
+        == "Sale of motor vehicle parts and accessories"
     )
-    assert (
-        im.get_green_measure_for_company("Boots")["INDUSTRY PROP HOURS GREEN TASKS"]
-        == 9.4
-    )
-    assert (
-        im.get_green_measure_for_company("Global British Petroleum")["SIC"] == "09100"
-    )
-    assert (
-        im.get_green_measure_for_company("Global British Petroleum")[
-            "INDUSTRY TOTAL GHG EMISSIONS"
-        ]
-        == 28.2
-    )
-    assert (
-        im.get_green_measure_for_company("Global British Petroleum")[
-            "INDUSTRY PROP HOURS GREEN TASKS"
-        ]
-        == None
-    )
+    assert industry_measures[2]["INDUSTRY PROP HOURS GREEN TASKS"] == None
+
+    assert len(industry_measures[0].keys()) == 7
+    assert len(industry_measures[3].keys()) == 7
+
+    assert type(industry_measures[0]["INDUSTRY PROP HOURS GREEN TASKS"]) == float
+    assert type(industry_measures[0]["SIC"]) == str
