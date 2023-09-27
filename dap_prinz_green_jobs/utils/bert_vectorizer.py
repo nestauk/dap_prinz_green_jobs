@@ -1,7 +1,39 @@
 from sentence_transformers import SentenceTransformer
-import time
 from ojd_daps_skills import logger
+import numpy as np
+
+from dap_prinz_green_jobs.utils.processing import list_chunks
+
+import time
 import logging
+from tqdm import tqdm
+
+
+def get_embeddings(
+    sent_list: list, chunk_size: int = 1000, id_list: list = None
+) -> dict:
+    """
+    Embed a list of sentences in chunks
+    Args:
+        sent_list: A list of sentences
+        chunk_size: The number of sentences to embed at a time
+        id_list: The keys you want in the output dictionary, if not given then the sent_list values will be given
+    Returns:
+        dict: The sentence (key) and the embedding (value)
+    """
+
+    bert_model = BertVectorizer(verbose=True, multi_process=True).fit()
+
+    embeddings = []
+    for batch_texts in tqdm(list_chunks(sent_list, chunk_size)):
+        embeddings.append(bert_model.transform(batch_texts))
+    embeddings = np.concatenate(embeddings)
+
+    if not id_list:
+        id_list = sent_list
+
+    # create dict
+    return dict(zip(id_list, embeddings))
 
 
 class BertVectorizer:

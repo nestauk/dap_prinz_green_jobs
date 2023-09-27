@@ -7,7 +7,6 @@
 - Run `make install` to configure the development environment:
   - Setup the conda environment
   - Configure `pre-commit`
-- run `python -m spacy download en_core_web_sm`
 
 ## Contributor guidelines
 
