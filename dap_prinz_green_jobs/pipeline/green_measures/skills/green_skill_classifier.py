@@ -16,22 +16,22 @@ import spacy
 from dap_prinz_green_jobs.utils.bert_vectorizer import get_embeddings
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data, save_to_s3
 from dap_prinz_green_jobs.getters.skill_getters import get_green_skills_taxonomy
-from dap_prinz_green_jobs import BUCKET_NAME, logger
+from dap_prinz_green_jobs import BUCKET_NAME, OJO_BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.occupation_getters import (
     load_onet_green_topics,
 )
 
 from tqdm import tqdm
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Dict, Any
 import joblib
 import s3fs
 from datetime import datetime
 import os
 
-OJO_BUCKET_NAME = "open-jobs-lake"
 
-
-def find_green_topics(skill_ent: str, green_topics: list) -> list:
+def find_green_topics(
+    skill_ent: str, green_topics: List[str]
+) -> Union[List[str], List[None]]:
     """
     Find the green topics which are contained within a skill entity using exact matching
     Args:
@@ -54,7 +54,7 @@ def find_green_topics(skill_ent: str, green_topics: list) -> list:
     return found_green_topics
 
 
-def process_green_topic_data(nlp):
+def process_green_topic_data(nlp) -> List[str]:
     """
     Function to load the ONET green topic data, clean it, add to it
 
@@ -117,9 +117,9 @@ def process_green_topic_data(nlp):
 
 
 def get_closest_match(
-    skills_list_embeddings_dict: dict,
-    green_data_embeddings_dict: dict,
-    formatted_green_data: pd.DataFrame(),
+    skills_list_embeddings_dict: Dict[str, np.ndarray],
+    green_data_embeddings_dict: Dict[Any, np.ndarray],
+    formatted_green_data: pd.DataFrame,
 ) -> dict:
     """
     Find the semantically closest matches for each skill in skills_list_embeddings_dict
@@ -154,7 +154,7 @@ def get_closest_match(
 def get_green_skill_matches(
     extracted_skill_list: List[str],
     similarities: np.array,
-    green_skills_taxonomy: pd.DataFrame(),
+    green_skills_taxonomy: pd.DataFrame,
     skill_threshold: float = 0.7,
 ) -> List[Tuple[str, Tuple[str, int]]]:
     """Get green skill matches for a list of extracted skills - use this

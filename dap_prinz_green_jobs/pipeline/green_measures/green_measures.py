@@ -66,8 +66,8 @@ class GreenMeasures(object):
         self.load_taxonomy_embeddings = self.config["skills"][
             "load_taxonomy_embeddings"
         ]  # Set to false if your input taxonomy data or way to embed changes
-        self.green_skills_classifier_model_file = self.config["skills"][
-            "green_skills_classifier_model_file"
+        self.green_skills_classifier_model_file_name = self.config["skills"][
+            "green_skills_classifier_model_file_name"
         ]
 
         if not skills_output_folder:
@@ -121,7 +121,7 @@ class GreenMeasures(object):
         # Skills attributes
         self.sm = SkillMeasures(
             config_name="extract_green_skills_esco",
-            green_skills_classifier_model_file=self.green_skills_classifier_model_file,
+            green_skills_classifier_model_file_name=self.green_skills_classifier_model_file_name,
         )
         self.sm.initiate_extract_skills(local=False, verbose=True)
 

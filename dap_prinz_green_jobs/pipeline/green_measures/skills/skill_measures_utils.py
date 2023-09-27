@@ -64,7 +64,7 @@ class SkillMeasures(object):
     def __init__(
         self,
         config_name="extract_green_skills_esco",
-        green_skills_classifier_model_file="outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib",
+        green_skills_classifier_model_file_name="outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib",
     ):
         self.config = get_yaml_config(
             PROJECT_DIR / f"dap_prinz_green_jobs/config/{config_name}.yaml"
@@ -74,8 +74,8 @@ class SkillMeasures(object):
         ]
 
         self.formatted_taxonomy_path = self.config["taxonomy_path"]
-        self.green_skills_classifier_model_file = os.path.join(
-            "s3://", BUCKET_NAME, green_skills_classifier_model_file
+        self.green_skills_classifier_model_file_name = os.path.join(
+            "s3://", BUCKET_NAME, green_skills_classifier_model_file_name
         )
 
     def initiate_extract_skills(self, local=True, verbose=True):
@@ -299,7 +299,9 @@ class SkillMeasures(object):
         )
         green_skills_classifier.formatted_taxonomy = self.formatted_taxonomy
 
-        green_skills_classifier.load(model_file=self.green_skills_classifier_model_file)
+        green_skills_classifier.load(
+            model_file=self.green_skills_classifier_model_file_name
+        )
 
         pred_green_skill = green_skills_classifier.predict(
             skill_ents, skills_list_embeddings_dict=all_extracted_skills_embeddings_dict
