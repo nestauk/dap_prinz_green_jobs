@@ -100,7 +100,10 @@ def clean_company_name(
 
         name = " ".join(words)
 
-        return name
+        if len(name) > 2:
+            return name
+        else:
+            return None
     else:
         return None
 

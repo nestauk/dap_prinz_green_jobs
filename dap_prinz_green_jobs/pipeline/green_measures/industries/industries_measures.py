@@ -8,15 +8,16 @@ Usage:
     job_ads = {'id': 1, 'company_name': "Fake Company", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
 
     im = IndustryMeasures()
+    im.load() #load necessary SIC mapper class and Industry-level greenness datasets
     im.get_measures(job_ads)
 
     >>  [{'SIC': '582',
     'SIC_name': 'Software publishing',
     'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
     'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
-    'INDUSTRY PROP HOURS GREEN TASKS': None,
-    'INDUSTRY PROP WORKERS GREEN TASKS': None,
-    'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': None}]
+    'INDUSTRY PROP HOURS GREEN TASKS': 9.700000000000001,
+    'INDUSTRY PROP WORKERS GREEN TASKS': 43.5,
+    'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 23.599999999999998}]]
 
 
 """
@@ -32,7 +33,6 @@ from dap_prinz_green_jobs.getters.industry_getters import (
     load_green_tasks_prop_hours,
     load_green_tasks_prop_workers,
     load_green_tasks_prop_workers_20,
-    load_sic,
 )
 
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
@@ -118,19 +118,6 @@ class IndustryMeasures(object):
             load_green_tasks_prop_workers_20()
         )
 
-        sic_data = load_sic()
-        self.sic_names = dict(
-            zip(sic_data["Most disaggregated level"], sic_data["Description"])
-        )
-        self.sic_names = {str(k).strip(): v for k, v in self.sic_names.items()}
-
-        self.sic_to_section = {
-            k: v.strip()
-            for k, v in dict(
-                zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
-            ).items()
-        }
-
     def get_measures(
         self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]
     ) -> List[Dict[str, float]]:
@@ -169,7 +156,7 @@ class IndustryMeasures(object):
             sic_section = self.sic_to_section.get(sic_clean)
             industry_measures = {
                 "SIC": sic,
-                "SIC_name": self.sic_names.get(sic),
+                "SIC_name": sic_info["sic_name"],
                 "SIC_confidence": sic_info["sic_confidence"],
                 "SIC_method": sic_info["sic_method"],
                 "INDUSTRY TOTAL GHG EMISSIONS": get_ghg_sic(

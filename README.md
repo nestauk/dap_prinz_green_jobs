@@ -8,6 +8,7 @@
   - Setup the conda environment
   - Configure `pre-commit`
 - run `python -m spacy download en_core_web_sm`
+- run `conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl` in order to install faiss and its associated dependencies.
 
 ## Contributor guidelines
 

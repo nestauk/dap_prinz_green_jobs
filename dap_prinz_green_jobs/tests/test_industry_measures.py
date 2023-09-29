@@ -88,10 +88,10 @@ def test_industry_measures():
         industry_measures[2]["SIC_name"]
         == "Sale of motor vehicle parts and accessories"
     )
-    assert industry_measures[2]["INDUSTRY PROP HOURS GREEN TASKS"] == None
+    assert industry_measures[2]["INDUSTRY PROP HOURS GREEN TASKS"] == 9.4
 
-    assert len(industry_measures[0].keys()) == 7
-    assert len(industry_measures[3].keys()) == 7
+    assert len(industry_measures[0].keys()) == 9
+    assert len(industry_measures[3].keys()) == 9
 
     assert type(industry_measures[0]["INDUSTRY PROP HOURS GREEN TASKS"]) == float
     assert type(industry_measures[0]["SIC"]) == str

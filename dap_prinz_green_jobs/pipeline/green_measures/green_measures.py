@@ -102,7 +102,7 @@ class GreenMeasures(object):
 
         # Industry attributes
         self.im = IndustryMeasures()
-        self.im.load_ch()
+        self.im.load()
 
         # Skills attributes
         self.sm = SkillMeasures(config_name="extract_green_skills_esco")
@@ -185,10 +185,6 @@ class GreenMeasures(object):
         Extract measures of greenness at the industry-level. Measures include:
             - INDUSTRY: SIC GHG emissions based on job advert company name
         """
-
-        if type(job_advert) == dict:
-            job_advert = [job_advert]
-
         ind_green_measures_list = self.im.get_measures(
             job_advert=job_advert, company_name_key=self.company_name_key
         )

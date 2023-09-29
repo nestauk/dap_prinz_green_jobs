@@ -32,7 +32,10 @@ from transformers import pipeline
 
 from dap_prinz_green_jobs import PROJECT_DIR, BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data, load_json_dict
-from dap_prinz_green_jobs.getters.industry_getters import load_companies_house_dict
+from dap_prinz_green_jobs.getters.industry_getters import (
+    load_companies_house_dict,
+    load_sic,
+)
 
 # utils imports
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
@@ -131,7 +134,7 @@ class SicMapper(object):
         self.model_path = self.config["industries"]["model_path"]
         # load relevant information to map company descriptions to SIC codes
         self.sic_comp_desc_path = self.config["industries"]["sic_comp_desc_path"]
-        self.k = self.config["industries"]["k"]
+        self.faiss_k = self.config["industries"]["faiss_k"]
         self.sim_threshold = self.config["industries"]["sim_threshold"]
         self.sic_levels = self.config["industries"]["sic_levels"]
         self.sic_comp_desc_embeds_path = self.config["industries"][
@@ -171,10 +174,10 @@ class SicMapper(object):
         """
         logger.info("Loading relevant models, tokenizers and datasets.")
         # things you need to load
-        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+        model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
+        tokenizer = AutoTokenizer.from_pretrained(self.model_path)
         self.company_description_classifier = pipeline(
-            "text-classification", model=self.model, tokenizer=self.tokenizer
+            "text-classification", model=model, tokenizer=tokenizer
         )
         self.sic_company_desc_dict = self._fetch_data(self.sic_comp_desc_path)
         # load your SIC company description embeddings to put in a FAISS index
@@ -184,6 +187,21 @@ class SicMapper(object):
         # Currently we're using companies house as the company
         # name to SIC code mapper - we can change this later
         self.ojo_companies_house_dict = load_companies_house_dict()
+
+        self.sic_db = self.create_vector_index(self.sic_comp_desc_embeds)
+
+        sic_data = load_sic()
+        self.sic_names = dict(
+            zip(sic_data["Most disaggregated level"], sic_data["Description"])
+        )
+        self.sic_names = {str(k).strip(): v for k, v in self.sic_names.items()}
+
+        self.sic_to_section = {
+            str(k).strip(): v.strip()
+            for k, v in dict(
+                zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
+            ).items()
+        }
 
     def preprocess_job_adverts(
         self, job_adverts: List[Dict[str, str]]
@@ -294,9 +312,7 @@ class SicMapper(object):
 
         return llm_index
 
-    def predict_sic_code(
-        self, company_embedding: np.ndarray, sic_db: faiss.IndexFlatIP
-    ) -> Union[str, None]:
+    def predict_sic_code(self, company_embedding: np.ndarray) -> Union[str, None]:
         """Predicts the majority SIC code at a given level for a company description embedding.
 
         Args:
@@ -308,7 +324,7 @@ class SicMapper(object):
         _vector = np.array([company_embedding])
         faiss.normalize_L2(_vector)  # normalise to use cosine distance
 
-        D, I = sic_db.search(_vector, self.k)  # search
+        D, I = self.sic_db.search(_vector, self.faiss_k)  # search
 
         closest_distance = D[0][0]
         top_k_indices, top_k_distances = I[0], D[0]
@@ -317,6 +333,7 @@ class SicMapper(object):
             sic_code_indx, sic_prob = top_k_indices[0], round(top_k_distances[0], 2)
             sics = self.sic_company_desc_dict[sic_code_indx]["sic_code"]
             sic_code = [str(code).strip() for code in sics][0]
+            sic_name = self.sic_names.get(sic_code)
             sic_method = "closest distance"
 
         else:
@@ -341,10 +358,11 @@ class SicMapper(object):
 
                 # calculate the average distance of the top majority SIC
                 sic_prob = su.calculate_average_distance(sic_code, top_sics, top_dists)
+                sic_name = self.sic_names.get(sic_code)
             else:
-                return None, None, None
+                return None, None, None, None
 
-        return sic_code, sic_prob, sic_method
+        return sic_code, sic_prob, sic_method, sic_name
 
     def get_sic_codes(self, job_adverts: Union[Dict[str, str], List[Dict[str, str]]]):
         """Finds the SIC code for a job advert or list of job adverts.
@@ -408,15 +426,14 @@ class SicMapper(object):
             comp_embeds = self.get_company_description_embeddings(
                 company_description_dict
             )
-            sic_db = self.create_vector_index(self.sic_comp_desc_embeds)
 
             for job_ad in preprocessed_job_adverts_comp_desc:
                 company_name = job_ad[self.company_name_key]
                 if job_ad["company_description"] != "":
                     company_desc_hash = tc.short_hash(job_ad["company_description"])
                     comp_embed = comp_embeds.get(company_desc_hash)
-                    sic_code, sic_prob, sic_method = self.predict_sic_code(
-                        np.array(comp_embed), sic_db
+                    sic_code, sic_prob, sic_method, sic_name = self.predict_sic_code(
+                        np.array(comp_embed)
                     )
                 else:
                     sic_code, sic_prob, sic_method = None, None, None
@@ -426,6 +443,7 @@ class SicMapper(object):
                         self.company_name_key: company_name,
                         "company_description": job_ad["company_description"],
                         "sic_code": sic_code,
+                        "sic_name": sic_name,
                         "sic_method": sic_method,
                         "sic_confidence": sic_prob,
                     }
