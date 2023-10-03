@@ -55,4 +55,6 @@ Measures based of the job adverts predicted SIC:
 - INDUSTRY GHG PER UNIT EMISSIONS : The 2021 greenhouse gas emissions per unit of economic activity for this SIC section code (letter) or division code (two digit). From `atmosphericemissionsghgintensity.xlsx`.
 - INDUSTRY PROP HOURS GREEN TASKS : The 2019 proportion of hours worked spent doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
 - INDUSTRY PROP WORKERS GREEN TASKS : The 2019 proportion of workers doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
-- INDUSTRY PROP WORKERS 20PERC GREEN TASKS : Thw 2019 proportion of workers spending at least 20% of their time doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
+- INDUSTRY PROP WORKERS 20PERC GREEN TASKS : The 2019 proportion of workers spending at least 20% of their time doing green tasks for this SIC section code (letter). From `greentasks.xlsx`.
+- INDUSTRY GHG EMISSIONS PER EMPLOYEE : The 2021 greenhouse gas emissions per employee for this SIC section code (letter) or division code (two digit). From `emissionsperemployee.xlsx`.
+- INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE : The 2021 carbon dioxide emissions per employee for this SIC section code (letter) or division code (two digit). From `emissionsperemployee.xlsx`.
