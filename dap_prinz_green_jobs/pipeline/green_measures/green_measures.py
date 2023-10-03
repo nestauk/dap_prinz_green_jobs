@@ -186,6 +186,9 @@ class GreenMeasures(object):
         Extract measures of greenness at the industry-level. Measures include:
             - INDUSTRY: SIC GHG emissions based on job advert company name
         """
+        if isinstance(job_advert, dict):
+            job_advert = [job_advert]
+
         ind_green_measures_list = self.im.get_measures(job_advert)
 
         ind_green_measures_dict = dict(

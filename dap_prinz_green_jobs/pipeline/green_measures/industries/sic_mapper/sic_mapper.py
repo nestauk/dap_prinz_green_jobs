@@ -10,11 +10,12 @@ Usage:
     sic_code = sm.get_sic_codes(job_ads) # get SIC codes for job adverts
 
   >>  [{'id': '1',
-      'company_name': 'Company A',
+      'company_name': 'Test Company A',
       'company_description': 'We are a fast growing company in the software engineering industry.',
       'sic_code': '582',
+      'sic_name': 'Software publishing',
       'sic_method': 'closest distance',
-      'sic_confidence': 0.49}]
+      'sic_confidence': 0.77}]
 """
 import faiss
 

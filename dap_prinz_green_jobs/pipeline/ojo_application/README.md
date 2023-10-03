@@ -1,14 +1,19 @@
-# OJO Application
+# 🎾 OJO Application
 
-This directory will contain scripts to run/apply green measures on OJO samples.
+This directory contains scripts that rely on access to Nesta's database of job ads. 
 
-It will also contain scripts to generate an OJO sample.
+The directory is split into two sections:
 
-Ultimately, we would like to have a single flow that applies the green measures class to a representative OJO sample to be used for i.e. a dashboard.
+1. `ojo_sample/` - scripts that generate a sample of job ads from the database. 
+2. `extract_green_measures.py` - A script that extract green measures at the skill-, occupations- and industries-level from a sample of job ads.
 
-## Extract Green Measures
+## 🔧 Extract Green Measures
 
-To extract measures across the skill-, occupations- and industries- level, you can run the following:
+To extract measures across the skill-, occupations- and industries- level on a sample of job ads, you can run the following:
+
+```
+python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures_metaflow.py --package-suffixes=.txt --datastore=s3 run
+```
 
 ```
 python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py --config_name "base" --production
@@ -16,7 +21,14 @@ python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py -
 
 This will save out three files, one for each of the measures.
 
-### Loading pre-calculated data and the config file
+### :sparkles: setting up with AWS and metaflow
+
+If you haven't used batch processing with Metaflow before and want to run any of the flows that make use of batch (e.g. `ojobert_flow.py`), you'll need to ensure a few things are set up first:
+
+1. Your metaflow config file needs be setup with the correct parameters. You can find your config file by executing `metaflow configure show`. If you don't have parameters such as `METAFLOW_ECS_S3_ACCESS_IAM_ROLE` and `METAFLOW_ECS_FARGATE_EXECUTION_ROLE`, contact the DE team.
+2. If your laptop username contains a `.` (e.g. if you run `whoami` from the command line and it returns `jack.vines` rather than `jackvines`), you'll need to change your username to remove the `.`. This is because the AWS Batch job will fail to run if your username contains a `.`. To fix this, add `export METAFLOW_USER=<your name without the period>` to a `.env` file at the root of the project. Then, [one time only] run `source .env` to trigger reloading of the variable.
+
+### ⏳ Loading pre-calculated data and the config file
 
 The config file you use should contain the following arguments to load pre-calculated data:
 
