@@ -393,13 +393,14 @@ class SicMapper(object):
             company_name = job_ad[self.company_name_key]
             ch_sic_code = su.get_ch_sic(company_name, self.ojo_companies_house_dict)
             if ch_sic_code:
+                sic_clean = su.clean_sic(ch_sic_code)
                 sic_codes.append(
                     {
                         self.job_id_key: job_ad[self.job_id_key],
                         self.company_name_key: company_name,
                         "company_description": None,
                         "sic_code": ch_sic_code,
-                        "sic_name": self.sic_names.get(ch_sic_code),
+                        "sic_name": self.sic_names.get(sic_clean),
                         "sic_method": "companies house",
                         "sic_confidence": None,
                     }
@@ -408,6 +409,8 @@ class SicMapper(object):
                 jobs_to_predict.append(i)
 
         if len(jobs_to_predict) > 0:
+            logger.info(f"{len(jobs_to_predict)} job adverts don't have SIC codes associated to them in companies house...")
+            logger.info(f"predicting SIC code for {len(jobs_to_predict)} job adverts...")
             job_adverts = [job_adverts[i] for i in jobs_to_predict]
 
             preprocessed_job_adverts = self.preprocess_job_adverts(job_adverts)
