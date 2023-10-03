@@ -13,21 +13,17 @@ In production, this script should take about ~15 minutes to run now
 """
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
-
 from dap_prinz_green_jobs.getters.ojo_getters import (
     get_mixed_ojo_job_title_sample,
     get_mixed_ojo_sample,
 )
-
 from dap_prinz_green_jobs import logger
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME
 
 import pandas as pd
+
 from argparse import ArgumentParser
-from tqdm import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 from datetime import datetime as date
 
 if __name__ == "__main__":
@@ -36,11 +32,16 @@ if __name__ == "__main__":
     parser.add_argument("--config_name", default="base", type=str)
 
     args = parser.parse_args()
+    production = args.production
 
     # instantiate GreenMeasures class here
-    gm = GreenMeasures(config_name=args.config_name)
-
-    production = args.production
+    if production:
+        gm = GreenMeasures(config_name=args.config_name)
+    else:
+        gm = GreenMeasures(
+            config_name=args.config_name,
+            skills_output_folder="outputs/data/green_skill_lists/test",
+        )
 
     # load and reformat relevant data
     logger.info("loading and reformatting datasets...")

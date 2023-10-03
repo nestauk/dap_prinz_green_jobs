@@ -28,6 +28,8 @@ class GreenMeasures(object):
     Attributes
     ----------
     config_name (str): the name of the config file to use.
+    skills_output_folder (str): If given, this will be the folder where all skills outputs are stored,
+        if not given it will default to f"outputs/data/green_skill_lists/{date_stamp}"
     ----------
     Methods
     ----------
@@ -43,10 +45,7 @@ class GreenMeasures(object):
             you can also pass a skill list to avoid re-extracting skills.
     """
 
-    def __init__(
-        self,
-        config_name: str = "base",
-    ):
+    def __init__(self, config_name: str = "base", skills_output_folder: str = ""):
         # Set variables from the config file
         if ".yaml" not in config_name:
             config_name += ".yaml"
@@ -68,27 +67,43 @@ class GreenMeasures(object):
         self.load_taxonomy_embeddings = self.config["skills"][
             "load_taxonomy_embeddings"
         ]  # Set to false if your input taxonomy data or way to embed changes
+        self.green_skills_classifier_model_file_name = self.config["skills"][
+            "green_skills_classifier_model_file_name"
+        ]
 
-        date_stamp = str(date.today().date()).replace("-", "")
+        if not skills_output_folder:
+            date_stamp = str(date.today().date()).replace("-", "")
+            skills_output_folder = f"outputs/data/green_skill_lists/{date_stamp}"
 
         if self.load_skills:
             self.skills_output = self.config["skills"]["skills_output"]
         else:
-            self.skills_output = f"outputs/data/green_skill_lists/skills_data_ojo_mixed_{date_stamp}.json"
+            self.skills_output = os.path.join(
+                skills_output_folder, "skills_data_ojo_mixed.json"
+            )
 
         if self.load_skills_embeddings:
             self.skill_embeddings_output = self.config["skills"][
                 "skill_embeddings_output"
             ]
         else:
-            self.skill_embeddings_output = f"outputs/data/green_skill_lists/extracted_skills_embeddings_{date_stamp}.json"
+            self.skill_embeddings_output = os.path.join(
+                skills_output_folder, "extracted_skills_embeddings.json"
+            )
 
         if self.load_taxonomy_embeddings:
             self.green_tax_embedding_path = self.config["skills"][
                 "green_tax_embedding_path"
             ]
         else:
-            self.green_tax_embedding_path = f"outputs/data/green_skill_lists/green_esco_embeddings_{date_stamp}.json"
+            self.green_tax_embedding_path = os.path.join(
+                skills_output_folder, "green_esco_embeddings.json"
+            )
+
+        # Where to output the mappings of skills to all of ESCO (not just green)
+        self.skill_mappings_output_path = os.path.join(
+            skills_output_folder, "full_esco_skill_mappings.json"
+        )
 
         # Input job advert data config variables
         self.job_id_key = self.config["job_adverts"]["job_id_key"]
@@ -105,7 +120,10 @@ class GreenMeasures(object):
         self.im.load()
 
         # Skills attributes
-        self.sm = SkillMeasures(config_name="extract_green_skills_esco")
+        self.sm = SkillMeasures(
+            config_name="extract_green_skills_esco",
+            green_skills_classifier_model_file_name=self.green_skills_classifier_model_file_name,
+        )
         self.sm.initiate_extract_skills(local=False, verbose=True)
 
     def get_skill_measures(
@@ -115,39 +133,22 @@ class GreenMeasures(object):
         if type(job_advert) == dict:
             job_advert = [job_advert]
 
-        predicted_entities = self.sm.get_entities(
-            job_advert,
-            output_path=self.skills_output,
-            load=self.load_skills,
-            job_text_key=self.job_text_key,
-            job_id_key=self.job_id_key,
-        )
-        skills_list = []
-        for p in predicted_entities.values():
-            for ent_type in ["SKILL", "MULTISKILL", "EXPERIENCE"]:
-                for skill in p[ent_type]:
-                    skills_list.append(skill)
-
-        unique_skills_list = list(set(skills_list))
-
-        all_extracted_skills_embeddings_dict = self.sm.get_skill_embeddings(
-            unique_skills_list,
-            output_path=self.skill_embeddings_output,
-            load=self.load_skills_embeddings,
-        )
-
         taxonomy_skills_embeddings_dict = self.sm.get_green_taxonomy_embeddings(
             output_path=self.green_tax_embedding_path,
             load=self.load_taxonomy_embeddings,
         )
 
-        all_extracted_green_skills_dict = self.sm.map_green_skills()
-
         prop_green_skills = self.sm.get_measures(
-            job_advert_ids=[j[self.job_id_key] for j in job_advert],
-            predicted_entities=predicted_entities,
-            all_extracted_green_skills_dict=all_extracted_green_skills_dict,
+            job_advert,
+            skills_output_path=self.skills_output,
+            load_skills=self.load_skills,
+            job_text_key=self.job_text_key,
+            job_id_key=self.job_id_key,
+            skill_embeddings_output_path=self.skill_embeddings_output,
+            load_skills_embeddings=self.load_skills_embeddings,
+            skill_mappings_output_path=self.skill_mappings_output_path,
         )
+
         return prop_green_skills
 
     def get_occupation_measures(self, job_advert: Dict[str, str]) -> List[dict]:
