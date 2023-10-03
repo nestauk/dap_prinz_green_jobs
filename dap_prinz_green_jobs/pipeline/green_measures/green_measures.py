@@ -6,15 +6,15 @@ A Green Measures class that takes as input a job advert and outputs
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import (
     OccupationMeasures,
 )
-from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
+from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import (
     IndustryMeasures,
 )
 from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils import (
     SkillMeasures,
 )
-from dap_prinz_green_jobs import logger, PROJECT_DIR
+from dap_prinz_green_jobs import PROJECT_DIR
 
-from typing import List, Union, Dict, Optional
+from typing import List, Dict, Optional
 from uuid import uuid4
 import yaml
 import os
@@ -185,9 +185,7 @@ class GreenMeasures(object):
         Extract measures of greenness at the industry-level. Measures include:
             - INDUSTRY: SIC GHG emissions based on job advert company name
         """
-        ind_green_measures_list = self.im.get_measures(
-            job_advert=job_advert, company_name_key=self.company_name_key
-        )
+        ind_green_measures_list = self.im.get_measures(job_advert)
 
         ind_green_measures_dict = dict(
             zip([j[self.job_id_key] for j in job_advert], ind_green_measures_list)
