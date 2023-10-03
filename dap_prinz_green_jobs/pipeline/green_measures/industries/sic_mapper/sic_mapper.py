@@ -398,6 +398,7 @@ class SicMapper(object):
                         self.company_name_key: company_name,
                         "company_description": None,
                         "sic_code": ch_sic_code,
+                        "sic_name": self.sic_names.get(ch_sic_code),
                         "sic_method": "companies house",
                         "sic_confidence": None,
                     }
