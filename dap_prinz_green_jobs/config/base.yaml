@@ -12,6 +12,7 @@ job_adverts:
   job_text_key: "job_text"
   job_title_key: "job_title"
   company_name_key: "company_name"
+  data_folder_name: "outputs/data/"
 skills:
   skills_config_name: "extract_green_skills_esco"
   load_skills: False # If False it doesn't matter what skills_output is
@@ -32,3 +33,14 @@ occupations:
   minimum_prop: 0.5
   save_embeds: True
 industries:
+  verbose: True
+  multi_process: False
+  local: False
+  sic_comp_desc_path: "20230911_sic_company_descriptions_dict_production_True_chunksize_50.json"
+  sic_comp_desc_embeds_path: "20230911_sic_company_descriptions_embeds_production_True_chunksize_50.json"
+  model_path: "nestauk/jobbert-base-cased-compdecs"
+  bert_model_name: "all-MiniLM-L6-v2"
+  faiss_k: 100
+  sic_levels: [2, 3, 4]
+  closest_distance_threshold: 0.48
+  majority_sic_threshold: 0.3

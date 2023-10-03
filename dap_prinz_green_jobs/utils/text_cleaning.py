@@ -6,6 +6,8 @@ from toolz import pipe
 import re
 from typing import List
 
+from hashlib import md5
+
 # Pattern for fixing a missing space between enumerations, for
 # split_sentences()
 compiled_missing_space_pattern = re.compile("([a-z])([A-Z])")
@@ -118,3 +120,31 @@ def clean_text(text: str) -> List[str]:
         List[str]: List of cleaned job description sentences
     """
     return pipe(text, detect_camelcase, replacements)
+
+
+def split_sentences(text: str) -> List[str]:
+    """Split a job description into sentences
+
+    Args:
+        text (str): job description
+
+    Returns:
+        List[str]: List of job description sentences
+    """
+    return re.split(r"[\.?!\n]", text)
+
+
+def short_hash(text: str) -> int:
+    """Create a short hash from a string
+
+    Args:
+        text (str): string to hash
+
+    Returns:
+        int: short hash
+    """
+
+    hx_code = md5(text.encode()).hexdigest()
+    int_code = int(hx_code, 16)
+    short_code = str(int_code)[:16]
+    return int(short_code)
