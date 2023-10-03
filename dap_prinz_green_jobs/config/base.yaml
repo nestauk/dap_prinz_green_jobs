@@ -37,10 +37,9 @@ industries:
   local: False
   sic_comp_desc_path: "20230911_sic_company_descriptions_dict_production_True_chunksize_50.json"
   sic_comp_desc_embeds_path: "20230911_sic_company_descriptions_embeds_production_True_chunksize_50.json"
-  model_path: "ihk/jobbert-base-cased-compdecs"
+  model_path: "nestauk/jobbert-base-cased-compdecs"
   bert_model_name: "all-MiniLM-L6-v2"
   faiss_k: 100
-  sim_threshold: 0.48
   sic_levels: [2, 3, 4]
-  closest_distance_threshold: 0.5
+  closest_distance_threshold: 0.48
   majority_sic_threshold: 0.3

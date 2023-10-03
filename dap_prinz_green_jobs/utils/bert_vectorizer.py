@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 import time
-from ojd_daps_skills import logger
+from dap_prinz_green_jobs import logger
 import logging
 
 
@@ -13,9 +13,9 @@ class BertVectorizer:
     def __init__(
         self,
         bert_model_name="sentence-transformers/all-MiniLM-L6-v2",
-        multi_process=True,
+        multi_process=False,
         batch_size=32,
-        verbose=True,
+        verbose=False,
     ):
         self.bert_model_name = bert_model_name
         self.multi_process = multi_process

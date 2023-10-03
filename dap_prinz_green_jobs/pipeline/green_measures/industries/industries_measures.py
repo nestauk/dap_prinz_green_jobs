@@ -55,11 +55,16 @@ class IndustryMeasures(object):
     ----------
     Parameters
     ----------
-    config_name: str
-        Name of the config file to use. Default is "base.yaml".
+    closest_distance_threshold: float
+        Threshold for the closest distance between an extracted company description and a SIC code.
+
+    majority_sic_threshold: float
+        Threshold for the majority SIC code confidence.
     ----------
     Methods
     ----------
+    load():
+        Method to load necessary SIC mapper class and Industry-level greenness datasets.
     get_measures(job_advert):
         For a given job advert (dict) or list of job adverts (list of dicts),
             extract the industry-level green measures.
@@ -76,24 +81,11 @@ class IndustryMeasures(object):
 
     def __init__(
         self,
-        config_name: str = "base",
+        closest_distance_threshold: float = 0.5,
+        majority_sic_threshold: float = 0.3,
     ):
-        # Set variables from the config file
-        if ".yaml" not in config_name:
-            config_name += ".yaml"
-        config_path = os.path.join(
-            PROJECT_DIR, "dap_prinz_green_jobs/config/", config_name
-        )
-        with open(config_path, "r") as f:
-            self.config = yaml.load(f, Loader=yaml.FullLoader)
-        self.config_path = config_path
-
-        self.closest_distance_threshold = self.config["industries"][
-            "closest_distance_threshold"
-        ]
-        self.majority_sic_threshold = self.config["industries"][
-            "majority_sic_threshold"
-        ]
+        self.closest_distance_threshold = (closest_distance_threshold,)
+        self.majority_sic_threshold = majority_sic_threshold
 
     def load(self):
         """
@@ -102,6 +94,11 @@ class IndustryMeasures(object):
         """
         self.sm = SicMapper()
         self.sm.load()
+
+        # can tune the thresholds here
+        self.sm.closest_distance_threshold = self.closest_distance_threshold
+        self.sm.majority_sic_threshold = self.majority_sic_threshold
+
         # Dictionary of SIC codes and total GHG emissions and GHG emissions per unit of economy activity
         self.ghg_emissions_dict, self.ghg_unit_emissions_dict = get_clean_ghg_data()
         # Dictionary of SIC sector (e.g. "A") to proportion of hours worked spent doing green tasks
@@ -136,26 +133,12 @@ class IndustryMeasures(object):
 
         industry_measures_list = []
         for sic_info in sic_codes:
-            confidence_threshold = None
-            if sic_info["sic_method"] == "closest distance":
-                confidence_threshold = self.closest_distance_threshold
-            elif sic_info["sic_method"] == "majority":
-                confidence_threshold = self.majority_sic_threshold
-
-            if (
-                confidence_threshold is not None
-                and sic_info["sic_confidence"] > confidence_threshold
-            ):
-                sic = sic_info["sic_code"]
-            elif sic_info["sic_method"] == "companies house":
-                sic = sic_info["sic_code"]
-            else:
-                sic = None
-
-            sic_clean = clean_sic(sic)
-            sic_section = self.sic_to_section.get(sic_clean)
+            sic_code = sic_info["sic_code"]
+            # clean sic code if not none else return none
+            sic_clean = clean_sic(sic_code) if sic_code else None
+            sic_section = self.sm.sic_to_section.get(sic_clean)
             industry_measures = {
-                "SIC": sic,
+                "SIC": sic_code,
                 "SIC_name": sic_info["sic_name"],
                 "SIC_confidence": sic_info["sic_confidence"],
                 "SIC_method": sic_info["sic_method"],

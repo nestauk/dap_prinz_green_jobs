@@ -23,8 +23,6 @@ import yaml
 from typing import List, Union, Dict
 
 from tqdm import tqdm
-import pandas as pd
-import ast
 import numpy as np
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -135,7 +133,9 @@ class SicMapper(object):
         # load relevant information to map company descriptions to SIC codes
         self.sic_comp_desc_path = self.config["industries"]["sic_comp_desc_path"]
         self.faiss_k = self.config["industries"]["faiss_k"]
-        self.sim_threshold = self.config["industries"]["sim_threshold"]
+        self.closest_distance_threshold = self.config["industries"][
+            "closest_distance_threshold"
+        ]
         self.sic_levels = self.config["industries"]["sic_levels"]
         self.sic_comp_desc_embeds_path = self.config["industries"][
             "sic_comp_desc_embeds_path"
@@ -307,7 +307,7 @@ class SicMapper(object):
         d = sic_embeddings.shape[1]  # define the dimensionality of the vectors
         # lets use brute force L2
         llm_index = faiss.IndexFlatIP(d)
-        faiss.normalize_L2(sic_embeddings)  # normalise to use cosine distance
+        # faiss.normalize_L2(sic_embeddings)  # normalise to use cosine distance
         llm_index.add(sic_embeddings)  # add vectors to the index
 
         return llm_index
@@ -329,7 +329,7 @@ class SicMapper(object):
         closest_distance = D[0][0]
         top_k_indices, top_k_distances = I[0], D[0]
 
-        if closest_distance > self.sim_threshold:
+        if closest_distance > self.closest_distance_threshold:
             sic_code_indx, sic_prob = top_k_indices[0], round(top_k_distances[0], 2)
             sics = self.sic_company_desc_dict[sic_code_indx]["sic_code"]
             sic_code = [str(code).strip() for code in sics][0]
@@ -357,8 +357,15 @@ class SicMapper(object):
                 )[0][0]
 
                 # calculate the average distance of the top majority SIC
+                # make sure its above the majority SIC threshold
                 sic_prob = su.calculate_average_distance(sic_code, top_sics, top_dists)
                 sic_name = self.sic_names.get(sic_code)
+                if sic_prob < self.majority_sic_threshold:
+                    sic_code = None
+                    sic_prob = None
+                    sic_method = None
+                    sic_name = None
+
             else:
                 return None, None, None, None
 
@@ -436,7 +443,7 @@ class SicMapper(object):
                         np.array(comp_embed)
                     )
                 else:
-                    sic_code, sic_prob, sic_method = None, None, None
+                    sic_code, sic_prob, sic_method, sic_name = None, None, None, None
                 sic_codes.append(
                     {
                         self.job_id_key: job_ad[self.job_id_key],
