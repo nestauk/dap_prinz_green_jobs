@@ -30,9 +30,11 @@ im.get_measures(job_ads)
   'SIC_method': 'closest distance',
   'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
   'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
-  'INDUSTRY PROP HOURS GREEN TASKS': None,
-  'INDUSTRY PROP WORKERS GREEN TASKS': None,
-  'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': None}]
+  'INDUSTRY PROP HOURS GREEN TASKS': 9.700000000000001,
+  'INDUSTRY PROP WORKERS GREEN TASKS': 43.5,
+  'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 23.599999999999998,
+  'INDUSTRY GHG EMISSIONS PER EMPLOYEE': 0.6,
+  'INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE': 771.2}]
 ```
 
 ## Datasets used
@@ -43,6 +45,7 @@ im.get_measures(job_ads)
 - `atmosphericemissionsghgintensity.xlsx`: The greenhouse gas emissions per unit of economic output by SIC from the ONS website [here](https://www.ons.gov.uk/economy/environmentalaccounts/datasets/ukenvironmentalaccountsatmosphericemissionsgreenhousegasemissionsintensitybyeconomicsectorunitedkingdom/current). The most current version of the dataset was downloaded on 13/06/2023 and uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghgintensity.xlsx`).
 - `publisheduksicsummaryofstructureworksheet.xlsx`: The ONS SIC codes downloaded from [here](https://www.ons.gov.uk/methodology/classificationsandstandards/ukstandardindustrialclassificationofeconomicactivities/uksic2007). The 'UK SIC 2007 Summary of Structure Worksheet' xlsx was downloaded on 02/05/2023 and uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/publisheduksicsummaryofstructureworksheet.xlsx`).
 - `greentasks.xlsx`: The ONS time spent on green tasks from [here](https://www.ons.gov.uk/economy/environmentalaccounts/datasets/timespentongreentasks) - downloaded on 12/06/2023 and uploaded to S3 (`s3://prinz-green-jobs/inputs/data/industry_data/greentasks.xlsx`). "Experimental estimates of the time spent doing green tasks, over time, by UK country and by industry. The estimates use a new method based on task-level data from the ONET database in the US."
+- `emissionsperemployee.xlsx`: The [ONS's emissions per employee by industry, United Kingdom, 2015 to 2021 here](https://www.ons.gov.uk/economy/environmentalaccounts/datasets/emissionsperemployeeuk2015to2021). The most current version of the dataset was downloaded on 03/10/2023 and uploaded to S3 (s3://prinz-green-jobs/inputs/data/industry_data/emissionsperemployee.xlsx).
 
 ## Green measures
 

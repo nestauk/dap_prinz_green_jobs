@@ -7,7 +7,11 @@ import re
 from dap_prinz_green_jobs.getters.industry_getters import (
     load_industry_ghg,
     load_industry_ghg_intensity,
+    load_ghg_emissions_per_employee,
+    load_carbon_dioxide_emissions_per_employee,
 )
+
+from typing import Tuple
 
 sic_ghg_per_unit_cleaner = {
     "10.2-3": ["102", "103"],
@@ -157,3 +161,30 @@ def get_clean_ghg_data():
     ghg_unit_emissions_dict_cleaned = clean_unit_emissions_dict(ghg_unit_emissions_dict)
 
     return ghg_emissions_dict_cleaned, ghg_unit_emissions_dict_cleaned
+
+
+def get_clean_employee_emissions_data() -> Tuple[dict, dict]:
+    """
+    Loads and cleans the employee emissions data
+
+    Returns:
+        ghg_employee_dict: dictionary of greenhouse gas emissions per employee by industry
+        carbon_dict: dictionary of carbon dioxide emissions per employee by industry
+    """
+    # load data
+    ghg = load_ghg_emissions_per_employee()
+    carbon = load_carbon_dioxide_emissions_per_employee()
+
+    # clean up ghg data
+    ghg.columns = ghg.iloc[4]
+    ghg = ghg.iloc[5:].reset_index(drop=True)
+
+    ghg_employee_dict = ghg.set_index("Industry Label").to_dict()[2021.0]
+
+    # clean up carbon data
+    carbon.columns = carbon.iloc[6]
+    carbon = carbon.iloc[7:].reset_index(drop=True)
+
+    carbon_dict = carbon.set_index("Industry Label").to_dict()[2021.0]
+
+    return ghg_employee_dict, carbon_dict
