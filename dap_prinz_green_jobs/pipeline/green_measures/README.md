@@ -18,7 +18,4 @@ job_ad = {"id": 1,
 
 gm = GreenMeasures() #instantiate class
 measures = gm.get_green_measures(job_ad) #Extract measures at all levels of granularity
-
->>
-
 ```
