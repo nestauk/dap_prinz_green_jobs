@@ -1,12 +1,12 @@
-Evaluation
+# 🤔 Evaluation
 
-This directory contains the evaluation of the company description classifier and the SICMapper. It also contains a notebook to generate evaluation graphs on a labelled dataset of X job ads.
+This directory contains the evaluation of the SICMapper. It also contains a notebook to generate evaluation graphs on a labelled dataset of X job ads.
 
-### Company Description Classifier Evaluation
+## 📠 Company Description Classifier Evaluation
 
 To learn more about the evaluation results of the company description classifier, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the `OJD DAPs language models repo`.
 
-### Thresholding analysis
+## 🌊 Thresholding analysis
 
 The base thresholds for the two SIC mapping approaches (as defined in `IndustryMeasures`)are as follows:
 
