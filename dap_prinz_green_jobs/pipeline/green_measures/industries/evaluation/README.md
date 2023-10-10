@@ -44,5 +44,3 @@ The results are as follows for the `majority SIC` approach:
 We also generated graphs to visualise the results:
 
 ![threshold_matching](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/141028c4-3c99-4c3b-b36a-9ecc2006dfd7)
-
-Ultimately, the thresholds as defined in `dap_prinz_green_jobs/config/base.yaml` appear reasonable. 
