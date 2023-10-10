@@ -37,10 +37,8 @@ The SIC Mapper can be described in the following diagram:
 The **3. Get SIC code** step takes a rules based similarity approach to identifying SIC codes most appropriate for the extracted company description per job advert. It can be described in the following diagram:
 
 <p align="center">
-  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/b7d318aa-396b-4d7c-a2e4-25ca6cff0f25" />
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/27f7a7e8-ac9d-4d0c-9e02-7ad66d3047e0" />
 </p>
-
-<img width="452" alt="Screenshot 2023-10-10 at 18 39 43" src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/27f7a7e8-ac9d-4d0c-9e02-7ad66d3047e0">
 
 ## 🤖 Synthetic SIC data generation
 
