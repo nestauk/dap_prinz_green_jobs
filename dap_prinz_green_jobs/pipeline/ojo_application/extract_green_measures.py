@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--production", action="store_true", default=False)
     parser.add_argument("--config_name", default="base", type=str)
-    parser.add_argument("test_n", default=10, type=int, nargs="?")
+    parser.add_argument("--test_n", default=10, type=int, nargs="?")
 
     args = parser.parse_args()
     production = args.production
