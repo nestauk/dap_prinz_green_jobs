@@ -30,9 +30,20 @@ sic_code = sm.get_sic_codes(job_ad) # get SIC codes for job advert
 
 The SIC Mapper can be described in the following diagram:
 
-The **Get SIC code** step takes a rules based similarity approach to identifying SIC codes most appropriate for the extracted company description per job advert. It can be described in the following diagram:
+<p align="center">
+  <img src="[http://some_place.com/image.png](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/41058062-0f83-4d79-a53c-fff8443df55b)" />
+</p>
+
+The **3. Get SIC code** step takes a rules based similarity approach to identifying SIC codes most appropriate for the extracted company description per job advert. It can be described in the following diagram:
+
+<p align="center">
+  <img src="[http://some_place.com/image.png]([https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/41058062-0f83-4d79-a53c-fff8443df55b](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/dc6a4f5a-f029-4666-b3f0-29956d9ce1ce
+))" />
+</p>
 
 ## 🤖 Synthetic SIC data generation
+
+As described in the high level diagram, we transform SIC codes to be described as company descriptions as input data in our pipeline.  
 
 To generate a dataset of SIC codes described as company descriptions for downstream mapping, run as a one off:
 
