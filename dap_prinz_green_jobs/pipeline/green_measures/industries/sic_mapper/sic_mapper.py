@@ -137,6 +137,9 @@ class SicMapper(object):
         self.closest_distance_threshold = self.config["industries"][
             "closest_distance_threshold"
         ]
+        self.majority_sic_threshold = self.config["industries"][
+            "majority_sic_threshold"
+        ]
         self.sic_levels = self.config["industries"]["sic_levels"]
         self.sic_comp_desc_embeds_path = self.config["industries"][
             "sic_comp_desc_embeds_path"
@@ -409,8 +412,12 @@ class SicMapper(object):
                 jobs_to_predict.append(i)
 
         if len(jobs_to_predict) > 0:
-            logger.info(f"{len(jobs_to_predict)} job adverts don't have SIC codes associated to them in companies house...")
-            logger.info(f"predicting SIC code for {len(jobs_to_predict)} job adverts...")
+            logger.info(
+                f"{len(jobs_to_predict)} job adverts don't have SIC codes associated to them in companies house..."
+            )
+            logger.info(
+                f"predicting SIC code for {len(jobs_to_predict)} job adverts..."
+            )
             job_adverts = [job_adverts[i] for i in jobs_to_predict]
 
             preprocessed_job_adverts = self.preprocess_job_adverts(job_adverts)

@@ -36,23 +36,3 @@ sic_code = sm.get_sic_codes(job_ad) # get SIC codes for job advert
   'sic_method': 'closest distance',
   'sic_confidence': 0.77}]
 ```
-
-### Evaluation
-
-When we labelled company descriptions, we also asked the LLM to assign it to a SIC code. We manually verified whether the match was appropriate or not.
-
-We have labelled **287** job ads with SIC codes. On that evaluation set, company descriptions are extracted **93.2%** of the time.
-
-We then further verified **85** matches and found…
-
-- 73% of mapped SIC codes are good or ok
-
-- 27% of mapped SIC codes are bad
-
-- 49% of matches were at least the same quality or better than the LLM
-
-- 40% of matches were worse than the LLM
-
-- In 11% of cases, both the LLM and the current approach were bad
-
-To learn more about the evaluation results of the company description classifier, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the `OJD DAPs language models repo`.

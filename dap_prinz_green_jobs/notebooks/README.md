@@ -1,13 +1,13 @@
-## Notebooks
+## 📓 Notebooks
 
-### `between_measures_analysis`
+The notebooks in this directory analyse results the three measures of greenness: industries, occupations and skills.
 
-This notebook does some preliminary analysis on how greeness betweeen occupation, industry and skills interact.
+The sample of job adverts analysed is defined in `dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py`.
 
-To convert the .ipynb file to a .py file, run the following command in the terminal:
+### Between Measures Analysis
 
-```
-jupyter nbconvert --to script dap_prinz_green_jobs/notebooks/between_measures_analysis.ipynb
-```
+This notebook contains analysis of green measures **between** industries, occupations and skills.
 
-Change the file name to the relevant .ipynb file.
+### Measures Analysis
+
+This notebook contains high-level analysis of industries, occupations and skills green measures.
