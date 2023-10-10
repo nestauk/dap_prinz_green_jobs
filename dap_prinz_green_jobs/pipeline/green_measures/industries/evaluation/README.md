@@ -4,7 +4,7 @@ This directory contains the evaluation of the SICMapper. It also contains a note
 
 ## 📠 Company Description Classifier Evaluation
 
-To learn more about the evaluation results of the company description classifier, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the `OJD DAPs language models repo`.
+To learn more about the evaluation results of the company description classifier, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the OJD DAPs language models repo.
 
 ## 🌊 Thresholding analysis
 
