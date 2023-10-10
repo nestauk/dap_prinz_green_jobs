@@ -1,4 +1,4 @@
-## Evaluation
+Evaluation
 
 This directory contains the evaluation of the company description classifier and the SICMapper. It also contains a notebook to generate evaluation graphs on a labelled dataset of X job ads.
 
@@ -13,7 +13,9 @@ The base thresholds for the two SIC mapping approaches (as defined in `IndustryM
 1. `closest SIC`: **0.5**
 2. `majority SIC`: **0.3**
 
-To determine the optimal threshold for each approach, we ran a thresholding analysis on a labelled dataset of **111** job ads. The results are as follows:
+To determine the optimal threshold for each approach, we ran a thresholding analysis on a labelled dataset of **111** job ads. We binarily label 'ok' or 'good' match quality matches as 1 and 'bad' match quality matches as 0.  
+
+The results are as follows:
 
 ```
 Number of job ads in threshold evaluation set: 111
@@ -40,3 +42,7 @@ The results are as follows for the `majority SIC` approach:
 | 0.4       | 1        | 2                 | 0.03         |
 
 We also generated graphs to visualise the results:
+
+![threshold_matching](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/141028c4-3c99-4c3b-b36a-9ecc2006dfd7)
+
+Ultimately, the thresholds as defined in `dap_prinz_green_jobs/config/base.yaml` appear reasonable. 
