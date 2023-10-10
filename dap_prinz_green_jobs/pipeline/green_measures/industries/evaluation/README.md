@@ -6,22 +6,37 @@ This directory contains the evaluation of the company description classifier and
 
 To learn more about the evaluation results of the company description classifier, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the `OJD DAPs language models repo`.
 
-### Null and thresholding analysis
+### Thresholding analysis
 
-### SICMapper Evaluation
+The base thresholds for the two SIC mapping approaches (as defined in `IndustryMeasures`)are as follows:
 
-When we labelled company descriptions, we also asked the LLM to assign it to a SIC code. We manually verified whether the match was appropriate or not.
+1. `closest SIC`: **0.5**
+2. `majority SIC`: **0.3**
 
-We have labelled **287** job ads with SIC codes. On that evaluation set, company descriptions are extracted **93.2%** of the time.
+To determine the optimal threshold for each approach, we ran a thresholding analysis on a labelled dataset of **111** job ads. The results are as follows:
 
-We then further verified **85** matches and found…
+```
+Number of job ads in threshold evaluation set: 111
+Number of job ads with extracted SIC: 92
+% of job ads WITH extracted SIC: 0.8288288288288288
+% of job ads WITHOUT extracted SIC: 0.17117117117117117
+```
 
-- 73% of mapped SIC codes are good or ok
+The results are as follows for the `closest SIC` approach:
 
-- 27% of mapped SIC codes are bad
+| Threshold | Accuracy | Number of Job Ads | % of Job Ads |
+| --------- | -------- | ----------------- | ------------ |
+| 0.5       | 0.81     | 57                | 0.81         |
+| 0.55      | 0.875    | 32                | 0.45         |
+| 0.6       | 0.94     | 17                | 0.24         |
+| 0.65      | 0.67     | 3                 | 0.04         |
 
-- 49% of matches were at least the same quality or better than the LLM
+The results are as follows for the `majority SIC` approach:
 
-- 40% of matches were worse than the LLM
+| Threshold | Accuracy | Number of Job Ads | % of Job Ads |
+| --------- | -------- | ----------------- | ------------ |
+| 0.3       | 0.772    | 22                | 0.31         |
+| 0.35      | 0.7      | 10                | 0.14         |
+| 0.4       | 1        | 2                 | 0.03         |
 
-- In 11% of cases, both the LLM and the current approach were bad
+We also generated graphs to visualise the results:
