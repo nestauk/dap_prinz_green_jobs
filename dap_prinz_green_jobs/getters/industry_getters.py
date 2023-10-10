@@ -37,6 +37,30 @@ def load_industry_ghg() -> pd.DataFrame():
     )
 
 
+def load_ghg_emissions_per_employee() -> pd.DataFrame():
+    """Downloads the dataset of Greenhouse gas emissions per employee by SIC
+    :return: A dataframe of SIC and Greenhouse gas emissions per employee by SIC
+    :rtype: pd.DataFrame()
+    """
+    return pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/emissionsperemployee.xlsx",
+        sheet_name="Table 1",
+        header=None,
+    )
+
+
+def load_carbon_dioxide_emissions_per_employee() -> pd.DataFrame():
+    """Downloads the dataset of carbon dioxide emissions per employee by SIC
+    :return: A dataframe of SIC and carbon dioxide emissions per employee by SIC
+    :rtype: pd.DataFrame()
+    """
+    return pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/industry_data/emissionsperemployee.xlsx",
+        sheet_name="Table 3",
+        header=None,
+    )
+
+
 def load_industry_ghg_intensity() -> pd.DataFrame():
     """Downloads the dataset of greenhouse gas emissions per unit of economy activity by SIC
     :return: A dataframe of SIC and greenhouse gas emissions

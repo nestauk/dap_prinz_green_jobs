@@ -6,10 +6,8 @@ A pipeline that extracts green measures on a OJO sample
 
 It also saves the extracted green measures to s3.
 
-To run the script including with time tracking:
-    time python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py
-
-In production, this script should take about ~15 minutes to run now
+To run the script:
+    python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py --config_name "base" --production
 """
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
 import dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils as sm
@@ -26,13 +24,17 @@ import pandas as pd
 from argparse import ArgumentParser
 from datetime import datetime as date
 
+import numpy as np
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--production", action="store_true", default=False)
     parser.add_argument("--config_name", default="base", type=str)
+    parser.add_argument("--test_n", default=10, type=int, nargs="?")
 
     args = parser.parse_args()
     production = args.production
+    test_n = args.test_n
 
     # instantiate GreenMeasures class here
     if production:
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     # We are only processing job adverts which have full texts
     ojo_sample_raw = pd.merge(
         ojo_desc[["id", "description", "job_title_raw"]],
-        ojo_job_title_raw[["id", "company_raw"]],
+        ojo_job_title_raw[["id", "company_raw", "type"]],
         how="left",
         on="id",
     ).rename(
@@ -65,14 +67,22 @@ if __name__ == "__main__":
             "description": gm.job_text_key,
         }
     )
-    ojo_sample_raw[gm.job_id_key] = ojo_sample_raw[gm.job_id_key].astype(
-        str
-    )  # Just to be consistant
+    ojo_sample_raw[gm.job_id_key] = ojo_sample_raw[gm.job_id_key].astype(str)
+    ojo_sample_raw["company_name"] = np.where(
+        ojo_sample_raw["type"] == "Recruitment consultancy",
+        "this_is_a_madeup_company_name",
+        ojo_sample_raw["company_name"],
+    )
+    # drop type column
+    ojo_sample_raw.drop(columns=["type"], inplace=True)
+
     ojo_sample_raw = list(ojo_sample_raw.T.to_dict().values())
 
     if not production:
-        test_n = 100
         ojo_sample_raw = ojo_sample_raw[:test_n]
+
+    # Just to be consistant
+    logger.info(f"extracting green measures for {len(ojo_sample_raw)} job adverts...")
 
     logger.info("extracting green skills...")
     green_skills_outputs = gm.get_skill_measures(job_advert=ojo_sample_raw)

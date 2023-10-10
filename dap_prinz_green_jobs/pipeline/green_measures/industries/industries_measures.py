@@ -37,6 +37,7 @@ from dap_prinz_green_jobs.getters.industry_getters import (
 
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     get_clean_ghg_data,
+    get_clean_employee_emissions_data,
     create_section_dict,
     get_ghg_sic,
 )
@@ -101,6 +102,11 @@ class IndustryMeasures(object):
 
         # Dictionary of SIC codes and total GHG emissions and GHG emissions per unit of economy activity
         self.ghg_emissions_dict, self.ghg_unit_emissions_dict = get_clean_ghg_data()
+        # Dictionary of SIC codes and GHG emissions and carbon dioxide emissions per employee
+        (
+            self.ghg_employee_dict,
+            self.carbon_employee_dict,
+        ) = get_clean_employee_emissions_data()
         # Dictionary of SIC sector (e.g. "A") to proportion of hours worked spent doing green tasks
         self.sic_section_2_prop_hours = create_section_dict(
             load_green_tasks_prop_hours()
@@ -155,6 +161,12 @@ class IndustryMeasures(object):
                     sic_section
                 ),
                 "INDUSTRY PROP WORKERS 20PERC GREEN TASKS": self.sic_section_2_prop_workers_20.get(
+                    sic_section
+                ),
+                "INDUSTRY GHG EMISSIONS PER EMPLOYEE": self.ghg_employee_dict.get(
+                    sic_section
+                ),
+                "INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE": self.carbon_employee_dict.get(
                     sic_section
                 ),
             }
