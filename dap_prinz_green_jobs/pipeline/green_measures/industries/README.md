@@ -14,7 +14,7 @@ It also contains the following `.py` files:
 
 ## 🔨 `IndustryMeasures` core functionality
 
-To map job adverts to SIC codes, you can use the `IndustryMeasures` class in `industries_measures.py`:
+To map job adverts to SIC codes and get SIC-level industry measures, you can use the `IndustryMeasures` class in `industries_measures.py`:
 
 ```
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures

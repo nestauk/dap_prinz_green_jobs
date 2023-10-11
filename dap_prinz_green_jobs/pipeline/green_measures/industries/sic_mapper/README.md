@@ -1,6 +1,6 @@
 # 🗺️ SIC Mapper
 
-The high-level goal of the SIC Mapper is to a given job advert to Standardised Industrial Classification (SIC) code.
+The high-level goal of the `SicMapper` is to map a given job advert to Standardised Industrial Classification (SIC) code.
 
 ## 🔨 Core functionality
 
