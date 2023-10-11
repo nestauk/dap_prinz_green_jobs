@@ -20,7 +20,7 @@ The base thresholds for the two SIC mapping approaches (as defined in `IndustryM
 1. `closest SIC`: **0.5**
 2. `majority SIC`: **0.3**
 
-To determine the optimal threshold for each approach, we ran a thresholding analysis on a labelled dataset of **X** job ads (`random_state=42`). We binarily label 'ok' or 'good' match quality matches as 1 and 'bad' match quality matches as 0.
+To determine the optimal threshold for each approach, we ran a thresholding analysis on a labelled dataset of **111** job ads (`random_state=42`). We binarily label 'ok' or 'good' match quality matches as 1 and 'bad' match quality matches as 0.
 
 The results are as follows:
 
