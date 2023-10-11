@@ -57,6 +57,10 @@ Based on the thresholding analysis, we decided to use the following thresholds f
 
 We then ran the SICMapper on a further random sample of **500** job ads (`random_state = 62`) and labelled **266** job ads. The results are as follows:
 
+<p align="center">
+  <img src="[http://some_place.com/image.png](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/389a69e1-3721-41cc-85f8-3bfd70ca1e4e)" />
+</p>
+
 ### Qualitative observations
 
 👍 The SICMapper appears to **do well** when:
