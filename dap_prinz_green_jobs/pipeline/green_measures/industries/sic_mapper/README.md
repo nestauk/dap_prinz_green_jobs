@@ -39,12 +39,12 @@ The **3. Get SIC code** step takes a rules based similarity approach to identify
 <p align="center">
   <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/27f7a7e8-ac9d-4d0c-9e02-7ad66d3047e0"
     width="400"
-    height="500"/>
+    height="250"/>
 </p>
 
 ## 🤖 Synthetic SIC data generation
 
-As described in the high level diagram, we transform SIC codes to be described as company descriptions as input data in our pipeline.  
+As described in the high level diagram, we transform SIC codes to be described as company descriptions as input data in our pipeline.
 
 To generate a dataset of SIC codes described as company descriptions for downstream mapping, run as a one off:
 
