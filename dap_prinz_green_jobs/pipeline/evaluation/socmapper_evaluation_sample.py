@@ -67,6 +67,8 @@ if __name__ == "__main__":
                 ]
                 match_type = "Top 6-digit 2020 soc"
                 match_prob = soc_info["top_soc_matches"][0][4]
+
+            soc_2020_4 = int(soc_2020_4)
         else:
             soc_2020_6 = None
             soc_2020_4 = None
