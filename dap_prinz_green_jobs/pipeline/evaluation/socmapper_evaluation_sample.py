@@ -10,6 +10,10 @@ from tqdm import tqdm
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
+from dap_prinz_green_jobs.getters.occupation_getters import load_job_title_soc
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_processing import (
+    process_job_title_soc,
+)
 
 if __name__ == "__main__":
     # Get the most common job titles in OJO
@@ -26,18 +30,18 @@ if __name__ == "__main__":
 
     # Get the SOC name
 
-    soc_2020_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/extendedsoc2020structureanddescriptionsexcel180523.xlsx",
-        skiprows=1,
-        sheet_name="Extended SOC Framework",
+    jobtitle_soc_data = process_job_title_soc(load_job_title_soc())
+    soc_2020_ext_dict = dict(
+        zip(
+            jobtitle_soc_data["SOC_2020_EXT"],
+            jobtitle_soc_data["SUB-UNIT GROUP DESCRIPTIONS"],
+        )
     )
-
-    ext_rows = soc_2020_data.dropna(subset=["Sub-Unit Group"])
-    soc_2020_ext_dict = dict(zip(ext_rows["Sub-Unit Group"], ext_rows["Group Title"]))
-
-    unit_group_rows = soc_2020_data.dropna(subset=["Unit Group"])
     soc_2020_dict = dict(
-        zip(unit_group_rows["Unit Group"], unit_group_rows["Group Title"])
+        zip(
+            [int(s) for s in jobtitle_soc_data["SOC_2020"]],
+            jobtitle_soc_data["SOC 2020 UNIT GROUP DESCRIPTIONS"],
+        )
     )
 
     # Use SOCmapper
