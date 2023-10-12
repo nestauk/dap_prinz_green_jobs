@@ -14,7 +14,9 @@ These datasets were manually labelled with how well we thought the job title was
 
 ## 🖊️ Overall Evaluation
 
-From a **random sample** of 200 job titles:
+This analysis can be run from the notebook `socmapper_evaluation.ipynb`.
+
+### From a **random sample** of 200 job titles:
 
 - 59.6% had a SOC 6-digit code matched
 - 5% were only able to have a SOC 4-digit code matched
@@ -32,7 +34,7 @@ From the 5% (10 job titles) of the random sample with SOC 4-digit codes found:
 - 10% had good quality SOC matches
 - 10% had poor quality SOC matches
 
-We also labelled 300 of the **most commonly occuring** job titles in our dataset with quality measures.
+### We also labelled 300 of the **most commonly occuring** job titles in our dataset with quality measures.
 
 - 89% had a SOC 6-digit code matched
 - 4% were only able to have a SOC 4-digit code matched
@@ -51,7 +53,7 @@ From the 20 job titles of the most commonly occuring job titles with SOC 4-digit
 
 We note that the results from the most commonly occuring job titles are probably better since the job title tends to be more clean and standardised.
 
-Example **excellent** matches:
+### Examples of **excellent** matches:
 
 | ojo_job_title                             | num_job_ads | prop_job_ads | soc_2020_6_name                          | occ_matched              | match_prob |
 | ----------------------------------------- | ----------- | ------------ | ---------------------------------------- | ------------------------ | ---------- |
@@ -66,7 +68,7 @@ Example **excellent** matches:
 | Internal Sales Executive                  | 2281        | 0.0003       | Business sales executives                | sales executive          | 0.85       |
 | HR Advisor                                | 10386       | 0.0014       | Human resources advisors                 | human resources adviser  | 0.85       |
 
-Example **good** matches:
+### Examples of **good** matches:
 
 | ojo_job_title                            | num_job_ads | prop_job_ads | soc_2020_6_name                                       | occ_matched                     | match_prob |
 | ---------------------------------------- | ----------- | ------------ | ----------------------------------------------------- | ------------------------------- | ---------- |
@@ -81,7 +83,7 @@ Example **good** matches:
 | Marketing Executive                      | 8363        | 0.0012       | Marketing consultants                                 | marketing executive             | 1          |
 | Chartered Financial Advisor - Berkshire  | 2           | 0.0000       | Financial accountants                                 | chartered management accountant | 0.70       |
 
-Example **bad** matches:
+### Examples of **bad** matches:
 
 | ojo_job_title                                                     | num_job_ads | prop_job_ads | soc_2020_6_name                                         | occ_matched                       | match_prob |
 | ----------------------------------------------------------------- | ----------- | ------------ | ------------------------------------------------------- | --------------------------------- | ---------- |
