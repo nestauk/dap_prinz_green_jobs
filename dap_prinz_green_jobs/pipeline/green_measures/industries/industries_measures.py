@@ -135,13 +135,13 @@ class IndustryMeasures(object):
         """
         sic_codes = self.sm.get_sic_codes(job_adverts)
 
-        industry_measures_list = []
-        for sic_info in sic_codes:
+        industry_measures_dict = {}
+        for job_id, sic_info in sic_codes.items():
             sic_code = sic_info["sic_code"]
             # clean sic code if not none else return none
             sic_clean = clean_sic(sic_code) if sic_code else None
             sic_section = self.sm.sic_to_section.get(sic_clean)
-            industry_measures = {
+            industry_measures_dict[job_id] = {
                 "SIC": sic_code,
                 "SIC_name": sic_info["sic_name"],
                 "SIC_confidence": sic_info["sic_confidence"],
@@ -168,6 +168,5 @@ class IndustryMeasures(object):
                     sic_section
                 ),
             }
-            industry_measures_list.append(industry_measures)
 
-        return industry_measures_list
+        return industry_measures_dict

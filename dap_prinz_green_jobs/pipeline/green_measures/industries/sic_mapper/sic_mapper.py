@@ -387,38 +387,39 @@ class SicMapper(object):
         if isinstance(job_adverts, dict):
             job_adverts = [job_adverts]
 
-        sic_codes = []
-        jobs_to_predict = []
-
+        sic_codes = {}
+        job_ids_to_predict = []
         # let's first try to get the SIC code from the company name
         # using our stand in company name to SIC code dictionary
-        for i, job_ad in enumerate(job_adverts):
+        for job_ad in job_adverts:
             company_name = job_ad[self.company_name_key]
             ch_sic_code = su.get_ch_sic(company_name, self.ojo_companies_house_dict)
             if ch_sic_code:
                 sic_clean = su.clean_sic(ch_sic_code)
-                sic_codes.append(
-                    {
-                        self.job_id_key: job_ad[self.job_id_key],
-                        self.company_name_key: company_name,
-                        "company_description": None,
-                        "sic_code": ch_sic_code,
-                        "sic_name": self.sic_names.get(sic_clean),
-                        "sic_method": "companies house",
-                        "sic_confidence": None,
-                    }
-                )
+                sic_codes[job_ad.get(self.job_id_key)] = {
+                    self.company_name_key: company_name,
+                    "company_description": None,
+                    "sic_code": ch_sic_code,
+                    "sic_name": self.sic_names.get(sic_clean),
+                    "sic_method": "companies house",
+                    "sic_confidence": None,
+                }
             else:
-                jobs_to_predict.append(i)
+                job_ids_to_predict.append(job_ad.get(self.job_id_key))
 
-        if len(jobs_to_predict) > 0:
+        if len(job_ids_to_predict) > 0:
             logger.info(
-                f"{len(jobs_to_predict)} job adverts don't have SIC codes associated to them in companies house..."
+                f"{len(job_ids_to_predict)} job adverts don't have SIC codes associated to them in companies house..."
             )
             logger.info(
-                f"predicting SIC code for {len(jobs_to_predict)} job adverts..."
+                f"predicting SIC code for {len(job_ids_to_predict)} job adverts..."
             )
-            job_adverts = [job_adverts[i] for i in jobs_to_predict]
+
+            job_adverts = [
+                advert
+                for advert in job_adverts
+                if str(advert["id"]) in map(str, job_ids_to_predict)
+            ]
 
             preprocessed_job_adverts = self.preprocess_job_adverts(job_adverts)
             preprocessed_job_adverts_comp_desc = self.extract_company_descriptions(
@@ -456,16 +457,13 @@ class SicMapper(object):
                     )
                 else:
                     sic_code, sic_prob, sic_method, sic_name = None, None, None, None
-                sic_codes.append(
-                    {
-                        self.job_id_key: job_ad[self.job_id_key],
-                        self.company_name_key: company_name,
-                        "company_description": job_ad["company_description"],
-                        "sic_code": sic_code,
-                        "sic_name": sic_name,
-                        "sic_method": sic_method,
-                        "sic_confidence": sic_prob,
-                    }
-                )
+                sic_codes[job_ad[self.job_id_key]] = {
+                    self.company_name_key: company_name,
+                    "company_description": job_ad["company_description"],
+                    "sic_code": sic_code,
+                    "sic_name": sic_name,
+                    "sic_method": sic_method,
+                    "sic_confidence": sic_prob,
+                }
 
         return sic_codes
