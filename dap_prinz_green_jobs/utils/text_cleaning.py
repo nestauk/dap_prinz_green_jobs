@@ -1,13 +1,11 @@
 """
 Functions to minimally clean job advertisements.
 """
-
 from toolz import pipe
 import re
 from typing import List
 
 from hashlib import md5
-
 # Pattern for fixing a missing space between enumerations, for
 # split_sentences()
 compiled_missing_space_pattern = re.compile("([a-z])([A-Z])")
@@ -51,9 +49,6 @@ exception_camelcases = [
 # Any trailing chars that match these are removed
 trim_chars = [" ", ".", ",", ";", ":", "\xa0"]
 
-# clean raw job ads and get job descriptions based on deduped job ids
-
-
 def detect_camelcase(text):
     """
     Splits a word written in camel-case into separate sentences. This fixes a case
@@ -83,7 +78,6 @@ punctuation_replacement_rules = {
 compiled_punct_patterns = {
     re.compile(p): v for p, v in punctuation_replacement_rules.items()
 }
-
 
 def replacements(text):
     """
@@ -123,16 +117,23 @@ def clean_text(text: str) -> List[str]:
 
 
 def split_sentences(text: str) -> List[str]:
-    """Split a job description into sentences
-
+    """Splits job adverts into sentences.
+    
+    Splits on:
+        - .?!    
+        
     Args:
-        text (str): job description
+        text str: job advert
 
     Returns:
-        List[str]: List of job description sentences
+        List[str]: A list of sentences
     """
-    return re.split(r"[\.?!\n]", text)
+    #split phrases on .?!
+    pattern = re.compile(r"([.?!])\s+")
+    # Split the text into sentences using the pattern
+    sentences = re.split(pattern, text)
 
+    return list(set(sentences))
 
 def short_hash(text: str) -> int:
     """Create a short hash from a string

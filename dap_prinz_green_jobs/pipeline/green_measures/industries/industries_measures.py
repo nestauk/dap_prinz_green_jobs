@@ -47,7 +47,6 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapp
     clean_sic,
 )
 
-
 class IndustryMeasures(object):
     """
     Class to extract industry measures for a given job advert or list of job adverts.
@@ -146,6 +145,7 @@ class IndustryMeasures(object):
                 "SIC_name": sic_info["sic_name"],
                 "SIC_confidence": sic_info["sic_confidence"],
                 "SIC_method": sic_info["sic_method"],
+                "company_description": sic_info["company_description"],
                 "INDUSTRY TOTAL GHG EMISSIONS": get_ghg_sic(
                     sic_clean, self.ghg_emissions_dict
                 ),

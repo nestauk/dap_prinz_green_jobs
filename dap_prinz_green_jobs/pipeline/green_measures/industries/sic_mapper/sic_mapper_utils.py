@@ -39,6 +39,36 @@ company_stopwords = set(
     ]
 )
 
+#get rid of tokens that often
+#appear in the beginning of job ads
+bad_phrases = [
+    "Job Title",
+    "Job Type",
+    "Salary",
+    "Competitive salary",
+    "competitive salary",
+    "Full-time",
+    "full-time",
+    "Full Time",
+    "part-time",
+    "Part-time",
+    "Permanent",
+    "permanent",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "Benefits",
+    "Location",
+    "benefits",
+    "location",
+    "Eye Care",
+    "Home Based",
+    "Fixed Term"
+]
 
 def clean_sic(sic_name: str) -> str:
     """Cleans the SIC code.
@@ -106,6 +136,32 @@ def clean_company_name(
             return None
     else:
         return None
+
+def clean_company_description(description: str, bad_phrases: List[str] = bad_phrases) -> str:
+    """Minimal cleaning of company description.
+
+    Args:
+        description (str): The company description
+
+    Returns:
+        str: The cleaned company description
+    """
+    sentence_replacement_rules = {
+        r'\b(?:' + '|'.join(map(re.escape, bad_phrases)) + r')\b': "",  # Remove bad phrases
+        r'£\d{1,3}(,\d{3})*': "",  # Convert "salaries" to spaces
+        # Convert numbers (including , and .) to spaces
+        r"\d{1,3}(,\d{3})*(\.\d+)?": "",
+        r'[^\w\s,.]': "",  # Remove punctuation that isn't a comma
+        r'\s+': " ",  # Convert multiple spaces to single spaces
+    }
+
+    # Initialize clean_description with the original description
+    clean_description = description
+    # Apply replacement rules
+    for pattern, replacement in sentence_replacement_rules.items():
+        clean_description = re.sub(pattern, replacement, clean_description)
+
+    return clean_description.strip()
 
 
 # We can modify this slightly when we use a company name to SIC mapper
