@@ -68,8 +68,9 @@ Based on the thresholding analysis, we decided to use the following thresholds f
 The results are as follows:
 
 <p align="center">
-  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/389a69e1-3721-41cc-85f8-3bfd70ca1e4e" />
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/03f8b94a-581c-406f-85fc-48adc5b9cf8d" />
 </p>
+
 
 Example **good** matches:
 
