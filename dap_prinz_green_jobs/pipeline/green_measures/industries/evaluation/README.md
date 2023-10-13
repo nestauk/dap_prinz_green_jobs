@@ -1,5 +1,13 @@
 # 🤔 Evaluation
 
+## generate industries evaluation sample
+
+To generate an evalaution sample of 200 job ads per SIC mapping method (closest distance, majority SIC, companies house), run the following:
+
+```
+python dap_prinz_green_jobs/pipeline/evaluation/industries_evaluation_sample.py
+```
+
 This directory contains a notebook that evaluates the **overall SICMapper**. The notebook is split into the following sections:
 
 **Null analysis:** On the full dataset of extracted industries measures, what proportion are null? This includes null analysis of SIC codes in addition to industries measures.
@@ -8,8 +16,8 @@ This directory contains a notebook that evaluates the **overall SICMapper**. The
 
 **Labelled Evaluation:** This section is split into two subsections:
 
-- one that explores a labelled dataset of job ads to explore the effect of different thresholds on accuracy.
-- one that explores a different, labelled dataset of job ads (incl. SIC codes mapped via companies house) to explore overall accuracy.
+- one that explores the effect of different thresholds on accuracy.
+- one that explores overall accuracy.
 
 If you would like to learn more about the evaluation results of the **company description classifier**, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the OJD DAPs language models repo.
 
@@ -20,33 +28,24 @@ The base thresholds for the two SIC mapping approaches (as defined in `IndustryM
 1. `closest SIC`: **0.5**
 2. `majority SIC`: **0.3**
 
-To determine the optimal threshold for each approach, we ran a thresholding analysis on a labelled dataset of **111** job ads (`random_state=42`). We binarily label 'ok' or 'good' match quality matches as 1 and 'bad' match quality matches as 0.
-
 The results are as follows:
 
-```
-Number of job ads in threshold evaluation set: 111
-Number of job ads with extracted SIC: 92
-% of job ads WITH extracted SIC: 0.8288288288288288
-% of job ads WITHOUT extracted SIC: 0.17117117117117117
-```
-
-The results are as follows for the `closest SIC` approach:
+for the `closest SIC` approach:
 
 | Threshold | Accuracy | Number of Job Ads | % of Job Ads |
 | --------- | -------- | ----------------- | ------------ |
-| 0.5       | 0.81     | 57                | 0.81         |
-| 0.55      | 0.875    | 32                | 0.45         |
-| 0.6       | 0.94     | 17                | 0.24         |
-| 0.65      | 0.67     | 3                 | 0.04         |
+| 0.5       | 0.785    | 200               | 100          |
+| 0.55      | 0.811    | 122               | 61           |
+| 0.6       | 0.87     | 55                | 28           |
+| 0.65      | 1        | 8                 | 4            |
 
-The results are as follows for the `majority SIC` approach:
+for the `majority SIC` approach:
 
 | Threshold | Accuracy | Number of Job Ads | % of Job Ads |
 | --------- | -------- | ----------------- | ------------ |
-| 0.3       | 0.772    | 22                | 0.31         |
-| 0.35      | 0.7      | 10                | 0.14         |
-| 0.4       | 1        | 2                 | 0.03         |
+| 0.3       | 0.61     | 135               | 100          |
+| 0.35      | 0.62     | 77                | 57           |
+| 0.4       | 0.55     | 22                | 16           |
 
 ## 🖊️ Overall Evaluation
 
@@ -55,7 +54,18 @@ Based on the thresholding analysis, we decided to use the following thresholds f
 1. `closest SIC`: **0.5**
 2. `majority SIC`: **0.3**
 
-We then ran the SICMapper on a further random sample of **500** job ads (`random_state = 62`) and labelled **266** job ads. The results are as follows:
+- 400 job ads were labelled by hand as being bad, ok or good SIC matches
+- 65 job ads matched via companies house were labelled
+- 200 job ads matched via closest distance were labelled
+- 135 job ads matched via majority SIC were labelled
+
+- the average company description quality is 2.75/3
+- the average overall match quality is 2.15/3
+- the average company house match quality is 2.1/3
+- the average closest distance match quality is 2.33/3
+- the average majority SIC match quality is 2.05/3
+
+The results are as follows:
 
 <p align="center">
   <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/389a69e1-3721-41cc-85f8-3bfd70ca1e4e" />

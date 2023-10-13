@@ -39,8 +39,8 @@ company_stopwords = set(
     ]
 )
 
-#get rid of tokens that often
-#appear in the beginning of job ads
+# get rid of tokens that often
+# appear in the beginning of job ads
 bad_phrases = [
     "Job Title",
     "Job Type",
@@ -67,8 +67,9 @@ bad_phrases = [
     "location",
     "Eye Care",
     "Home Based",
-    "Fixed Term"
+    "Fixed Term",
 ]
+
 
 def clean_sic(sic_name: str) -> str:
     """Cleans the SIC code.
@@ -137,7 +138,10 @@ def clean_company_name(
     else:
         return None
 
-def clean_company_description(description: str, bad_phrases: List[str] = bad_phrases) -> str:
+
+def clean_company_description(
+    description: str, bad_phrases: List[str] = bad_phrases
+) -> str:
     """Minimal cleaning of company description.
 
     Args:
@@ -147,12 +151,14 @@ def clean_company_description(description: str, bad_phrases: List[str] = bad_phr
         str: The cleaned company description
     """
     sentence_replacement_rules = {
-        r'\b(?:' + '|'.join(map(re.escape, bad_phrases)) + r')\b': "",  # Remove bad phrases
-        r'£\d{1,3}(,\d{3})*': "",  # Convert "salaries" to spaces
+        r"\b(?:"
+        + "|".join(map(re.escape, bad_phrases))
+        + r")\b": "",  # Remove bad phrases
+        r"£\d{1,3}(,\d{3})*": "",  # Convert "salaries" to spaces
         # Convert numbers (including , and .) to spaces
         r"\d{1,3}(,\d{3})*(\.\d+)?": "",
-        r'[^\w\s,.]': "",  # Remove punctuation that isn't a comma
-        r'\s+': " ",  # Convert multiple spaces to single spaces
+        r"[^\w\s,.]": "",  # Remove punctuation that isn't a comma
+        r"\s+": " ",  # Convert multiple spaces to single spaces
     }
 
     # Initialize clean_description with the original description

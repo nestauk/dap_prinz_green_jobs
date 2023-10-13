@@ -262,8 +262,10 @@ class SicMapper(object):
                     pred = self.company_description_classifier(sentence)[0]
                     if pred["label"] == "LABEL_1":
                         company_description += f"{sentence}. "
-            
-            company_description_clean = su.clean_company_description(company_description)
+
+            company_description_clean = su.clean_company_description(
+                company_description
+            )
             company_descriptions.append(
                 {
                     self.job_id_key: job_advert[self.job_id_key],
@@ -312,7 +314,7 @@ class SicMapper(object):
         d = sic_embeddings.shape[1]  # define the dimensionality of the vectors
         # lets use brute force L2
         llm_index = faiss.IndexFlatIP(d)
-        #faiss.normalize_L2(sic_embeddings)  # normalise to use cosine distance
+        # faiss.normalize_L2(sic_embeddings)  # normalise to use cosine distance
         llm_index.add(sic_embeddings)  # add vectors to the index
 
         return llm_index

@@ -47,6 +47,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapp
     clean_sic,
 )
 
+
 class IndustryMeasures(object):
     """
     Class to extract industry measures for a given job advert or list of job adverts.
