@@ -1,6 +1,3 @@
-import sys
-
-sys.path.append("/Users/india.kerlenesta/Projects/dap_green_jobs/dap_prinz_green_jobs")
 """
 This one-off script script cleans and generates datasets needed to calculate industry measures.
 
