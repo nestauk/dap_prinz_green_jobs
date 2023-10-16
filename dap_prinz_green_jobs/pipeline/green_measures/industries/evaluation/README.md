@@ -14,10 +14,11 @@ This directory contains a notebook that evaluates the **overall SICMapper**. The
 
 **Threshold analysis:** On the full dataset of extracted industries measures, what is the optimal threshold for the two SIC mapping approaches? This includes a thresholding analysis of the `closest SIC` and `majority SIC` approaches to better understand completeness.
 
-**Labelled Evaluation:** This section is split into two subsections:
+**Labelled Evaluation:** This section is split into several subsections:
 
 - one that explores the effect of different thresholds on accuracy.
 - one that explores overall accuracy.
+- one that compares SIC mapping quality when using companies house matches and not using companies house matches. 
 
 If you would like to learn more about the evaluation results of the **company description classifier**, refer to [📠 20230825 model metrics](https://github.com/nestauk/ojd_daps_language_models/tree/dev/ojd_daps_language_models/pipeline/train_model/company_descriptions#-20230825-model-metrics) in the OJD DAPs language models repo.
 
@@ -46,6 +47,14 @@ for the `majority SIC` approach:
 | 0.3       | 0.61     | 135               | 100          |
 | 0.35      | 0.62     | 77                | 57           |
 | 0.4       | 0.55     | 22                | 16           |
+
+## 🏠 Using companies house data 
+
+100 job adverts with the SIC match using companies house data and the SIC match using semantic similarity to identify which method was more appropriate. The extracted SIC code was compared and was labelled either: companies house is better; semantic similarity is better; neither are good or both are appropriate. The results are as follows:
+
+<p align="center">
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/8cf67d76-a8a3-448f-9af6-a24f23acfde3" />
+</p>
 
 ## 🖊️ Overall Evaluation
 
