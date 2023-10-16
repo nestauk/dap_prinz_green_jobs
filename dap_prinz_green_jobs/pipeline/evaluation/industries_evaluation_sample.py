@@ -1,5 +1,5 @@
 """
-Create a sample dataset to evaluate the SicMapper
+Create sample datasets to evaluate the SicMapper
 
     python dap_prinz_green_jobs/pipeline/evaluation/industries_evaluation_sample.py
 """
@@ -17,12 +17,15 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
 date = "20231013"
 production = True
 config = "base"
-
-industries_measures_path = f"outputs/data/ojo_application/extracted_green_measures/{date}/ojo_sample_industry_green_measures_production_{production}_{config}.json"
-industries_evaluation_df_path = f"outputs/data/labelled_job_adverts/evaluation/industries/{date}_ojo_sample_industry_green_measures_production_{production}_{config}_evaluation_dataset.csv"
-
 random_state = 64
 
+industries_measures_path = f"outputs/data/ojo_application/extracted_green_measures/{date}/ojo_sample_industry_green_measures_production_{production}_{config}.json"
+
+use_companies_house = False
+companies_house_path = f"outputs/data/ojo_application/extracted_green_measures/{date}/ojo_sample_industry_green_measures_production_{production}_{config}_companies_house_{use_companies_house}.json"
+
+industries_evaluation_df_path = f"outputs/data/labelled_job_adverts/evaluation/industries/{date}_ojo_sample_industry_green_measures_production_{production}_{config}_evaluation_dataset.csv"
+sic_comparison_path = f"outputs/data/labelled_job_adverts/evaluation/industries/{date}_ojo_sample_industry_green_measures_production_{production}_{config}_sic_comparison_dataset.csv"
 
 if __name__ == "__main__":
     logger.info("loading industries measures data...")
@@ -30,6 +33,13 @@ if __name__ == "__main__":
     industries_data = load_s3_data(BUCKET_NAME, industries_measures_path)
     industries_data_df = (
         pd.DataFrame(industries_data).T.reset_index().rename(columns={"index": "id"})
+    )
+
+    industries_data_df_no_comp_house = load_s3_data(BUCKET_NAME, companies_house_path)
+    industries_data_df_no_comp_house_df = (
+        pd.DataFrame(industries_data_df_no_comp_house)
+        .T.reset_index()
+        .rename(columns={"index": "id"})
     )
 
     ##add OJO job title and description
@@ -74,4 +84,31 @@ if __name__ == "__main__":
     logger.info("saving evaluation dataset...")
     industries_measures_sample.to_csv(
         f"s3://{BUCKET_NAME}/{industries_evaluation_df_path}", index=False
+    )
+
+    # then also create a sample of 100 matches
+    # comparing industries measures using
+    # companies house data and not using it
+    industries_data_comp_house = industries_data_df.query(
+        "SIC_method == 'companies house'"
+    ).rename(
+        columns={"SIC": "SIC_companies_house", "SIC_name": "SIC_name_companies_house"}
+    )[
+        ["id", "SIC_companies_house", "SIC_name_companies_house"]
+    ]
+
+    industries_data_no_comp_house = industries_data_df_no_comp_house_df[
+        ["id", "company_description", "SIC", "SIC_name", "SIC_confidence", "SIC_method"]
+    ]
+
+    sic_comparison_df = pd.merge(
+        industries_data_comp_house, industries_data_no_comp_house, on="id"
+    )
+
+    sic_comparison_df_sample = sic_comparison_df.dropna(subset=["SIC"]).sample(
+        100, random_state=random_state
+    )
+    logger.info("saving SIC comparison evaluation dataset...")
+    sic_comparison_df_sample.to_csv(
+        f"s3://{BUCKET_NAME}/{sic_comparison_path}", index=False
     )

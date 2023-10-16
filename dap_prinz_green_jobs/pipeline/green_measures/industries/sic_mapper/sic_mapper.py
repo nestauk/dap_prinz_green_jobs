@@ -133,6 +133,7 @@ class SicMapper(object):
         self.model_path = self.config["industries"]["model_path"]
         # load relevant information to map company descriptions to SIC codes
         self.sic_comp_desc_path = self.config["industries"]["sic_comp_desc_path"]
+        # binary of whether to use companies house data or not as part of the sic
         self.faiss_k = self.config["industries"]["faiss_k"]
         self.closest_distance_threshold = self.config["industries"][
             "closest_distance_threshold"
@@ -393,7 +394,7 @@ class SicMapper(object):
         sic_codes = {}
         job_ids_to_predict = []
         # let's first try to get the SIC code from the company name
-        # using our stand in company name to SIC code dictionary
+        # companies house
         for job_ad in job_adverts:
             company_name = job_ad[self.company_name_key]
             ch_sic_code = su.get_ch_sic(company_name, self.ojo_companies_house_dict)
