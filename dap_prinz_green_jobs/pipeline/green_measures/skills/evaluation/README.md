@@ -8,7 +8,7 @@ To generate an evaluation sample for extracted and mapped skills and green skill
 python dap_prinz_green_jobs/pipeline/evaluation/skills_evaluation_sample.py
 ```
 
-This directory contains a notebook that evaluates the overall **SkillMeasures** class. If you would like to learn more about the evaluation results of the green skill classifier, please refer to the Green skills classifier section of the [skills README](https://github.com/nestauk/dap_prinz_green_jobs/tree/rerun_analysis/dap_prinz_green_jobs/pipeline/green_measures/skills#green-skills-classifier).
+This directory contains a notebook that evaluates the overall **SkillMeasures** class. If you would like to learn more about the evaluation results of the green skill classifier, please refer to the Green skills classifier section of the [skills README](https://github.com/nestauk/dap_prinz_green_jobs/tree/dev/dap_prinz_green_jobs/pipeline/green_measures/skills#green-skills-classifier).
 
 ## 🖊️ Overall Evaluation
 
