@@ -21,7 +21,8 @@ This directory contains a notebook that evaluates the overall **SkillMeasures** 
 Overall, in the labelled dataset of skills:
 
 there were...
-
+- **350** unique green skills labelled
+- **150** unique non-green skills labelled 
 - **494** unique extracted skills
 - **309** unique mapped all ESCO skills
 - **182** unique green ESCO skills
@@ -30,7 +31,17 @@ there were...
 
 The distribution of labels are as follows:
 
-[DISTRIBUTION OF SKILLS GRAPH]
+![dist_graph](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/ce9217e6-fb69-44cf-8705-b7f65bb93e2b)
+
+<p align="center">
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/ce9217e6-fb69-44cf-8705-b7f65bb93e2b" alt="skill label distribution graph"/>
+</p>
+
+The relationship between green skill probability, green ESCO semantic similarity and label quality are as follows:
+
+<p align="center">
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/b2598610-5ff2-456f-ad65-58782f943f8b" alt="skill label relationship graph"/>
+</p>
 
 Example **excellent** matches to **green ESCO**:
 
