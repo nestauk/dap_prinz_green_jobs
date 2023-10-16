@@ -31,8 +31,6 @@ there were...
 
 The distribution of labels are as follows:
 
-![dist_graph](https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/ce9217e6-fb69-44cf-8705-b7f65bb93e2b)
-
 <p align="center">
   <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/ce9217e6-fb69-44cf-8705-b7f65bb93e2b" alt="skill label distribution graph"/>
 </p>
