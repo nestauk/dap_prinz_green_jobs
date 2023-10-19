@@ -19,7 +19,7 @@ To map job adverts to SIC codes and get SIC-level industry measures, you can use
 ```
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures
 
-job_ads = {'id': 1, 'company_name': "fake_company_name", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+job_ads = {'id': 1, 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
 
 im = IndustryMeasures() #instantiate the class
 im.load() #load the relevant green industries datasets and SicMapper class

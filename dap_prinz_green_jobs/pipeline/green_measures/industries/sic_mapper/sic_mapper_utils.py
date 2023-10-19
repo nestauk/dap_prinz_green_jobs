@@ -96,49 +96,6 @@ def clean_sic(sic_name: str) -> str:
         return None
 
 
-def clean_company_name(
-    name: str,
-    word_mapper: dict = {},
-    company_stop_words: set = company_stopwords,
-) -> str:
-    """Clean the company name so it can be matched across datasets
-
-    There is lots of different ways to write company names, so this normalises
-    across datasets for matching. e.g. "Apple ltd." and "apple limited"
-
-    :param name: A company name
-    :type: str
-    :param word_mapper: A dict of words to replace with others (e.g. {"ltd": "limited"})
-    :type: dict
-    :param company_stop_words: words to be removed from the name
-    :type: set
-    :return: A cleaned company name
-    :rtype: str
-    """
-
-    if name:
-        name = str(name)
-        name = re.sub(r"[^\w\s]", "", name)
-        name = " ".join(name.split())  # sort out double spaces and trailing spaces
-        name = name.lower()
-
-        name_words = name.split()
-        words = [
-            word_mapper.get(word, word)
-            for word in name_words
-            if word not in company_stop_words
-        ]
-
-        name = " ".join(words)
-
-        if len(name) > 2:
-            return name
-        else:
-            return None
-    else:
-        return None
-
-
 def clean_company_description(
     description: str, bad_phrases: List[str] = bad_phrases
 ) -> str:
@@ -168,39 +125,6 @@ def clean_company_description(
         clean_description = re.sub(pattern, replacement, clean_description)
 
     return clean_description.strip()
-
-
-# We can modify this slightly when we use a company name to SIC mapper
-# instead of companies house data
-def get_ch_sic(company_name: str, ojo_companies_house_dict: Dict) -> str:
-    """
-    Pick the first 5 digit SIC for each cleaned name
-        using the Companies House data. Assumes that companies house
-        SICs are ordered in terms of importance.
-
-    :type companies_house_cleaned_in_ojo_dict: dict
-
-    :param cleaned_name: The cleaned company name
-    :type cleaned_name: str
-
-    :return: A SIC or None
-    :rtype: str or None
-
-    """
-    cleaned_name = clean_company_name(company_name)
-
-    companies_house_data = ojo_companies_house_dict.get(cleaned_name)
-    if companies_house_data:
-        sic_options = [
-            c["SICCode.SicText_1"]
-            for c in companies_house_data
-            if c["SICCode.SicText_1"]
-        ]
-        # return the first sic code
-        sic_code = clean_sic(sic_options[0])
-        return sic_code
-    else:
-        return None
 
 
 def convert_indx_to_sic(

@@ -4,13 +4,14 @@ Class to extract company descriptions and map them to up to a SIC code
 
 Usage:
 
-    job_ads = {'id': 1, 'company_name': "Company A", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+    job_ads = {'id': 1,
+    'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+
     sm = SicMapper()
     sm.load() # load relevant models, tokenizers and datasets
     sic_code = sm.get_sic_codes(job_ads) # get SIC codes for job adverts
 
   >>  [{'id': '1',
-      'company_name': 'Test Company A',
       'company_description': 'We are a fast growing company in the software engineering industry.',
       'sic_code': '582',
       'sic_name': 'Software publishing',
@@ -31,10 +32,7 @@ from transformers import pipeline
 
 from dap_prinz_green_jobs import PROJECT_DIR, BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data, load_json_dict
-from dap_prinz_green_jobs.getters.industry_getters import (
-    load_companies_house_dict,
-    load_sic,
-)
+from dap_prinz_green_jobs.getters.industry_getters import load_sic
 
 # utils imports
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
@@ -128,7 +126,6 @@ class SicMapper(object):
         # get job id and job description keys
         self.job_id_key = self.config["job_adverts"]["job_id_key"]
         self.job_description_key = self.config["job_adverts"]["job_text_key"]
-        self.company_name_key = self.config["job_adverts"]["company_name_key"]
         # load company description classifier model name
         self.model_path = self.config["industries"]["model_path"]
         # load relevant information to map company descriptions to SIC codes
@@ -189,10 +186,6 @@ class SicMapper(object):
         sic_embeds = self._fetch_data(self.sic_comp_desc_embeds_path)
         self.sic_comp_desc_embeds = np.float32(np.array(sic_embeds))
 
-        # Currently we're using companies house as the company
-        # name to SIC code mapper - we can change this later
-        self.ojo_companies_house_dict = load_companies_house_dict()
-
         self.sic_db = self.create_vector_index(self.sic_comp_desc_embeds)
 
         sic_data = load_sic()
@@ -206,6 +199,13 @@ class SicMapper(object):
             for k, v in dict(
                 zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
             ).items()
+        }
+
+        # based on evaluation, we have hard coded for some companies
+        self.hard_coded_sics = {
+            "Menzies Distribution": "49",
+            "Logistics UKs most innovative business": "49",
+            "SaintGobain": "231",
         }
 
     def preprocess_job_adverts(
@@ -231,7 +231,6 @@ class SicMapper(object):
             preprocessed_job_adverts.append(
                 {
                     self.job_id_key: job_advert[self.job_id_key],
-                    self.company_name_key: job_advert[self.company_name_key],
                     f"{self.job_description_key}_clean": job_description_clean,
                     f"{self.job_description_key}_sentences": job_description_sentences,
                 }
@@ -270,7 +269,6 @@ class SicMapper(object):
             company_descriptions.append(
                 {
                     self.job_id_key: job_advert[self.job_id_key],
-                    self.company_name_key: job_advert[self.company_name_key],
                     f"{self.job_description_key}_clean": job_advert.get(
                         f"{self.job_description_key}_clean"
                     ),
@@ -393,23 +391,23 @@ class SicMapper(object):
 
         sic_codes = {}
         job_ids_to_predict = []
-        # let's first try to get the SIC code from the company name
-        # companies house
+        # lets first hard code sic codes
         for job_ad in job_adverts:
-            company_name = job_ad[self.company_name_key]
-            ch_sic_code = su.get_ch_sic(company_name, self.ojo_companies_house_dict)
-            if ch_sic_code:
-                sic_clean = su.clean_sic(ch_sic_code)
-                sic_codes[job_ad.get(self.job_id_key)] = {
-                    self.company_name_key: company_name,
-                    "company_description": None,
-                    "sic_code": ch_sic_code,
-                    "sic_name": self.sic_names.get(sic_clean),
-                    "sic_method": "companies house",
-                    "sic_confidence": None,
-                }
-            else:
-                job_ids_to_predict.append(job_ad.get(self.job_id_key))
+            job_ad_text = job_ad.get(self.job_description_key)
+            if job_ad_text:
+                sic_code = [
+                    v for k, v in self.hard_coded_sics.items() if k in job_ad_text
+                ]
+                if sic_code != []:
+                    sic_codes[job_ad.get(self.job_id_key)] = {
+                        "company_description": None,
+                        "sic_code": sic_code[0],
+                        "sic_name": self.sic_names.get(sic_code[0]),
+                        "sic_method": "hard coded sic",
+                        "sic_confidence": None,
+                    }
+                else:
+                    job_ids_to_predict.append(job_ad.get(self.job_id_key))
 
         if len(job_ids_to_predict) > 0:
             logger.info(
@@ -452,7 +450,6 @@ class SicMapper(object):
             )
 
             for job_ad in preprocessed_job_adverts_comp_desc:
-                company_name = job_ad[self.company_name_key]
                 if job_ad["company_description"] != "":
                     company_desc_hash = tc.short_hash(job_ad["company_description"])
                     comp_embed = comp_embeds.get(company_desc_hash)
@@ -462,7 +459,6 @@ class SicMapper(object):
                 else:
                     sic_code, sic_prob, sic_method, sic_name = None, None, None, None
                 sic_codes[job_ad[self.job_id_key]] = {
-                    self.company_name_key: company_name,
                     "company_description": job_ad["company_description"],
                     "sic_code": sic_code,
                     "sic_name": sic_name,
