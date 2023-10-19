@@ -30,7 +30,7 @@ sic_code = sm.get_sic_codes(job_ad) # get SIC codes for job advert
 The SIC Mapper can be described in the following diagram:
 
 <p align="center">
-  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/b7d318aa-396b-4d7c-a2e4-25ca6cff0f25" />
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/6e16b600-aaa9-46f4-9926-0ad4e772e2ef" />
 </p>
 
 ## 🤖 Synthetic SIC data generation
