@@ -6,7 +6,7 @@ The sample of job adverts analysed is defined in `dap_prinz_green_jobs/pipeline/
 
 ### Between Measures Analysis
 
-This notebook contains analysis of green measures **between** industries, occupations and skills.
+The `between_measures_analysis.ipynb` notebook contains analysis of green measures **between** industries, occupations and skills.
 
 ### Measures Analysis
 
