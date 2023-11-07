@@ -1,16 +1,19 @@
 """
 Create a sample dataset to evaluate the skills extraction and mapping to green ESCO
+
+python dap_prinz_green_jobs/pipeline/evaluation/skills_evaluation_sample.py
 """
 
-from dap_prinz_green_jobs import BUCKET_NAME
 import pandas as pd
 
 import random
+from typing import Dict
 
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data, save_to_s3
+from dap_prinz_green_jobs import BUCKET_NAME
 
 
-def format_skills_data(green_skills_outputs):
+def format_skills_data(green_skills_outputs: Dict[str, dict]) -> pd.DataFrame:
     skill_measures_df = (
         pd.DataFrame.from_dict(green_skills_outputs, orient="index")
         .reset_index()
@@ -91,6 +94,9 @@ if __name__ == "__main__":
         lambda x: x.sample(500, random_state=42)
     )
     skills_df_sample.drop(columns=["ENTS", "GREEN_ENTS", "all_esco_map"], inplace=True)
-    skills_df_sample.to_csv(
-        "dap_prinz_green_jobs/pipeline/evaluation/skill_evaluation_sample.csv"
+
+    save_to_s3(
+        BUCKET_NAME,
+        skills_df_sample,
+        "outputs/data/labelled_job_adverts/evaluation/skills/skill_evaluation_sample.csv",
     )

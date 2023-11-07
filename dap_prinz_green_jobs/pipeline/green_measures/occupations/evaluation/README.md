@@ -103,3 +103,7 @@ We note that the results from the most commonly occuring job titles are probably
 A random sample of the job titles that don't match to a SOC revealed that extra cleaning may help them match to SOC codes. Some of the job titles that didn't match include:
 
 ['Disability Assessor Homebase / Front Office', 'Clinical Fellow ST3 Stroke medicine', 'IT Engineer - &#163;25-&#163;30k - Normanton / Hybrid', 'Entry Level Graduate Scheme', 'Operatives Needed', 'Waiting Staff 1', 'Staff Nurse, General Surgery - Band 5', 'PHP Developer Laravel Vue.js', 'Bike Courier parttime Liverpool', 'E&amp;I Technician Days', '1-1 Tutor Required - Wakefield', 'Flexcube Analyst permanent', 'Infection Prevention Control Nurse - Band 8a', 'Blinds and Curtains Installer', 'Senior Community Host - Woking', 'Data Architect, Microsoft Stack, Remote', 'Factory Cleaning Operative - &#163;1000 sign on bonus!', 'Retail Customer Service CSM 30hrs - Multi-site', 'Retail Customer Service CSA 30hrs', 'Driver weekend Liverpool']
+
+## Future work
+
+It'd be good to compare our SOCmapper performance to other mappers out there, for example [this python package that maps to 3-digit SOC](https://github.com/aeturrell/occupationcoder) or [the online tool from Cascot](https://cascotweb.warwick.ac.uk/#/classification/soc2020).

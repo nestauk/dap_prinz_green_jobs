@@ -83,6 +83,7 @@ if __name__ == "__main__":
     )
     common_job_titles = count_job_titles[0:1000].to_dict()
 
+    random.seed(42)
     random_job_titles = random.sample(list(count_job_titles.items()), 200)
     random_job_titles = {k: v for (k, v) in random_job_titles}
 
@@ -111,13 +112,18 @@ if __name__ == "__main__":
         soc_mapper, common_job_titles, soc_2020_ext_dict, soc_2020_dict
     )
 
-    common_evaluation_data_df.to_csv(
-        "dap_prinz_green_jobs/pipeline/green_measures/occupations/evaluation/soc_evaluation_sample.csv"
+    save_to_s3(
+        BUCKET_NAME,
+        common_evaluation_data_df,
+        "outputs/data/labelled_job_adverts/evaluation/occupations/soc_evaluation_sample.csv",
     )
+
     random_evaluation_data_df = get_evaluation_df(
         soc_mapper, random_job_titles, soc_2020_ext_dict, soc_2020_dict
     )
 
-    random_evaluation_data_df.to_csv(
-        "dap_prinz_green_jobs/pipeline/green_measures/occupations/evaluation/soc_evaluation_random_sample.csv"
+    save_to_s3(
+        BUCKET_NAME,
+        random_evaluation_data_df,
+        "outputs/data/labelled_job_adverts/evaluation/occupations/soc_evaluation_random_sample.csv",
     )
