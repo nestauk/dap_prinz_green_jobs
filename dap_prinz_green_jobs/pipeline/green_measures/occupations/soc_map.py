@@ -3,10 +3,13 @@ A class to map inputted job titles to their most likely SOC 2020 4-digit codes.
 
 Usage:
 
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
+
 soc_mapper = SOCMapper()
 soc_mapper.load()
-matches = soc_mapper.get_soc(job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"])
->>> [('2425', 'data scientist'), ('6141', 'assistant nurse'), ('3534', 'financial consultant')]
+job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"]
+
+soc_mapper.get_soc(job_titles, return_soc_name=True)
 
 """
 from collections import Counter, defaultdict
@@ -232,6 +235,19 @@ class SOCMapper(object):
 
         self.jobtitle_soc_data = self.load_process_soc_data()
 
+        self.soc_2020_6_dict = dict(
+            zip(
+                self.jobtitle_soc_data["SOC_2020_EXT"],
+                self.jobtitle_soc_data["SUB-UNIT GROUP DESCRIPTIONS"],
+            )
+        )
+        self.soc_2020_4_dict = dict(
+            zip(
+                self.jobtitle_soc_data["SOC_2020"],
+                self.jobtitle_soc_data["SOC 2020 UNIT GROUP DESCRIPTIONS"],
+            )
+        )
+
         if job_titles:
             self.job_title_2_soc6_4 = self.unique_soc_job_titles(self.jobtitle_soc_data)
         else:
@@ -366,7 +382,12 @@ class SOCMapper(object):
             else:
                 return None
 
-    def get_soc(self, job_titles: Union[str, List[str]], additional_info: bool = False):
+    def get_soc(
+        self,
+        job_titles: Union[str, List[str]],
+        additional_info: bool = False,
+        return_soc_name: bool = False,
+    ):
         """Get the most likely SOC for each inputted job title
 
                 :param job_titles: A single job title or a list of raw job titles
@@ -375,6 +396,9 @@ class SOCMapper(object):
                 :param additional_info: Whether to provide additional information about the matches.
                         Return just the most likely soc match (False) or the top soc matches (True)
         :type additional_info: bool
+                :param return_soc_name: Whether to output the SOC names of the most likely SOC (or just the codes).
+                        When applied to lots of data this might not be as desirable.
+        :type return_soc_name: book
 
         :return: A list of the top matches for each job title inputted
         :rtype: list
@@ -395,7 +419,21 @@ class SOCMapper(object):
         found_count = 0
         for job_matches in top_soc_matches:
             most_likely_soc = self.find_most_likely_soc(job_matches)
-            job_matches["most_likely_soc"] = most_likely_soc
+            ((soc_2020_6, soc_2020_4, soc_2010_4), job_title) = most_likely_soc
+            if return_soc_name:
+                job_matches["most_likely_soc"] = (
+                    (
+                        (soc_2020_6, self.soc_2020_6_dict.get(soc_2020_6)),
+                        (soc_2020_4, self.soc_2020_4_dict.get(soc_2020_4)),
+                        soc_2010_4,
+                    ),
+                    job_title,
+                )
+            else:
+                job_matches["most_likely_soc"] = (
+                    (soc_2020_6, soc_2020_4, soc_2010_4),
+                    job_title,
+                )
             if most_likely_soc:
                 found_count += 1
 
