@@ -5,19 +5,25 @@ Usage:
 
     from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures
 
-    job_ads = {'id': 1, 'company_name': "Fake Company", 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+    job_ads = [{'id': 1, 'job_text': 'We are looking for a software engineer to join our team. This company sits in the software engineering industry.'}]
 
-    im = IndustryMeasures()
-    im.load() #load necessary SIC mapper class and Industry-level greenness datasets
-    im.get_measures(job_ads)
+    im = IndustryMeasures() #instantiate the class
+    im.load() #load the relevant green industries datasets and SicMapper class
 
-    >>  [{'SIC': '582',
-    'SIC_name': 'Software publishing',
-    'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
-    'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
-    'INDUSTRY PROP HOURS GREEN TASKS': 9.700000000000001,
-    'INDUSTRY PROP WORKERS GREEN TASKS': 43.5,
-    'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 23.599999999999998}]]
+    im.get_measures(job_ads) #get the measures for the job advert
+
+    >>  {1: {'SIC': '62012',
+  'SIC_name': 'Business and domestic software development',
+  'SIC_confidence': 0.62,
+  'SIC_method': 'closest distance',
+  'company_description': 'This company sits in the software engineering industry..',
+  'INDUSTRY TOTAL GHG EMISSIONS': 254,
+  'INDUSTRY GHG PER UNIT EMISSIONS': 0,
+  'INDUSTRY PROP HOURS GREEN TASKS': 9.700000000000001,
+  'INDUSTRY PROP WORKERS GREEN TASKS': 43.5,
+  'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 23.599999999999998,
+  'INDUSTRY GHG EMISSIONS PER EMPLOYEE': 0.6,
+  'INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE': 771.2}}
 """
 from typing import List, Union, Dict, Union
 import yaml

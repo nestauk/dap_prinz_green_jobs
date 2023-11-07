@@ -19,24 +19,25 @@ To map job adverts to SIC codes and get SIC-level industry measures, you can use
 ```
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import IndustryMeasures
 
-job_ads = {'id': 1, 'job_text': 'We are looking for a software engineer to join our team. We are a fast growing company in the software engineering industry.'}
+job_ads = {'id': 1, 'job_text': 'We are looking for a software engineer to join our team. This company sits in the software engineering industry.'}
 
 im = IndustryMeasures() #instantiate the class
 im.load() #load the relevant green industries datasets and SicMapper class
 
 im.get_measures(job_ads) #get the measures for the job advert
 
->>  [{'SIC': '582',
-  'SIC_name': 'Software publishing',
-  'SIC_confidence': 0.77,
+>>  {1: {'SIC': '62012',
+  'SIC_name': 'Business and domestic software development',
+  'SIC_confidence': 0.62,
   'SIC_method': 'closest distance',
-  'INDUSTRY TOTAL GHG EMISSIONS': 46.4,
-  'INDUSTRY GHG PER UNIT EMISSIONS': 0.01,
+  'company_description': 'This company sits in the software engineering industry..',
+  'INDUSTRY TOTAL GHG EMISSIONS': 254,
+  'INDUSTRY GHG PER UNIT EMISSIONS': 0,
   'INDUSTRY PROP HOURS GREEN TASKS': 9.700000000000001,
   'INDUSTRY PROP WORKERS GREEN TASKS': 43.5,
   'INDUSTRY PROP WORKERS 20PERC GREEN TASKS': 23.599999999999998,
   'INDUSTRY GHG EMISSIONS PER EMPLOYEE': 0.6,
-  'INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE': 771.2}]
+  'INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE': 771.2}}
 ```
 
 ## 🪥 Industry data processing

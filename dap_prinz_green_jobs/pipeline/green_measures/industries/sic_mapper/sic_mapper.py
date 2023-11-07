@@ -202,11 +202,7 @@ class SicMapper(object):
         }
 
         # based on evaluation, we have hard coded for some companies
-        self.hard_coded_sics = {
-            "Menzies Distribution": "49",
-            "Logistics UKs most innovative business": "49",
-            "SaintGobain": "231",
-        }
+        self.hard_coded_sics = su.hard_coded_sics
 
     def preprocess_job_adverts(
         self, job_adverts: List[Dict[str, str]]
@@ -391,7 +387,7 @@ class SicMapper(object):
 
         sic_codes = {}
         job_ids_to_predict = []
-        # lets first hard code sic codes
+        # lets first hard code sic codes  if part of the company description is in `self.hard_coded_sics`
         for job_ad in job_adverts:
             job_ad_text = job_ad.get(self.job_description_key)
             if job_ad_text:

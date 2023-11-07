@@ -8,6 +8,12 @@ from dap_prinz_green_jobs.getters.industry_getters import load_sic
 import numpy as np
 import re
 
+hard_coded_sics = {
+    "Menzies Distribution": "49",
+    "Logistics UKs most innovative business": "49",
+    "SaintGobain": "231",
+}
+
 sic_data = load_sic()
 sic_to_section = {
     str(k).strip(): v.strip()
@@ -153,7 +159,7 @@ def clean_company_description(
     sentence_replacement_rules = {
         r"\b(?:"
         + "|".join(map(re.escape, bad_phrases))
-        + r")\b": "",  # Remove bad phrases
+        + r")\b": "",  # Remove bad phrases if at the beginning of the description
         r"£\d{1,3}(,\d{3})*": "",  # Convert "salaries" to spaces
         # Convert numbers (including , and .) to spaces
         r"\d{1,3}(,\d{3})*(\.\d+)?": "",
