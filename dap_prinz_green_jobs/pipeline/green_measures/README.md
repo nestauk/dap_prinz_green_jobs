@@ -12,7 +12,6 @@ To extract measures at all levels of granularity, you may use the `GreenMeasures
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
 
 job_ad = {"id": 1,
-"company_name": "Test Company A",
 "title": "Data Scientist",
 "job_text": "We are looking for a data scientist to join our team. We are a manufacturing company. You should be able to use python and R. You should also have experience in sustainability."}
 

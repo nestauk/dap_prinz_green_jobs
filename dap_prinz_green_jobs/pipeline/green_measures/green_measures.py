@@ -189,11 +189,7 @@ class GreenMeasures(object):
         if isinstance(job_advert, dict):
             job_advert = [job_advert]
 
-        ind_green_measures_list = self.im.get_measures(job_advert)
-
-        ind_green_measures_dict = dict(
-            zip([j[self.job_id_key] for j in job_advert], ind_green_measures_list)
-        )
+        ind_green_measures_dict = self.im.get_measures(job_advert)
 
         return ind_green_measures_dict
 

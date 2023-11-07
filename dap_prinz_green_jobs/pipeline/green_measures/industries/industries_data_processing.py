@@ -22,7 +22,7 @@ from tqdm import tqdm
 
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME
-from dap_prinz_green_jobs.pipeline.green_measures.industries.industry_measures_utils import (
+from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper_utils import (
     clean_company_name,
 )
 
@@ -42,6 +42,7 @@ if __name__ == "__main__":
         (
             (companies_house["SICCode.SicText_1"] != "None Supplied")
             & (companies_house["SICCode.SicText_1"] != "99999 - Dormant Company")
+            & (companies_house["SICCode.SicText_1"] != "74990 - Non-trading company")
         )
     ].reset_index(drop=True)
 

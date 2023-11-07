@@ -9,8 +9,8 @@ openpyxl
 ojd-daps-skills
 pyarrow==10.0.0
 altair
-umap
 vega
 plac
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.1/en_core_web_sm-3.4.1.tar.gz
 typing_extensions<4.6.0
+umap-learn

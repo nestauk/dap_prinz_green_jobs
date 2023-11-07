@@ -8,6 +8,12 @@ from dap_prinz_green_jobs.getters.industry_getters import load_sic
 import numpy as np
 import re
 
+hard_coded_sics = {
+    "Menzies Distribution": "49",
+    "Logistics UKs most innovative business": "49",
+    "SaintGobain": "231",
+}
+
 sic_data = load_sic()
 sic_to_section = {
     str(k).strip(): v.strip()
@@ -38,6 +44,37 @@ company_stopwords = set(
         "plc",
     ]
 )
+
+# get rid of tokens that often
+# appear in the beginning of job ads
+bad_phrases = [
+    "Job Title",
+    "Job Type",
+    "Salary",
+    "Competitive salary",
+    "competitive salary",
+    "Full-time",
+    "full-time",
+    "Full Time",
+    "part-time",
+    "Part-time",
+    "Permanent",
+    "permanent",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "Benefits",
+    "Location",
+    "benefits",
+    "location",
+    "Eye Care",
+    "Home Based",
+    "Fixed Term",
+]
 
 
 def clean_sic(sic_name: str) -> str:
@@ -108,37 +145,35 @@ def clean_company_name(
         return None
 
 
-# We can modify this slightly when we use a company name to SIC mapper
-# instead of companies house data
-def get_ch_sic(company_name: str, ojo_companies_house_dict: Dict) -> str:
+def clean_company_description(
+    description: str, bad_phrases: List[str] = bad_phrases
+) -> str:
+    """Minimal cleaning of company description.
+
+    Args:
+        description (str): The company description
+
+    Returns:
+        str: The cleaned company description
     """
-    Pick the first 5 digit SIC for each cleaned name
-        using the Companies House data. Assumes that companies house
-        SICs are ordered in terms of importance.
+    sentence_replacement_rules = {
+        r"\b(?:"
+        + "|".join(map(re.escape, bad_phrases))
+        + r")\b": "",  # Remove bad phrases if at the beginning of the description
+        r"£\d{1,3}(,\d{3})*": "",  # Convert "salaries" to spaces
+        # Convert numbers (including , and .) to spaces
+        r"\d{1,3}(,\d{3})*(\.\d+)?": "",
+        r"[^\w\s,.]": "",  # Remove punctuation that isn't a comma
+        r"\s+": " ",  # Convert multiple spaces to single spaces
+    }
 
-    :type companies_house_cleaned_in_ojo_dict: dict
+    # Initialize clean_description with the original description
+    clean_description = description
+    # Apply replacement rules
+    for pattern, replacement in sentence_replacement_rules.items():
+        clean_description = re.sub(pattern, replacement, clean_description)
 
-    :param cleaned_name: The cleaned company name
-    :type cleaned_name: str
-
-    :return: A SIC or None
-    :rtype: str or None
-
-    """
-    cleaned_name = clean_company_name(company_name)
-
-    companies_house_data = ojo_companies_house_dict.get(cleaned_name)
-    if companies_house_data:
-        sic_options = [
-            c["SICCode.SicText_1"]
-            for c in companies_house_data
-            if c["SICCode.SicText_1"]
-        ]
-        # return the first sic code
-        sic_code = clean_sic(sic_options[0])
-        return sic_code
-    else:
-        return None
+    return clean_description.strip()
 
 
 def convert_indx_to_sic(
