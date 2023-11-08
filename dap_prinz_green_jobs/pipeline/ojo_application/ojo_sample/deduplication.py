@@ -1,6 +1,5 @@
 """
-A script to deduplicate the OJO dataset
-
+A script to deduplicate the OJO dataset and sample per soc4 occupation and itl2 location.
 """
 
 import pandas as pd
@@ -10,13 +9,24 @@ from tqdm import tqdm
 
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
-from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.deduplication_utils import (
+from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.ojo_sample_utils import (
     short_hash,
     get_deduplicated_job_adverts,
+    get_soc4_codes,
+    desired_sample_size,
+    random_seed,
 )
+
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
+
+from tqdm import tqdm
 
 num_units = config["ojo_deduplication_num_units"]
 unit_type = config["ojo_deduplication_unit_type"]
+
+# load SOC mapper
+soc_mapper = SOCMapper()
+soc_mapper.load()
 
 if __name__ == "__main__":
     adverts_ojd_daps_extract = pd.read_parquet(
@@ -71,10 +81,9 @@ if __name__ == "__main__":
     )
 
     no_duplicates.reset_index(drop=True, inplace=True)
-    
+
     save_to_s3(
         BUCKET_NAME,
         no_duplicates,
         output_file_name,
     )
-
