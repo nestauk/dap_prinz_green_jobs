@@ -4,7 +4,7 @@ This repository contains the code required to measure the greeness of job advert
 
 1. **Extract** relevant information from job ads;
 2. **Map** information to UK government standards including Standard Occupation Classification (SOC) codes, Standard Industrial Classification (SIC) codes and the European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy;
-3. **Join** standards to publically available greeness datasets, such as industry-level GHG emissions as reported by the UK's Office for National Statistics or the U.S. Bureau of Labor Statistics's Occupational Information Network (O\*NET)'s occupation-level time spent on green tasks.
+3. **Join** standards to publically available greeness datasets, such as industry-level GHG emissions as reported by the UK's Office for National Statistics or  the U.S. Bureau of Labor Statistics's Occupational Information Network (O*NET)'s occupation-level time spent on green tasks.  
 
 At the job advert level, this can be summaried with the following visual:
 
@@ -86,9 +86,9 @@ Core to the codebase are the following directories:
 
 - `dap_prinz_green_jobs/pipeline/green_measures/`: This directory contains the code required and methodological summaries to **extract and map** job adverts to:
 
-  - `occupations`: Standard Occupational Classification codes (SOC);
-  - `industries`: Standard Industrial Classification codes (SIC) and;
-  - `skills`: The European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy.
+  - `occupations/`: Standard Occupational Classification codes (SOC);
+  - `industries/`: Standard Industrial Classification codes (SIC) and;
+  - `skills/`: The European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy.
 
   It also contains code to join those standards to publically available datasets on occupations and sectors.
 
@@ -98,7 +98,7 @@ Core to the codebase are the following directories:
 
 ## Green Jobs Explorer
 
-If you would to explore the data via a front end, we've build a demo tool for reresearchers to explore and learn more about green jobs and skills.
+If you would to explore the data via a front end, [we've build a demo tool for reresearchers](https://green-jobs-19776304fc2f.herokuapp.com/occupations) to explore and download data ongreen jobs and skills. 
 
 ## Setup
 
