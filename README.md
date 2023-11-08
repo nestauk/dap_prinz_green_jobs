@@ -2,9 +2,9 @@
 
 This repository contains the code required to measure the greeness of job adverts at the skill-, occupation- and sector-level. At it's highest level, this codebase contains the algorithms required to:
 
-<p align="center">
-  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/8aa30258-e468-4749-94f3-c11a29580387" />
-</p>
+1. **Extract** relevant information from job ads;
+2. **Map** information to UK government standards including Standard Occupation Classification (SOC) codes, Standard Industrial Classification (SIC) codes and the European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy;
+3. **Join** standards to publically available greeness datasets, such as industry-level GHG emissions as reported by the UK's Office for National Statistics or  the U.S. Bureau of Labor Statistics's Occupational Information Network (O*NET)'s occupation-level time spent on green tasks.  
 
 At the job advert level, this can be summaried with the following visual:
 
