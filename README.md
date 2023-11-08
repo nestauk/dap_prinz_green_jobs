@@ -84,7 +84,7 @@ Should you like to extract a single measure (i.e. extract green skills) or if yo
 
 Core to the codebase are the following directories:
 
-- `dap_prinz_green_jobs/pipeline/green_measures/`: This directory contains the code required and methodological summaries to **extract, map and job** job adverts to:
+- `dap_prinz_green_jobs/pipeline/green_measures/`: This directory contains the code required and methodological summaries to **extract, map and join** job adverts to:
 
   - `occupations/`: Standard Occupational Classification codes (SOC) and associated greeness datasets;
   - `industries/`: Standard Industrial Classification codes (SIC) and associated greeness datasets and;
