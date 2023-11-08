@@ -100,7 +100,7 @@ Core to the codebase are the following directories:
   <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/4ee5d9e3-90e9-48ac-8164-273fa93f503c" />
 </p>
 
-If you would to explore the data via a front end, [we've build a demo tool for reresearchers](https://green-jobs-19776304fc2f.herokuapp.com/occupations) to explore and download data ongreen jobs and skills. 
+If you would to explore the data via a front end, [we've build a demo tool for researchers](https://green-jobs-19776304fc2f.herokuapp.com/occupations) to explore and download data on green jobs and skills. 
 
 ## Setup
 
