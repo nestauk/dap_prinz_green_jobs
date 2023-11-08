@@ -2,7 +2,15 @@
 
 This repository contains the code required to measure the greeness of job adverts at the skill-, occupation- and sector-level. At it's highest level, this codebase contains the algorithms required to:
 
+<p align="center">
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/8aa30258-e468-4749-94f3-c11a29580387" />
+</p>
+
 At the job advert level, this can be summaried with the following visual:
+
+<p align="center">
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/db07e584-c1cc-476e-8ee1-050562318daf" />
+</p>
 
 ## TL;DR: Extracting green measures
 
@@ -70,7 +78,7 @@ measures = gm.get_green_measures(job_ad) #Extract measures at all levels of gran
 
 You can also pass a list of job adverts to the `get_green_measures` method to extract measures from multiple job adverts at once.
 
-Should you like to extract a single measure (i.e. extract green skills), please refer to detailed READMEs in the `dap_prinz_green_jobs/pipeline/green_measures/` directory.
+Should you like to extract a single measure (i.e. extract green skills) or if you would just like to extract SOC, SIC or skills, please refer to detailed READMEs in the `dap_prinz_green_jobs/pipeline/green_measures/` directory.
 
 ## Project structure
 
@@ -85,6 +93,12 @@ Core to the codebase are the following directories:
   It also contains code to join those standards to publically available datasets on occupations and sectors.
 
 - `dap_prinz_green_jobs/pipeline/ojo_application`: This directory contains the code required to apply the alorithms on different samples of scraped online job adverts from the [Open Jobs Observatory (OJO)](https://www.nesta.org.uk/data-visualisation-and-interactive/open-jobs-observatory/). As part of the project, Nesta has been scraping online job adverts since 2021 and building algorithms to extract and structure information as part of the Open Jobs Observatory project. Code in this directory requires access to Nesta's private S3 bucket and is not available to the public.
+
+- `dap_prinz_green_jobs/analysis/`: This directory contains the code that powers the [Green Jobs Explorer](https://green-jobs-19776304fc2f.herokuapp.com/occupations), our demo tool to explore and learn more about green jobs and skills.
+
+## Green Jobs Explorer
+
+If you would to explore the data via a front end, we've build a demo tool for reresearchers to explore and learn more about green jobs and skills.
 
 ## Setup
 
