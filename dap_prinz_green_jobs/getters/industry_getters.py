@@ -31,8 +31,8 @@ def load_industry_ghg() -> pd.DataFrame():
     """
 
     return pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg.xlsx",
-        sheet_name="GHG total",
+        "s3://prinz-green-jobs/inputs/data/industry_data/atmosphericemissionsghg_new.xlsx",
+        sheet_name="GHG total ",
         header=None,
     )
 
