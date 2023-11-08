@@ -90,9 +90,9 @@ Core to the codebase are the following directories:
   - `industries/`: Standard Industrial Classification codes (SIC) and associated greeness datasets and;
   - `skills/`: The European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy.
 
-- `dap_prinz_green_jobs/pipeline/ojo_application`: This directory contains the code required to apply the alorithms on different samples of scraped online job adverts from the [Open Jobs Observatory (OJO)](https://www.nesta.org.uk/data-visualisation-and-interactive/open-jobs-observatory/). As part of the project, Nesta has been scraping online job adverts since 2021 and building algorithms to extract and structure information as part of the Open Jobs Observatory project. Code in this directory requires access to Nesta's private S3 bucket and is not available to the public.
+- `dap_prinz_green_jobs/pipeline/ojo_application`: This directory contains the code required to apply the algorithms on different samples of scraped online job adverts from the [Open Jobs Observatory (OJO)](https://www.nesta.org.uk/data-visualisation-and-interactive/open-jobs-observatory/). Code in this directory requires access to Nesta's private S3 bucket and is not available to the public.
 
-- `dap_prinz_green_jobs/analysis/`: This directory contains the code that powers the [Green Jobs Explorer](https://green-jobs-19776304fc2f.herokuapp.com/occupations), our demo tool to explore and learn more about green jobs and skills.
+- `dap_prinz_green_jobs/analysis/`: This directory contains the analysis code that powers the [Green Jobs Explorer](https://green-jobs-19776304fc2f.herokuapp.com/occupations), our demo tool to explore and learn more about green jobs and skills.
 
 ## Green Jobs Explorer
 
