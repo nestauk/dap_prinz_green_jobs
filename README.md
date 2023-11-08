@@ -84,19 +84,21 @@ Should you like to extract a single measure (i.e. extract green skills) or if yo
 
 Core to the codebase are the following directories:
 
-- `dap_prinz_green_jobs/pipeline/green_measures/`: This directory contains the code required and methodological summaries to **extract and map** job adverts to:
+- `dap_prinz_green_jobs/pipeline/green_measures/`: This directory contains the code required and methodological summaries to **extract, map and job** job adverts to:
 
-  - `occupations/`: Standard Occupational Classification codes (SOC);
-  - `industries/`: Standard Industrial Classification codes (SIC) and;
+  - `occupations/`: Standard Occupational Classification codes (SOC) and associated greeness datasets;
+  - `industries/`: Standard Industrial Classification codes (SIC) and associated greeness datasets and;
   - `skills/`: The European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy.
-
-  It also contains code to join those standards to publically available datasets on occupations and sectors.
 
 - `dap_prinz_green_jobs/pipeline/ojo_application`: This directory contains the code required to apply the alorithms on different samples of scraped online job adverts from the [Open Jobs Observatory (OJO)](https://www.nesta.org.uk/data-visualisation-and-interactive/open-jobs-observatory/). As part of the project, Nesta has been scraping online job adverts since 2021 and building algorithms to extract and structure information as part of the Open Jobs Observatory project. Code in this directory requires access to Nesta's private S3 bucket and is not available to the public.
 
 - `dap_prinz_green_jobs/analysis/`: This directory contains the code that powers the [Green Jobs Explorer](https://green-jobs-19776304fc2f.herokuapp.com/occupations), our demo tool to explore and learn more about green jobs and skills.
 
 ## Green Jobs Explorer
+
+<p align="center">
+  <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/4ee5d9e3-90e9-48ac-8164-273fa93f503c" />
+</p>
 
 If you would to explore the data via a front end, [we've build a demo tool for reresearchers](https://green-jobs-19776304fc2f.herokuapp.com/occupations) to explore and download data ongreen jobs and skills. 
 
