@@ -4,7 +4,7 @@ This repository contains the code required to measure the greeness of job advert
 
 1. **Extract** relevant information from job ads;
 2. **Map** information to UK government standards including Standard Occupation Classification (SOC) codes, Standard Industrial Classification (SIC) codes and the European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy;
-3. **Join** standards to publically available greeness datasets, such as industry-level GHG emissions as reported by the UK's Office for National Statistics or  the U.S. Bureau of Labor Statistics's Occupational Information Network (O*NET)'s occupation-level time spent on green tasks.  
+3. **Join** standards to publically available greeness datasets, such as industry-level GHG emissions as reported by the UK's Office for National Statistics or the U.S. Bureau of Labor Statistics's Occupational Information Network (O\*NET)'s occupation-level time spent on green tasks.
 
 At the job advert level, this can be summaried with the following visual:
 
@@ -20,7 +20,7 @@ To extract green measures at the job advert level, you can use the `GreenMeasure
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
 
 job_ad = {'id': 1,
- 'title': 'Senior Sustainability Consultant',
+ 'job_title': 'Senior Sustainability Consultant',
  'job_text': 'You will work as part of a peer group of specialists and project managers, supported by a strong and diverse team of consultants and senior leaders. We are a organisation that is part of the architecture sector and is focused on the build environment. The role requires strong skills in sustainability reporting and knowledge of climate change. It also requires a sound understanding of qualitative/quantitative analysis and excellent report writing and communication skills.'}
 
 gm = GreenMeasures() #instantiate class
@@ -86,9 +86,9 @@ Core to the codebase are the following directories:
 
 - `dap_prinz_green_jobs/pipeline/green_measures/`: This directory contains the code required and methodological summaries to **extract and map** job adverts to:
 
-  - Standard Occupational Classification codes (SOC);
-  - Standard Industrial Classification codes (SIC) and;
-  - The European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy.
+  - `occupations`: Standard Occupational Classification codes (SOC);
+  - `industries`: Standard Industrial Classification codes (SIC) and;
+  - `skills`: The European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy.
 
   It also contains code to join those standards to publically available datasets on occupations and sectors.
 

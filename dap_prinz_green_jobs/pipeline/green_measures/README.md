@@ -12,7 +12,7 @@ To extract measures at all levels of granularity, you may use the `GreenMeasures
 from dap_prinz_green_jobs.pipeline.green_measures.green_measures import GreenMeasures
 
 job_ad = {'id': 1,
- 'title': 'Senior Sustainability Consultant',
+ 'job_title': 'Senior Sustainability Consultant',
  'job_text': 'You will work as part of a peer group of specialists and project managers, supported by a strong and diverse team of consultants and senior leaders. We are a organisation that is part of the architecture sector and is focused on the build environment. The role requires strong skills in sustainability reporting and knowledge of climate change. It also requires a sound understanding of qualitative/quantitative analysis and excellent report writing and communication skills.'}
 
 gm = GreenMeasures() #instantiate class

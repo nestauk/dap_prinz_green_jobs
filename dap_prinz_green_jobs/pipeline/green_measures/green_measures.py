@@ -15,7 +15,6 @@ from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils im
 from dap_prinz_green_jobs import PROJECT_DIR
 
 from typing import List, Dict, Optional
-from uuid import uuid4
 import yaml
 import os
 from datetime import datetime as date
@@ -170,6 +169,10 @@ class GreenMeasures(object):
                 ]
             )
         )
+        if unique_job_titles == []:
+            assert (
+                False
+            ), "No job titles found in job advert. Have you specified the correct job title key?"
 
         job_title_2_match = self.om.precalculate_soc_mapper(unique_job_titles)
         occ_green_measures_list = self.om.get_measures(
