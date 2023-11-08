@@ -117,7 +117,12 @@ def job_title_cleaner(text, lower_case_all_end_words=lower_case_all_end_words):
         text = re.sub(r"\d+\s*hrs", "", text).strip()
 
         # If there is a "£" remove everything after it (e.g. £30k per annum)
-        text = " ".join(text.split("£")[0:-1]).strip() if "£" in text else text
+        # Unless it occurs very early in the text
+        if "£" in text:
+            matches = re.findall(r"£", text)
+            index_found = text.index(matches[0])
+            if index_found > 4:
+                text = " ".join(text.split("£")[0:-1]).strip() if "£" in text else text
 
         # Remove certain things after the last dash
         if " - " in text:
@@ -135,7 +140,8 @@ def job_title_cleaner(text, lower_case_all_end_words=lower_case_all_end_words):
                 # Remove everything after the lastedash
                 text = " - ".join(text.split(" - ")[0:-1]).strip()
 
-        if text[-1] == "-":
-            text = text[0:-1].strip()
+        if text:  # The cleaning may make it so we are left with nothing
+            if text[-1] == "-":
+                text = text[0:-1].strip()
 
     return text
