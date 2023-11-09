@@ -17,6 +17,7 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
+          activate-environment: dap_prinz_green_jobs
           environment-file: environment.yaml
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
