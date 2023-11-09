@@ -27,7 +27,6 @@ jobs:
       - name: (ubuntu) Install conda dependencies
         if: runner.os != 'windows'
         run: |
-          conda activate dap_prinz_green_jobs
           conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
       - name: (ubuntu) Test with pytest
         if: runner.os != 'windows'
