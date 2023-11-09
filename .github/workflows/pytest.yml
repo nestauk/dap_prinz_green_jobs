@@ -20,7 +20,8 @@ jobs:
           environment-file: environment.yaml
       - name: Activate Conda environment
         run: |
-          source activate test
+          source ${{ runner.temp }}/conda/etc/profile.d/conda.sh
+          conda activate test
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
