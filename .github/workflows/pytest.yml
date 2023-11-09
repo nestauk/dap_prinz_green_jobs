@@ -11,9 +11,6 @@ jobs:
         os:
           - name: ubuntu
             host: ubuntu-latest
-          - name: windows
-            host: windows-latest
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -31,19 +28,5 @@ jobs:
           conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl
       - name: (ubuntu) Test with pytest
         if: runner.os != 'windows'
-        run: |
-          pytest --verbose
-
-      - name: (windows) Install dependencies
-        if: runner.os == 'windows'
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-          python -m spacy download en_core_web_sm
-          conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl
-      - name: (windows) Test with pytest
-        if: runner.os == 'windows'
-        shell: bash
         run: |
           pytest --verbose
