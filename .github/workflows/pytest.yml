@@ -13,11 +13,14 @@ jobs:
             host: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # - uses: conda-incubator/setup-miniconda@v2
-      #   with:
-      #     auto-update-conda: true
-      #     python-version: ${{ matrix.python-version }}
-      #     environment-file: environment.yaml
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          environment-file: environment.yaml
+      - name: Activate Conda environment
+        run: |
+          source activate $(basename ${{ inputs.environment-file }} .yaml)
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -30,10 +33,10 @@ jobs:
           pip install -e .
           pip install pytest faiss-cpu
           python -m spacy download en_core_web_sm
-      # - name: (ubuntu) Install conda dependencies
-      #   if: runner.os != 'windows'
-      #   run: |
-      #     conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
+      - name: (ubuntu) Install conda dependencies
+        if: runner.os != 'windows'
+        run: |
+          conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
       - name: (ubuntu) Test with pytest
         if: runner.os != 'windows'
         run: |
