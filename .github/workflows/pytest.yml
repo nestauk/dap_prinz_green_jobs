@@ -17,7 +17,6 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          activate-environment: dap_prinz_green_jobs
           environment-file: environment.yaml
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -31,11 +30,12 @@ jobs:
           pip install -e .
           pip install pytest
           python -m spacy download en_core_web_sm
-      - name: (ubuntu) Install conda dependencies
-        if: runner.os != 'windows'
-        run: |
-          conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
+      # - name: (ubuntu) Install conda dependencies
+      #   if: runner.os != 'windows'
+      #   run: |
+      #     conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
       - name: (ubuntu) Test with pytest
         if: runner.os != 'windows'
         run: |
+          conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
           pytest --verbose
