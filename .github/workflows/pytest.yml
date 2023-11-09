@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os.host }}
     strategy:
       matrix:
-        python-version: ["3.8", "3.9"]
+        python-version: ["3.8"]
         os:
           - name: ubuntu
             host: ubuntu-latest
