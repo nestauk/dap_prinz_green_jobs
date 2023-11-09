@@ -20,7 +20,7 @@ jobs:
           environment-file: environment.yaml
       - name: Activate Conda environment
         run: |
-          source activate $(basename ${{ inputs.environment-file }} .yaml)
+          source activate test
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
