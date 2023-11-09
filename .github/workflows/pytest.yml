@@ -18,16 +18,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-
-      - name: (ubuntu) Install dependencies
+      - name: (ubuntu) Install pip dependencies
         if: runner.os != 'windows'
         run: |
           python -m pip install --upgrade pip
-          conda create --name testenv python=${{ matrix.python-version }} -y
-          conda activate testenv
           pip install -e . 
           python -m spacy download en_core_web_sm
-          conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl
+      - name: (ubuntu) Install conda dependencies
+        if: runner.os != 'windows'
+        run: |
+          conda activate dap_prinz_green_jobs
+          conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
       - name: (ubuntu) Test with pytest
         if: runner.os != 'windows'
         run: |
