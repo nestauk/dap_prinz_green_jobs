@@ -15,7 +15,7 @@ To extract measures across the skill-, occupations- and industries- level on a s
 python dap_prinz_green_jobs/pipeline/ojo_application/extract_green_measures.py --config_name "base" --production
 ```
 
-This will save out three files, one for each of the measures.
+This will save out three main files, one for each of the measures. An additional file `soc_name_dict.json` will be outputted containing the SOC 2020 codes to their names.
 
 ### ⏳ Loading pre-calculated data and the config file
 
