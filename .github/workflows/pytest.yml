@@ -20,6 +20,7 @@ jobs:
           environment-file: environment.yaml
       - name: Activate Conda environment
         run: |
+          eval "$(conda shell.bash hook)"
           conda activate test
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
