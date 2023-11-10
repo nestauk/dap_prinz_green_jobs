@@ -19,10 +19,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           activate-environment: dap_prinz_green_jobs
           environment-file: environment.yaml
-      # - name: Activate Conda environment
-      #   run: |
-      #     eval "$(conda shell.bash hook)"
-      #     conda activate test
+      - name: Activate Conda environment
+        run: |
+          eval "$(conda shell.bash hook)"
+          conda activate dap_prinz_green_jobs
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
