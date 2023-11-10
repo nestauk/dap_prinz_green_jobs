@@ -11,3 +11,7 @@ The `between_measures_analysis.ipynb` notebook contains analysis of green measur
 ### Measures Analysis
 
 This notebook contains high-level analysis of industries, occupations and skills green measures.
+
+### Regional Comparison
+
+The `regional_comparison.ipynb` notebook contains code to create a chloropleth of regional comparisons of the greenness measures.
