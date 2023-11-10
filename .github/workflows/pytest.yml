@@ -17,11 +17,12 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
+          activate-environment: dap_prinz_green_jobs
           environment-file: environment.yaml
-      - name: Activate Conda environment
-        run: |
-          eval "$(conda shell.bash hook)"
-          conda activate test
+      # - name: Activate Conda environment
+      #   run: |
+      #     eval "$(conda shell.bash hook)"
+      #     conda activate test
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -30,8 +31,8 @@ jobs:
       - name: (ubuntu) Install pip dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest faiss-cpu
+          pip install -e .
+          pip install pytest
           python -m spacy download en_core_web_sm
       - name: (ubuntu) Install conda dependencies
         run: |
