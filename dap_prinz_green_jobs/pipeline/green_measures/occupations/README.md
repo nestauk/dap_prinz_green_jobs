@@ -54,31 +54,56 @@ The SOCMapper works by finding the semantically closest job titles between the i
 For example, if our inputted job adverts were
 
 ```
-["Data Scientist - London", "Electric motor assembler - part-time", "Data Analyst"]
+["Data Scientist - London", "Electric motor assembler - part time", "Data visualisation developer £30k per annum"]
+```
+
+these would be cleaned to
+
+```
+['Data Scientist', 'Electric motor assembler', 'Data visualisation developer']
 ```
 
 **Step 2:** We process the [ONS SOC dataset](https://www.ons.gov.uk/methodology/classificationsandstandards/standardoccupationalclassificationsoc/standardoccupationalclassificationsocextensionproject). An example of this dataset is:
 
-| SOC 2010 | SOC 2020 | SOC 2020 Ext Code | INDEXOCC         | ADD       | IND         | INDEXOCC NATURAL WORD ORDER | SOC 2020 UNIT GROUP DESCRIPTIONS                   | SUB-UNIT GROUP DESCRIPTIONS                               |
-| -------- | -------- | ----------------- | ---------------- | --------- | ----------- | --------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
-| 2425     | 2433     | 2433/02           | Scientist, data  |           |             | data scientist              | Actuaries, economists and statisticians            | Data scientists                                           |
-| 2136     | 2134     | 2134/99           | Analyst, data    | computing |             | data analyst                | Programmers and software development professionals | Programmers and software development professionals n.e.c. |
-| 3539     | 3544     | 3544/00           | Analyst, data    |           |             | data analyst                | Data analysts                                      | Data analysts                                             |
-| 8139     | 8149     | 8149/00           | Assembler, meter |           |             | meter assembler             | Assemblers and routine operatives n.e.c.           | Assemblers and routine operatives n.e.c.                  |
-| 8131     | 8141     | 8141/00           | Assembler, motor | electric  |             | motor assembler             | Assemblers (electrical and electronic products)    | Assemblers (electrical and electronic products)           |
-| 8132     | 8142     | 8142/02           | Assembler, motor |           | engineering | motor assembler             | Assemblers (vehicles and metal goods)              | Vehicle and vehicle part assemblers                       |
+| SOC 2010 | SOC 2020 | SOC 2020 Ext Code | INDEXOCC           | ADD       | IND         | INDEXOCC NATURAL WORD ORDER | SOC 2020 UNIT GROUP DESCRIPTIONS                   | SUB-UNIT GROUP DESCRIPTIONS                               |
+| -------- | -------- | ----------------- | ------------------ | --------- | ----------- | --------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| 2425     | 2433     | 2433/02           | Scientist, data    |           |             | data scientist              | Actuaries, economists and statisticians            | Data scientists                                           |
+| 2136     | 2134     | 2134/99           | Analyst, data      | computing |             | data analyst                | Programmers and software development professionals | Programmers and software development professionals n.e.c. |
+| 3539     | 3544     | 3544/00           | Analyst, data      |           |             | data analyst                | Data analysts                                      | Data analysts                                             |
+| 2136     | 2134     | 2134/03           | Developer, analyst |           |             | analyst developer           | Programmers and software development professionals | Software developers                                       |
+| 8139     | 8149     | 8149/00           | Assembler, meter   |           |             | meter assembler             | Assemblers and routine operatives n.e.c.           | Assemblers and routine operatives n.e.c.                  |
+| 8131     | 8141     | 8141/00           | Assembler, motor   | electric  |             | motor assembler             | Assemblers (electrical and electronic products)    | Assemblers (electrical and electronic products)           |
+| 8132     | 8142     | 8142/02           | Assembler, motor   |           | engineering | motor assembler             | Assemblers (vehicles and metal goods)              | Vehicle and vehicle part assemblers                       |
 
 We can combine the `INDEXOCC NATURAL WORD ORDER`, `ADD` and `IND` columns to create unique job titles. The dictionary of unique job titles to SOC information would be:
 
 ```
-{"data scientist": ("2433/02", "2433", "2425"), "data analyst computing": ("2134/99", "2134", "2136"), "data analyst": ("3544/00", "3544", "3539"), "meter assembler": ("8149/00", "8149", "8139"), "motor assembler electric": ("8141/00", "8141", "8131"), "motor assembler engineering": ("8142/02", "8142", "8132")}
+{"data scientist": ("2433/02", "2433", "2425"), "data analyst computing": ("2134/99", "2134", "2136"), "data analyst": ("3544/00", "3544", "3539"), "analyst developer": ("2134/03", "2134", "2136"), "meter assembler": ("8149/00", "8149", "8139"), "motor assembler electric": ("8141/00", "8141", "8131"), "motor assembler engineering": ("8142/02", "8142", "8132")}
 ```
 
 **Step 3:** We embed these unique ONS job titles and the input job title using the `all-MiniLM-L6-v2` Sentence Tranformers pretrained model.
 
-**Step 4:** We then calculate the cosine similarity between the input job title and all the ONS job titles.
+**Step 4:** We then calculate the cosine similarity between the embedded input job title and all the embedded ONS job titles.
 
-**Step 5:** Finally, we find the SOC information for the ONS job title with the highest similarity as long as it is over a certain threshold. If there is no single job title with a particularly high similiarity, then we use a consensus approach at the SOC 2020 4-digit level.
+In our example, the cosine similarity scores for each input job title (row) and each ONS SOC data job title (columns) are:
+
+|                              | data scientist | data analyst computing | data analyst | analyst developer | meter assembler | motor assembler electric | motor assembler engineering |
+| ---------------------------- | -------------- | ---------------------- | ------------ | ----------------- | --------------- | ------------------------ | --------------------------- |
+| Data Scientist               | **1.0**        | 0.69                   | 0.81         | 0.56              | 0.20            | 0.07                     | 0.15                        |
+| Electric motor assembler     | 0.07           | 0.20                   | 0.11         | 0.15              | 0.52            | **0.81**                 | 0.80                        |
+| Data visualisation developer | 0.53           | 0.57                   | 0.59         | 0.47              | 0.22            | 0.04                     | 0.17                        |
+
+**Step 5:** Finally, we find the SOC information for the ONS job title with the highest similarity as long as it is over a certain threshold (default is 0.67). If there is no single job title with a particularly high similiarity, then we use a consensus approach at the SOC 2020 4-digit level (default to having over 3 matches with over 0.5 similarity score).
+
+With the default values, the final matches for each inputted job title would be:
+
+|                              | ONS job title matched to | SOC     | SOC description                                 |
+| ---------------------------- | ------------------------ | ------- | ----------------------------------------------- |
+| Data Scientist               | data scientist           | 2433/02 | Data scientists                                 |
+| Electric motor assembler     | motor assembler electric | 8141/00 | Assemblers (electrical and electronic products) |
+| Data visualisation developer | None                     | None    | None                                            |
+
+However, if we had set slightly different conditions for the consensus approach, another outcome could be that the "Data visualisation developer" job title was mapped to the SOC "2134 - Programmers and software professionals" since 2 out of the 4 matches with over 0.45 similarity were from this 4-digit SOC.
 
 # Occupational Green Measures
 
