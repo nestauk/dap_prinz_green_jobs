@@ -17,16 +17,10 @@ from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.ojo_sample_utils i
     random_seed,
 )
 
-from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
-
 from tqdm import tqdm
 
 num_units = config["ojo_deduplication_num_units"]
 unit_type = config["ojo_deduplication_unit_type"]
-
-# load SOC mapper
-soc_mapper = SOCMapper()
-soc_mapper.load()
 
 if __name__ == "__main__":
     adverts_ojd_daps_extract = pd.read_parquet(
