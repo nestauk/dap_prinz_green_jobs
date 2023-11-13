@@ -38,6 +38,6 @@ jobs:
         run: |
           conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
       - name: (ubuntu) Test with pytest
-        shell: bash -l {0}
+      - uses: ./dap_prinz_green_jobs/
         run: |
           pytest --verbose
