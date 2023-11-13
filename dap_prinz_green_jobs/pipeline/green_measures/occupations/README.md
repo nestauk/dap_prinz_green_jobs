@@ -1,20 +1,10 @@
-# Occupational Green Measures
+# SOCMapper
 
-The script
+To create green measures at the occupation level we first need to map each job advert to a Standardised Occupation Category (SOC). The SOC dataset mapped to comes from the ONS website [here](https://www.ons.gov.uk/methodology/classificationsandstandards/standardoccupationalclassificationsoc/standardoccupationalclassificationsocextensionproject).
 
-```
-dap_prinz_green_jobs/pipeline/green_measures/occupations/occupation_measures_utils.py
-```
+The `SOCMapper` class in `soc_map.py` maps job title(s) to SOC(s).
 
-contains functions needed to see whether occupations are green or not.
-
-The class in
-
-```
-dap_prinz_green_jobs/pipeline/green_measures/occupations/soc_map.py
-```
-
-can be used to map job title(s) to SOC codes, for example
+## Usage
 
 ```
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
@@ -24,12 +14,81 @@ soc_mapper.load()
 job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"]
 
 soc_mapper.get_soc(job_titles, return_soc_name=True)
->>> [((('2433/02', 'Data scientists'), ('2433', 'Actuaries, economists and statisticians'), '2425'), 'data scientist'), ((('6131/99', 'Nursing auxiliaries and assistants n.e.c.'), ('6131', 'Nursing auxiliaries and assistants'), '6141'), 'assistant nurse'), ((('2422/02', 'Financial advisors and planners'), ('2422', 'Finance and investment analysts and advisers'), '3534'), 'financial consultant')]
 ```
 
-The output for one job title is in the format `(((SOC 2020 Extension code, SOC 2020 Extension name), (SOC 2020 4-digit code, SOC 2020 4-digit name), SOC 2010 code), cleaned job title)`.
+## Output
+
+The output for one job title is in the format
+
+```
+(((SOC 2020 Extension code, SOC 2020 Extension name), (SOC 2020 4-digit code, SOC 2020 4-digit name), SOC 2010 code), job title matched to in SOC data)
+```
+
+for example
+
+```
+((('2422/02', 'Financial advisors and planners'), ('2422', 'Fi
+nance and investment analysts and advisers'), '3534'), 'financial consultant')
+```
 
 If the names of the SOC codes aren't needed then you can set `return_soc_name=False`. The variables `soc_mapper.soc_2020_6_dict` and `soc_mapper.soc_2020_4_dict` give the names of each SOC 2020 6 and 4 digit codes.
+
+The following table gives the results of using the SOCMapper function on the job titles in the "Input job title" column.
+
+| Input job title                      | SOC 2020 EXT code | SOC 2020 sub-unit group                   | SOC 2020 unit group                          | SOC 2010 code | SOC data job title   |
+| ------------------------------------ | ----------------- | ----------------------------------------- | -------------------------------------------- | ------------- | -------------------- |
+| data scientist                       | 2433/02           | Data scientists                           | Actuaries, economists and statisticians      | 2425          | data scientist       |
+| Assistant nurse                      | 6131/99           | Nursing auxiliaries and assistants n.e.c. | Nursing auxiliaries and assistants           | 6141          | assistant nurse      |
+| Senior financial consultant - London | 2422/02           | Financial advisors and planners           | Finance and investment analysts and advisers | 3534          | financial consultant |
+
+## Methodology
+
+The SOCMapper works by finding the semantically closest job titles between the inputed job titles and the job titles in the ONS SOC dataset. An overview of the methodology is in the diagram below.
+
+<p align="center">
+  <img src="SOCMapper_overview.jpg" />
+</p>
+
+**Step 1:** We clean the inputted job advert. This cleaning involves removing words which describe the job conditions but not the job title; e.g. removing common placenames or words like "part-time".
+
+For example, if our inputted job adverts were
+
+```
+["Data Scientist - London", "Electric motor assembler - part-time", "Data Analyst"]
+```
+
+**Step 2:** We process the [ONS SOC dataset](https://www.ons.gov.uk/methodology/classificationsandstandards/standardoccupationalclassificationsoc/standardoccupationalclassificationsocextensionproject). An example of this dataset is:
+
+| SOC 2010 | SOC 2020 | SOC 2020 Ext Code | INDEXOCC         | ADD       | IND         | INDEXOCC NATURAL WORD ORDER | SOC 2020 UNIT GROUP DESCRIPTIONS                   | SUB-UNIT GROUP DESCRIPTIONS                               |
+| -------- | -------- | ----------------- | ---------------- | --------- | ----------- | --------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| 2425     | 2433     | 2433/02           | Scientist, data  |           |             | data scientist              | Actuaries, economists and statisticians            | Data scientists                                           |
+| 2136     | 2134     | 2134/99           | Analyst, data    | computing |             | data analyst                | Programmers and software development professionals | Programmers and software development professionals n.e.c. |
+| 3539     | 3544     | 3544/00           | Analyst, data    |           |             | data analyst                | Data analysts                                      | Data analysts                                             |
+| 8139     | 8149     | 8149/00           | Assembler, meter |           |             | meter assembler             | Assemblers and routine operatives n.e.c.           | Assemblers and routine operatives n.e.c.                  |
+| 8131     | 8141     | 8141/00           | Assembler, motor | electric  |             | motor assembler             | Assemblers (electrical and electronic products)    | Assemblers (electrical and electronic products)           |
+| 8132     | 8142     | 8142/02           | Assembler, motor |           | engineering | motor assembler             | Assemblers (vehicles and metal goods)              | Vehicle and vehicle part assemblers                       |
+
+We can combine the `INDEXOCC NATURAL WORD ORDER`, `ADD` and `IND` columns to create unique job titles. The dictionary of unique job titles to SOC information would be:
+
+```
+{"data scientist": ("2433/02", "2433", "2425"), "data analyst computing": ("2134/99", "2134", "2136"), "data analyst": ("3544/00", "3544", "3539"), "meter assembler": ("8149/00", "8149", "8139"), "motor assembler electric": ("8141/00", "8141", "8131"), "motor assembler engineering": ("8142/02", "8142", "8132")}
+```
+
+**Step 3:** We embed these unique ONS job titles and the input job title using the `all-MiniLM-L6-v2` Sentence Tranformers pretrained model.
+
+**Step 4:** We then calculate the cosine similarity between the input job title and all the ONS job titles.
+
+**Step 5:** Finally, we find the SOC information for the ONS job title with the highest similarity as long as it is over a certain threshold. If there is no single job title with a particularly high similiarity, then we use a consensus approach at the SOC 2020 4-digit level.
+
+# Occupational Green Measures
+
+The script
+
+```
+dap_prinz_green_jobs/pipeline/green_measures/occupations/occupation_measures_utils.py
+```
+
+contains functions needed to see whether occupations are green or not.
 
 ## Datasets used
 
