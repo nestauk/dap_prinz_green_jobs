@@ -14,7 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
-      - uses: ./dap_prinz_green_jobs/
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
@@ -38,6 +37,9 @@ jobs:
       - name: (ubuntu) Install conda dependencies
         run: |
           conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl -y
+      - name: set pythonpath
+        run: |
+          echo "PYTHONPATH=dap_prinz_green_jobs" >> $GITHUB_ENV
       - name: (ubuntu) Test with pytest
         run: |
           pytest --verbose
