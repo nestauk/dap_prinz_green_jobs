@@ -21,9 +21,15 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOC
 
 soc_mapper = SOCMapper()
 soc_mapper.load()
-soc_mapper.get_soc(job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"])
->>> [('2425', 'data scientist'), ('6141', 'assistant nurse'), ('3534', 'financial consultant')]
+job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"]
+
+soc_mapper.get_soc(job_titles, return_soc_name=True)
+>>> [((('2433/02', 'Data scientists'), ('2433', 'Actuaries, economists and statisticians'), '2425'), 'data scientist'), ((('6131/99', 'Nursing auxiliaries and assistants n.e.c.'), ('6131', 'Nursing auxiliaries and assistants'), '6141'), 'assistant nurse'), ((('2422/02', 'Financial advisors and planners'), ('2422', 'Finance and investment analysts and advisers'), '3534'), 'financial consultant')]
 ```
+
+The output for one job title is in the format `(((SOC 2020 Extension code, SOC 2020 Extension name), (SOC 2020 4-digit code, SOC 2020 4-digit name), SOC 2010 code), cleaned job title)`.
+
+If the names of the SOC codes aren't needed then you can set `return_soc_name=False`. The variables `soc_mapper.soc_2020_6_dict` and `soc_mapper.soc_2020_4_dict` give the names of each SOC 2020 6 and 4 digit codes.
 
 ## Datasets used
 

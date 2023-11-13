@@ -71,7 +71,6 @@ bad_phrases = [
     "Location",
     "benefits",
     "location",
-    "Eye Care",
     "Home Based",
     "Fixed Term",
 ]

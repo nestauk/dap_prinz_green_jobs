@@ -141,7 +141,7 @@ def get_clean_ghg_data():
     emissions_data = emissions_data.loc[list(range(4, 24)) + list(range(30, 159))]
 
     ghg_emissions_dict = dict(
-        zip(emissions_data["SIC"].tolist(), emissions_data[2020].tolist())
+        zip(emissions_data["SIC"].tolist(), emissions_data[2021].tolist())
     )
 
     ghg_emissions_dict_cleaned = clean_total_emissions_dict(ghg_emissions_dict)

@@ -3,10 +3,13 @@ A class to map inputted job titles to their most likely SOC 2020 4-digit codes.
 
 Usage:
 
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
+
 soc_mapper = SOCMapper()
 soc_mapper.load()
-matches = soc_mapper.get_soc(job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"])
->>> [('2425', 'data scientist'), ('6141', 'assistant nurse'), ('3534', 'financial consultant')]
+job_titles=["data scientist", "Assistant nurse", "Senior financial consultant - London"]
+
+soc_mapper.get_soc(job_titles, return_soc_name=True)
 
 """
 from collections import Counter, defaultdict
@@ -22,6 +25,7 @@ import numpy as np
 from dap_prinz_green_jobs.getters.occupation_getters import load_job_title_soc
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_processing import (
     process_job_title_soc,
+    job_title_cleaner,
 )
 
 from dap_prinz_green_jobs.utils.processing import list_chunks
@@ -232,6 +236,19 @@ class SOCMapper(object):
 
         self.jobtitle_soc_data = self.load_process_soc_data()
 
+        self.soc_2020_6_dict = dict(
+            zip(
+                self.jobtitle_soc_data["SOC_2020_EXT"],
+                self.jobtitle_soc_data["SUB-UNIT GROUP DESCRIPTIONS"],
+            )
+        )
+        self.soc_2020_4_dict = dict(
+            zip(
+                self.jobtitle_soc_data["SOC_2020"],
+                self.jobtitle_soc_data["SOC 2020 UNIT GROUP DESCRIPTIONS"],
+            )
+        )
+
         if job_titles:
             self.job_title_2_soc6_4 = self.unique_soc_job_titles(self.jobtitle_soc_data)
         else:
@@ -326,6 +343,9 @@ class SOCMapper(object):
         2. Get the 4-digit SOCs of the good (>top_n_sim_threshold) matches in the top n most similar.
         3. If there are a few of these (>=minimum_n) and over a certain proportion (>minimum_prop) of these are the same at the 4 digit level - use this as the SOC.
                 This will return (soc, the job titles given for this same soc)
+
+        Returns data in the format ((soc_2020_6, soc_2020_4, soc_2010), job_title) or None
+        If pathway 1. (above) isn't true then the output will be ((None, soc_2020_4, None), job_title) and job_title will be a set of multiple
         """
 
         top_soc_match = match_row["top_soc_matches"][0][0]
@@ -340,7 +360,7 @@ class SOCMapper(object):
             return (top_soc_match_code, top_soc_match)
         else:
             all_good_socs = [
-                t[2]  # 4 digit
+                t[2]  # 4 digit 2020 SOC
                 for t in match_row["top_soc_matches"]
                 if t[4] > self.top_n_sim_threshold
             ]
@@ -349,7 +369,7 @@ class SOCMapper(object):
                 prop_most_common_soc = num_common_soc / len(all_good_socs)
                 if prop_most_common_soc > self.minimum_prop:
                     return (
-                        common_soc,
+                        (None, common_soc, None),
                         set(
                             [
                                 t[0]
@@ -366,7 +386,13 @@ class SOCMapper(object):
             else:
                 return None
 
-    def get_soc(self, job_titles: Union[str, List[str]], additional_info: bool = False):
+    def get_soc(
+        self,
+        job_titles: Union[str, List[str]],
+        additional_info: bool = False,
+        return_soc_name: bool = False,
+        clean_job_title: bool = True,
+    ):
         """Get the most likely SOC for each inputted job title
 
                 :param job_titles: A single job title or a list of raw job titles
@@ -375,6 +401,11 @@ class SOCMapper(object):
                 :param additional_info: Whether to provide additional information about the matches.
                         Return just the most likely soc match (False) or the top soc matches (True)
         :type additional_info: bool
+                :param return_soc_name: Whether to output the SOC names of the most likely SOC (or just the codes).
+                        When applied to lots of data this might not be as desirable.
+        :type return_soc_name: bool
+            :param clean_job_title: Whether to apply the cleaning function to the job title.
+        :type clean_job_title: bool
 
         :return: A list of the top matches for each job title inputted
         :rtype: list
@@ -383,6 +414,10 @@ class SOCMapper(object):
 
         if isinstance(job_titles, str):
             job_titles = [job_titles]
+
+        # Clean the job titles
+        if clean_job_title:
+            job_titles = [job_title_cleaner(job_title) for job_title in job_titles]
 
         # Embed the input job titles
         job_title_embeddings = self.embed_texts(job_titles)
@@ -395,7 +430,24 @@ class SOCMapper(object):
         found_count = 0
         for job_matches in top_soc_matches:
             most_likely_soc = self.find_most_likely_soc(job_matches)
-            job_matches["most_likely_soc"] = most_likely_soc
+            if most_likely_soc:
+                ((soc_2020_6, soc_2020_4, soc_2010_4), job_title) = most_likely_soc
+                if return_soc_name:
+                    job_matches["most_likely_soc"] = (
+                        (
+                            (soc_2020_6, self.soc_2020_6_dict.get(soc_2020_6)),
+                            (soc_2020_4, self.soc_2020_4_dict.get(soc_2020_4)),
+                            soc_2010_4,
+                        ),
+                        job_title,
+                    )
+                else:
+                    job_matches["most_likely_soc"] = (
+                        (soc_2020_6, soc_2020_4, soc_2010_4),
+                        job_title,
+                    )
+            else:
+                job_matches["most_likely_soc"] = None
             if most_likely_soc:
                 found_count += 1
 

@@ -156,6 +156,8 @@ class GreenMeasures(object):
         Extract measures of greenness at the occupation-level. Measures include:
             - GREEN CATEGORY: O*NET green occupation categorisation
             - GREEN/NOT GREEN: whether occupation name is considered green or not green
+
+        Also returned will be the dictionary of SOC 2020 codes to their name
         """
 
         if type(job_advert) == dict:
@@ -179,7 +181,12 @@ class GreenMeasures(object):
             zip([j[self.job_id_key] for j in job_advert], occ_green_measures_list)
         )
 
-        return green_occupation_measures_dict
+        soc_name_dict = {
+            "soc_2020_6": self.om.soc_mapper.soc_2020_6_dict,
+            "soc_2020_4": self.om.soc_mapper.soc_2020_4_dict,
+        }
+
+        return green_occupation_measures_dict, soc_name_dict
 
     def get_industry_measures(self, job_advert: Dict[str, str]) -> List[dict]:
         """

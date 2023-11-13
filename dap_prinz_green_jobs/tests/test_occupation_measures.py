@@ -3,6 +3,9 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measur
     OccupationMeasures,
 )
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
+from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_processing import (
+    job_title_cleaner,
+)
 
 
 def test_occupation_measures():
@@ -49,3 +52,16 @@ def test_occupation_measures():
         )
         == 3
     )
+
+
+def test_job_title_cleaner():
+    assert job_title_cleaner("Data Scientist - London") == "Data Scientist"
+    assert (
+        job_title_cleaner("Data Scientist - Part-time - London")
+        == "Data Scientist - Part-time"
+    )
+    assert job_title_cleaner("Data Scientist - 16hrs") == "Data Scientist"
+    assert job_title_cleaner("Data Scientist - &#163;1000 bonus") == "Data Scientist"
+    assert job_title_cleaner("£30k Data Scientist") == "£30k Data Scientist"
+    assert job_title_cleaner("Data Scientist £30k") == "Data Scientist"
+    assert job_title_cleaner("Remote - Data Scientist") == "Remote - Data Scientist"

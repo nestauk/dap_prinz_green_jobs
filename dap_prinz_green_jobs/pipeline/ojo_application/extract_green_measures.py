@@ -91,7 +91,7 @@ if __name__ == "__main__":
     green_industry_outputs_dict = gm.get_industry_measures(job_advert=ojo_sample_raw)
 
     logger.info("extracting green occupations...")
-    green_occupation_outputs_dict = gm.get_occupation_measures(
+    green_occupation_outputs_dict, soc_name_dict = gm.get_occupation_measures(
         job_advert=ojo_sample_raw
     )
 
@@ -113,4 +113,9 @@ if __name__ == "__main__":
         BUCKET_NAME,
         green_occupation_outputs_dict,
         f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/ojo_sample_occupation_green_measures_production_{production}_{gm.config_path.split('/')[-1].split('.')[0]}.json",
+    )
+    save_to_s3(
+        BUCKET_NAME,
+        soc_name_dict,
+        f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/soc_name_dict.json",
     )
