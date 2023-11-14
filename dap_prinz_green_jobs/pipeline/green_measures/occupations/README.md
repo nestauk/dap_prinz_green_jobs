@@ -2,10 +2,10 @@
 
 Key files and folders in this directory are:
 
-1. [dap_prinz_green_jobs/pipeline/green_measures/occupations/soc_map.py](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/soc_map.py): The script containing the `SOCMapper` class.
-2. [dap_prinz_green_jobs/pipeline/green_measures/occupations/occupations_measures_utils.py](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/occupations_measures_utils.py): The script containing the `OccupationMeasures` class to find occupational green measures from job adverts.
-3. [dap_prinz_green_jobs/pipeline/green_measures/occupations/occupations_data_processing.py](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/occupations_data_processing.py): A script containing cleaning functions used across `soc_map.py` and `occupations_measures_utils.py`.
-4. [dap_prinz_green_jobs/pipeline/green_measures/occupations/evaluation/](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/evaluation/): The directory to evaluate the `SOCMapper` class.
+1. [soc_map.py](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/soc_map.py): The script containing the `SOCMapper` class.
+2. [occupations_measures_utils.py](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/occupations_measures_utils.py): The script containing the `OccupationMeasures` class to find occupational green measures from job adverts.
+3. [occupations_data_processing.py](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/occupations_data_processing.py): A script containing cleaning functions used across `soc_map.py` and `occupations_measures_utils.py`.
+4. [evaluation/](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures/occupations/evaluation/): The directory to evaluate the `SOCMapper` class.
 
 # 🗺️ SOC Mapper
 
@@ -148,6 +148,16 @@ or
 om.get_measures(job_adverts= [{'description': 'We are looking for a sales ...', 'job_title': 'Data Scientist'}], job_title_key='job_title')
 >>> [{'GREEN CATEGORY': 'Green New & Emerging', 'GREEN/NOT GREEN': 'Green', 'GREEN TIMESHARE': 12.5, 'GREEN TOPICS': 39, 'SOC': {'SOC_2020_EXT': '2433/02', 'SOC_2020': '2433', 'SOC_2010': '2425', 'name': ['Data scientists', 'Economists', 'Statisticians ', 'Environmental scientists', 'Mathematicians ']}}]
 
+```
+
+If needed, you could then retrieve the SOC name from the SOC codes as follows:
+
+```
+om.soc_mapper.soc_2020_6_dict['2433/02']
+>> 'Data scientists'
+
+om.soc_mapper.soc_2020_4_dict['2433']
+>> 'Actuaries, economists and statisticians'
 ```
 
 ## 💾 Datasets used & green measures
