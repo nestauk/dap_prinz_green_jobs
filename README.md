@@ -1,6 +1,6 @@
 # 🥬 Measuring Green Jobs
 
-This repository contains the code required to measure the greeness of job adverts at the skill-, occupation- and sector-level. At it's highest level, this codebase contains the algorithms required to:
+This repository contains the code required to measure the greeness of job adverts at the skill-, occupation- and sector-level. At its highest level, this codebase contains the algorithms required to:
 
 1. **Extract** relevant information from job ads;
 2. **Map** information to UK government standards including Standard Occupation Classification (SOC) codes, Standard Industrial Classification (SIC) codes and the European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy;
