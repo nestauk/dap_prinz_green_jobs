@@ -78,7 +78,7 @@ measures = gm.get_green_measures(job_ad) #Extract measures at all levels of gran
 
 You can also pass a list of job adverts to the `get_green_measures` method to extract measures from multiple job adverts at once.
 
-Should you like to extract a single measure (i.e. extract green skills) or if you would just like to extract SOC, SIC or skills, please refer to detailed READMEs in the `dap_prinz_green_jobs/pipeline/green_measures/` directory.
+Should you like to extract a single measure (i.e. extract green skills) or if you would just like to extract SOC, SIC or skills, please refer to detailed READMEs in the [dap_prinz_green_jobs/pipeline/green_measures/](https://github.com/nestauk/dap_prinz_green_jobs/dap_prinz_green_jobs/pipeline/green_measures) directory.
 
 ## Project structure
 
