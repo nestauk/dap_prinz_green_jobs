@@ -84,7 +84,7 @@ An overview of the methodology to extract green skills from a job advert is in t
   <img src="greenskill_overview.jpg" />
 </p>
 
-**Step 1:** Skills are extracted from the job advert by applying the trained skills extractor model.
+**Step 1:** Skills are extracted from the job advert by applying the trained skills extractor model. Skill entities over 10 words long are split up into separate entities.
 
 **Step 2:** The skills extracted, all the green ESCO skills and the all the O\*NET green topics are embedded using the `all-MiniLM-L6-v2` Sentence Tranformers pretrained model. The cosine similarity scores are then calculated, allowing us to find the closest green ESCO skill, the closest O\*NET green topic, and the number of O\*NET green topics exactly found in the entity (exact word matching).
 
