@@ -15,7 +15,7 @@ import pandas as pd
 class OjoSocFlow(FlowSpec):
     """Flow to extract soc4 codes for all unique job titles."""
 
-    production = Parameter("production", help="Run in production?", default=True)
+    production = Parameter("production", help="Run in production?", default=False)
     random_seed = Parameter("random_seed", help="Random seed", default=random_seed)
     sample_size = Parameter(
         "sample_size", help="Sample size", default=desired_sample_size
