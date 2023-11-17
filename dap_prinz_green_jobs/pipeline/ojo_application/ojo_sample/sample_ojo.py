@@ -10,8 +10,14 @@ import random
 
 import pandas as pd
 
-from dap_prinz_green_jobs.getters.data_getters import save_to_s3
+from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
+
+from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.ojo_sample_utils import (
+    desired_sample_size,
+    random_seed,
+    production,
+)
 
 green_keywords = ["sustainability", "climate change", "green energy"]
 
@@ -23,7 +29,7 @@ def filter_data(data, filter_ids_set, id_col_name="id"):
 
 
 if __name__ == "__main__":
-    logger.info("Creating and saving job id sample")
+    logger.info("Creating and saving job id sample...")
 
     deduplicated_ids = pd.read_csv(
         "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/deduplicated_job_ids.csv"
@@ -69,10 +75,59 @@ if __name__ == "__main__":
     )
     random.shuffle(mixed_sample_ids)
 
-    large_sample_ids_df = pd.read_csv(
-        "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/deduplicated_sampled_job_ids.csv"
+    # SAMPLE FOR LARGE SAMPLE
+    logger.info("Getting large sample")
+    job_title_data = pd.read_parquet(config["ojo_s3_file_adverts_ojd_daps_extract"])
+    # There are duplicate rows with different date formats
+    job_title_data = job_title_data.drop_duplicates(
+        subset=job_title_data.columns.difference(["created"])
     )
-    large_sample_ids = large_sample_ids_df.id.to_list()
+    # load job locations
+    locations_data = pd.read_parquet(config["ojo_s3_file_locations"])
+    locations_data = locations_data.drop_duplicates()
+
+    jobtitles2soc = load_s3_data(
+        BUCKET_NAME,
+        f"outputs/data/ojo_application/deduplicated_sample/jobtitles2soc4_production_{production}.json",
+    )
+
+    job_title_locations = (
+        pd.merge(job_title_data, locations_data, on="id")
+        .query("id in @deduplicated_ids_list")
+        .query("is_uk == 1")
+        .query("is_large_geo == 0")[
+            [
+                "id",
+                "job_title_raw",
+                "itl_2_code",
+                "itl_2_name",
+                "itl_3_code",
+                "itl_3_name",
+            ]
+        ]
+        .reset_index(drop=True)
+    )
+
+    job_title_locations["soc4_code"] = job_title_locations.job_title_raw.map(
+        jobtitles2soc
+    )
+    job_title_locations["soc4_code_itl2_code"] = (
+        job_title_locations.soc4_code + "_" + job_title_locations.itl_3_code
+    )
+
+    soc4_itl2_weights = (
+        job_title_locations.groupby(["soc4_code_itl2_code"]).size()
+        / job_title_locations.shape[0]
+    )
+    job_title_locations[
+        "soc4_code_itl2_code"
+    ] = job_title_locations.soc4_code_itl2_code.map(soc4_itl2_weights)
+
+    large_sample_df = job_title_locations.sample(
+        n=desired_sample_size, weights="soc4_code_itl2_code", random_state=random_seed
+    )
+
+    large_sample_ids = large_sample_df.id.to_list()
 
     save_to_s3(
         BUCKET_NAME,
@@ -92,15 +147,15 @@ if __name__ == "__main__":
         "outputs/data/ojo_application/deduplicated_sample/sampled_mixed_job_ids.json",
     )
 
+    save_to_s3(
+        BUCKET_NAME,
+        large_sample_ids,
+        "outputs/data/ojo_application/deduplicated_sample/sampled_large_job_ids.json",
+    )
+
     # Filter the datasets for this sample
 
-    logger.info("Creating and saving the job titles data sample")
-
-    job_title_data = pd.read_parquet(config["ojo_s3_file_adverts_ojd_daps_extract"])
-    # There are duplicate rows with different date formats
-    job_title_data = job_title_data.drop_duplicates(
-        subset=job_title_data.columns.difference(["created"])
-    )
+    logger.info("Creating job titles data sample...")
 
     job_title_data_sample = filter_data(
         job_title_data, set(sample_ids), id_col_name="id"
@@ -139,7 +194,7 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         job_title_data_sample_large,
-        f"outputs/data/ojo_application/deduplicated_sample/large_job_title_data_sample.csv",
+        f"outputs/data/ojo_application/deduplicated_sample/large_job_title_data_sample.parquet",
     )
 
     logger.info("Creating and saving the salaries data sample")
@@ -182,13 +237,10 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         salaries_data_sample_large,
-        f"outputs/data/ojo_application/deduplicated_sample/large_salaries_data_sample.csv",
+        f"outputs/data/ojo_application/deduplicated_sample/large_salaries_data_sample.parquet",
     )
 
     logger.info("Creating and saving the locations data sample")
-
-    locations_data = pd.read_parquet(config["ojo_s3_file_locations"])
-    locations_data = locations_data.drop_duplicates()
 
     locations_data_sample = filter_data(
         locations_data, set(sample_ids), id_col_name="id"
@@ -227,7 +279,7 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         locations_data_sample_large,
-        f"outputs/data/ojo_application/deduplicated_sample/large_locations_data_sample.csv",
+        f"outputs/data/ojo_application/deduplicated_sample/large_locations_data_sample.parquet",
     )
 
     logger.info("Creating and saving the skills data sample")
@@ -270,7 +322,7 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         skills_data_sample_large,
-        f"outputs/data/ojo_application/deduplicated_sample/large_skills_data_sample.csv",
+        f"outputs/data/ojo_application/deduplicated_sample/large_skills_data_sample.parquet",
     )
 
     logger.info("Creating and saving the descriptions + main info data sample")
@@ -288,7 +340,7 @@ if __name__ == "__main__":
     )
 
     descriptions_data_large_sample = filter_data(
-        descriptions_data_green, set(large_sample_ids), id_col_name="id"
+        descriptions_data, set(large_sample_ids), id_col_name="id"
     )
 
     ojo_data_sample = pd.merge(job_title_data_sample, descriptions_data_sample, on="id")
@@ -372,5 +424,5 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         large_ojo_data_sample,
-        f"outputs/data/ojo_application/deduplicated_sample/large_ojo_sample.csv",
+        f"outputs/data/ojo_application/deduplicated_sample/large_ojo_sample.parquet",
     )

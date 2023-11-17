@@ -17,6 +17,7 @@ from typing import List, Union
 
 desired_sample_size = 1000000
 random_seed = 42
+production = "true"
 
 
 def short_hash(text: str) -> int:
