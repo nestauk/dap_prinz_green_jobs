@@ -1,5 +1,7 @@
 """
-A script to deduplicate the OJO dataset and sample per soc4 occupation and itl2 location.
+A script to deduplicate the OJO dataset.
+
+python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/deduplication.py
 """
 
 import pandas as pd
@@ -12,9 +14,6 @@ from dap_prinz_green_jobs import BUCKET_NAME, logger, config
 from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.ojo_sample_utils import (
     short_hash,
     get_deduplicated_job_adverts,
-    get_soc4_codes,
-    desired_sample_size,
-    random_seed,
 )
 
 from tqdm import tqdm
@@ -41,9 +40,7 @@ if __name__ == "__main__":
 
     # Merge what's needed for the deduplication
     job_adverts = adverts_ojd_daps_extract[["id", "job_location_raw", "created"]]
-    job_adverts.loc[:, "description_hash"] = job_adverts["id"].apply(
-        lambda x: hash_dict.get(str(x))
-    )
+    job_adverts["description_hash"] = job_adverts["id"].map(hash_dict)
 
     # Can't do anything with the adverts without description text, so remove these before deduplication and sampling
     job_adverts = job_adverts[job_adverts["description_hash"].notnull()]
