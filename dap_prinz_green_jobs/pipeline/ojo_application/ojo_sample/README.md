@@ -14,17 +14,11 @@ this creates a csv with deduplicated job adverts ids in a certain time window (i
 
 ## Sampling
 
-To generate a sample of 1,000,000 deduplicated job ads that are sampled per SOC4 code per ITL2 code, you first need to extract SOC codes across all job adverts. To do this run:
-
-```
-python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/get_soc_codes.py
-```
-
 To generate deduplicated datasets for:
 
 - A random small sample (100,000);
 - An engineered 'green' sample based on keywords (100,000) and;
-- The final sample of 1,000,000 job ads sampled by soc4 and itl2 code
+- The final random sample of 1,000,000 job ads 
 
 run:
 
