@@ -91,7 +91,7 @@ An overview of the methodology to extract green skills from a job advert is in t
 
 ### 🏋️ Training a Green Skills Classifier
 
-Core to `SkillMeasures` is the predicting whether a skill entity is likely to be green or not, this is done by training a random forest classifier. The green skills classifier can be trained by running:
+Core to `SkillMeasures` is predicting whether a skill entity is likely to be green or not. This is done by training a random forest classifier. The green skills classifier can be trained by running:
 
 ```
 python dap_prinz_green_jobs/pipeline/green_measures/skills/green_skill_classifier.py
