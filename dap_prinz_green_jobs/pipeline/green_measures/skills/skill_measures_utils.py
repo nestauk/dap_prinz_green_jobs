@@ -357,7 +357,7 @@ class SkillMeasures(object):
                     "PROP_GREEN": len(green_ents) / num_split_ents
                     if num_split_ents != 0
                     else 0,
-                    "BENEFITS": job_benefits_dict.get(job_id),
+                    "BENEFITS": job_benefits_dict.get(str(job_id)),
                 }
             else:
                 prop_green_skills[job_id] = {
@@ -366,7 +366,7 @@ class SkillMeasures(object):
                     "ENTS": None,
                     "GREEN_ENTS": None,
                     "PROP_GREEN": 0,
-                    "BENEFITS": job_benefits_dict.get(job_id),
+                    "BENEFITS": job_benefits_dict.get(str(job_id)),
                 }
         if not_found_skills != 0:
             logger.warning(
@@ -402,6 +402,12 @@ class SkillMeasures(object):
         Returns:
             dict: A dictionary of job advert ids and green measures information
         """
+
+        num_unique_ids = len(set([s[job_id_key] for s in job_adverts]))
+        if len(job_adverts) != num_unique_ids:
+            logger.warning(
+                f"The job advert IDs are not always unique - duplicated IDs will be overwritten - consider re-inputting job_adverts with unique IDs"
+            )
 
         # We will predict entities using our NER model
         predicted_entities = self.get_entities(
