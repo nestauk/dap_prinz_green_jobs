@@ -1,19 +1,23 @@
 """
-Functions to deal with duplication in job adverts.
+Functions and utils to deal with duplication in job adverts and to sample OJO data.
 
 get_deduplicated_job_adverts takes the job adverts (only job id and date columns are needed)
 and chunks up the dates and then removes duplicates from each chunk, before recombining.
 
 """
 
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-import random
 from hashlib import md5
 
 from dap_prinz_green_jobs import logger
 
 import pandas as pd
+from typing import List, Union
+
+desired_sample_size = 1000000
+random_seed = 42
+production = "true"
 
 
 def short_hash(text: str) -> int:
@@ -143,3 +147,25 @@ def get_deduplicated_job_adverts(
     )
 
     return no_duplicates[["id", "end_date_chunk"]]
+
+
+def get_soc4_codes(soc_codes: Union[List[tuple], None]) -> Union[List[str], None]:
+    """Get the SOC4 codes from extracted SOC codes.
+
+    Args:
+        soc_codes (Union[List[tuple], None]): Extracted SOC codes.
+
+    Returns:
+        Union[List[str], None]: SOC4 codes.
+    """
+    soc4_codes = []
+    for soc_info in soc_codes:
+        if isinstance(soc_info, tuple):
+            if len(soc_info[0]) == 3:
+                soc_code = soc_info[0][1]
+            else:
+                soc_code = soc_info[0]
+        else:
+            soc_code = None
+        soc4_codes.append(soc_code)
+    return soc4_codes

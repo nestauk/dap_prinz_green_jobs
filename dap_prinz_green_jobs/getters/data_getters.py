@@ -93,6 +93,10 @@ def save_to_s3(bucket_name, output_var, output_file_dir):
 
     if fnmatch(output_file_dir, "*.csv"):
         output_var.to_csv("s3://" + bucket_name + "/" + output_file_dir, index=False)
+    elif fnmatch(output_file_dir, "*.parquet"):
+        output_var.to_parquet(
+            "s3://" + bucket_name + "/" + output_file_dir, index=False
+        )
     elif fnmatch(output_file_dir, "*.pkl") or fnmatch(output_file_dir, "*.pickle"):
         obj.put(Body=pickle.dumps(output_var))
     elif fnmatch(output_file_dir, "*.gz"):
@@ -143,12 +147,14 @@ def load_s3_data(bucket_name, file_name):
         return json.loads(file)
     elif fnmatch(file_name, "*.csv"):
         return pd.read_csv("s3://" + bucket_name + "/" + file_name)
+    elif fnmatch(file_name, "*.parquet"):
+        return pd.read_parquet("s3://" + bucket_name + "/" + file_name)
     elif fnmatch(file_name, "*.pkl") or fnmatch(file_name, "*.pickle"):
         file = obj.get()["Body"].read().decode()
         return pickle.loads(file)
     else:
         logger.error(
-            'Function not supported for file type other than "*.csv", "*.jsonl.gz", "*.jsonl", or "*.json"'
+            'Function not supported for file type other than "*.csv", "*.parquet", "*.jsonl.gz", "*.jsonl", or "*.json"'
         )
 
 

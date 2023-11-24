@@ -1,6 +1,7 @@
 """
-A script to deduplicate the OJO dataset
+A script to deduplicate the OJO dataset.
 
+python dap_prinz_green_jobs/pipeline/ojo_application/ojo_sample/deduplication.py
 """
 
 import pandas as pd
@@ -10,10 +11,12 @@ from tqdm import tqdm
 
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
 from dap_prinz_green_jobs import BUCKET_NAME, logger, config
-from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.deduplication_utils import (
+from dap_prinz_green_jobs.pipeline.ojo_application.ojo_sample.ojo_sample_utils import (
     short_hash,
     get_deduplicated_job_adverts,
 )
+
+from tqdm import tqdm
 
 num_units = config["ojo_deduplication_num_units"]
 unit_type = config["ojo_deduplication_unit_type"]
@@ -37,9 +40,7 @@ if __name__ == "__main__":
 
     # Merge what's needed for the deduplication
     job_adverts = adverts_ojd_daps_extract[["id", "job_location_raw", "created"]]
-    job_adverts.loc[:, "description_hash"] = job_adverts["id"].apply(
-        lambda x: hash_dict.get(str(x))
-    )
+    job_adverts["description_hash"] = job_adverts["id"].map(hash_dict)
 
     # Can't do anything with the adverts without description text, so remove these before deduplication and sampling
     job_adverts = job_adverts[job_adverts["description_hash"].notnull()]
@@ -71,10 +72,9 @@ if __name__ == "__main__":
     )
 
     no_duplicates.reset_index(drop=True, inplace=True)
-    
+
     save_to_s3(
         BUCKET_NAME,
         no_duplicates,
         output_file_name,
     )
-
