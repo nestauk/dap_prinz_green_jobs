@@ -10,7 +10,6 @@ It also contains the following `.py` files:
 
 1. [green_esco_formatting.py](https://github.com/nestauk/dap_prinz_green_jobs/tree/dev/dap_prinz_green_jobs/pipeline/green_measures/skills/green_esco_formatting.py): A script to format the ESCO green skills taxonomy into a structure compatible with the Skills Extractor library. This needs to be run as a one-off.
 2. [map_skills_utils.py](https://github.com/nestauk/dap_prinz_green_jobs/tree/dev/dap_prinz_green_jobs/pipeline/green_measures/skills/map_skills_utils.py): Utils to match skill embeddings to all of the ESCO taxonomy. The majority of this code is from the [ojd_daps_skills](https://github.com/nestauk/ojd_daps_skills) repo, but replicated here since currently there was no functionality in `ojd_daps_skills` to take in already embedded skills and map them.
-3. [customise_skills_extractor.py](https://github.com/nestauk/dap_prinz_green_jobs/tree/dev/dap_prinz_green_jobs/pipeline/green_measures/skills/customise_skills_extractor.py): To add the custom config file, formatted skills taxonomy and taxonomy embeddings to the relevant location in the `ojd-daps-skills` library location run this script with the `--config_name "extract_green_skills_esco"` argument. NOTE: it isn't neccessary to run this anymore, as such this file is unneeded.
 
 ## 🔨 `SkillMeasures` core functionality
 
