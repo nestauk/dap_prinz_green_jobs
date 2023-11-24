@@ -97,7 +97,7 @@ Core to `SkillMeasures` is predicting whether a skill entity is likely to be gre
 python dap_prinz_green_jobs/pipeline/green_measures/skills/green_skill_classifier.py
 ```
 
-The training data for this is `s3://prinz-green-jobs/inputs/data/training_data/green_skill_training_data.csv` - this was created by labelling a dataset of frequently occurring skills, as well as skills which are mapped to ESCO green skills with a high similarity score.
+The training data for this is found in `s3://prinz-green-jobs/inputs/data/training_data/green_skill_training_data.csv` - this was created by labelling a dataset of frequently occurring skills, as well as skills which are mapped to ESCO green skills with a high similarity score.
 
 This dataset contains 971 skills labelled as not-green and 743 labelled as green.
 
