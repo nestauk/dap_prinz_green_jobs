@@ -58,7 +58,7 @@ def load_ojo_green_measures(
     )
     green_inds_outputs = load_s3_data(
         BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{ind_date_stamp}/ojo_sample_industry_green_measures_production_{production}_{config}_companies_house_False.json",
+        f"outputs/data/ojo_application/extracted_green_measures/{ind_date_stamp}/ojo_sample_industry_green_measures_production_{production}_{config}.json",
     )
 
     skill_measures_df = (

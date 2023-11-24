@@ -58,5 +58,5 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         occ_aggregated_df,
-        f"outputs/data/ojo_application/extracted_green_measures/analysis/itl_3_code_aggregated_data_{today}.csv",
+        f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_{today}.csv",
     )
