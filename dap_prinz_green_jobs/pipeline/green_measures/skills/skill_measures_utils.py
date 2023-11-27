@@ -78,6 +78,8 @@ class SkillMeasures(object):
             "s3://", BUCKET_NAME, green_skills_classifier_model_file_name
         )
 
+        self.green_skills_classifier = GreenSkillClassifier()
+
     def initiate_extract_skills(self, local=True, verbose=True):
         """
         Ideally the ojd_daps_skills package would be refactored to not need this step,
@@ -293,17 +295,16 @@ class SkillMeasures(object):
 
         """
 
-        green_skills_classifier = GreenSkillClassifier()
-        green_skills_classifier.taxonomy_skills_embeddings_dict = (
+        self.green_skills_classifier.taxonomy_skills_embeddings_dict = (
             self.taxonomy_skills_embeddings_dict
         )
-        green_skills_classifier.formatted_taxonomy = self.formatted_taxonomy
+        self.green_skills_classifier.formatted_taxonomy = self.formatted_taxonomy
 
-        green_skills_classifier.load(
+        self.green_skills_classifier.load(
             model_file=self.green_skills_classifier_model_file_name
         )
 
-        pred_green_skill = green_skills_classifier.predict(
+        pred_green_skill = self.green_skills_classifier.predict(
             skill_ents, skills_list_embeddings_dict=all_extracted_skills_embeddings_dict
         )
 
