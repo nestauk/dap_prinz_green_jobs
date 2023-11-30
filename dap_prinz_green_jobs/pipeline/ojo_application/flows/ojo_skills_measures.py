@@ -1,4 +1,8 @@
 """
+Run the skills measures for the large sample of job adverts.
+
+python -i dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_skills_measures.py
+
 
 """
 
@@ -28,7 +32,6 @@ import os
 import numpy as np
 
 if __name__ == "__main__":
-
     parser = ArgumentParser()
     parser.add_argument("--production", action="store_true", default=False)
     parser.add_argument("--job_desc_column", default="description", type=str)
@@ -102,7 +105,6 @@ if __name__ == "__main__":
     )
 
     for i, job_desc_chunk in tqdm(enumerate(job_desc_chunks)):
-
         skills_output = os.path.join(
             skills_output_folder, f"predicted_skills_production_{production}/{i}.json"
         )
