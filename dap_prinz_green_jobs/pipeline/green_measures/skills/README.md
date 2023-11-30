@@ -58,22 +58,22 @@ Where entities are parts of the job advert text identified to be one of 3 entity
 For example
 
 ```
-{'NUM_ORIG_ENTS': 4, 'NUM_SPLIT_ENTS': 4, 'ENTS': [(['communication'], 'SKILL'), ...], 'GREEN_ENTS': [('Heat pump installation skills', ('green', 0.696, ('install heat pump', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.8755350848936703))), ...], 'PROP_GREEN': 0.5, 'BENEFITS': ['pension scheme']}
+{'NUM_ORIG_ENTS': 4, 'NUM_SPLIT_ENTS': 4, 'ENTS': [(['communication'], 'SKILL'), ...], 'GREEN_ENTS': [('Heat pump installation skills', ('green', 0.76, ('heat pump installation', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.91))), ...], 'PROP_GREEN': 0.5, 'BENEFITS': ['pension scheme']}
 ```
 
 The following table gives the full results from the example.
 
-| Job ID | NUM_ORIG_ENTS | NUM_SPLIT_ENTS | PROP_GREEN | BENEFITS                                   | ENTS                                                                                                                                                                                                               | GREEN_ENTS                                                              | Green skill classifier score | Green ESCO map                                           |
-| ------ | ------------- | -------------- | ---------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------- |
-| a      | 4             | 4              | 0.5        | ['pension scheme']                         | (['communication'], 'SKILL')                                                                                                                                                                                       |                                                                         |                              |                                                          |
-|        |               |                |            |                                            | (['Excel'], 'SKILL')                                                                                                                                                                                               |                                                                         |                              |                                                          |
-|        |               |                |            |                                            | (['Heat pump installation skills'], 'SKILL')                                                                                                                                                                       | Heat pump installation skills                                           | 0.70                         | ('install heat pump', '0073..', 0.88)                    |
-|        |               |                |            |                                            | (['experience in sustainability'], 'EXPERIENCE')                                                                                                                                                                   | experience in sustainability                                            | 1.00                         | ('advise on sustainability solutions', 'dbef..', 0.69)   |
-| b      | 0             | 0              | 0          |                                            |                                                                                                                                                                                                                    |                                                                         |                              |                                                          |
-| 55     | 1             | 1              | 0          | ['pension scheme', 'cycle to work scheme'] | (['Excel'], 'SKILL')                                                                                                                                                                                               |                                                                         |                              |                                                          |
-| 2      | 1             | 3              | 1          |                                            | (['Promote good practice of material sustainability (reuse and or recycle)', 'sustainability (reuse and or recycle) initiatives to reduce waste and', 'initiatives to reduce waste and save costs'], 'MULTISKILL') | Promote good practice of material sustainability (reuse and or recycle) | 0.97                         | ('promote sustainability', '469e..', 0.71)               |
-|        |               |                |            |                                            |                                                                                                                                                                                                                    | sustainability (reuse and or recycle) initiatives to reduce waste and   | 1                            | ('identify new recycling opportunities', '89f5..', 0.76) |
-|        |               |                |            |                                            |                                                                                                                                                                                                                    | initiatives to reduce waste and save costs                              | 0.61                         | ('waste management', '40f6..', 0.75)                     |
+| Job ID | NUM_ORIG_ENTS | NUM_SPLIT_ENTS | PROP_GREEN | BENEFITS                                   | ENTS                                                                                                                                                                                                               | GREEN_ENTS                                                              | Green skill classifier score | Green ESCO map                                          |
+| ------ | ------------- | -------------- | ---------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
+| a      | 4             | 4              | 0.5        | ['pension scheme']                         | (['communication'], 'SKILL')                                                                                                                                                                                       |                                                                         |                              |                                                         |
+|        |               |                |            |                                            | (['Excel'], 'SKILL')                                                                                                                                                                                               |                                                                         |                              |                                                         |
+|        |               |                |            |                                            | (['Heat pump installation skills'], 'SKILL')                                                                                                                                                                       | Heat pump installation skills                                           | 0.77                         | ('heat pump installation', '0073..', 0.91)              |
+|        |               |                |            |                                            | (['experience in sustainability'], 'EXPERIENCE')                                                                                                                                                                   | experience in sustainability                                            | 1.00                         | ('sustainability', 'b1b1..', 0.76)                      |
+| b      | 0             | 0              | 0          |                                            |                                                                                                                                                                                                                    |                                                                         |                              |                                                         |
+| 55     | 1             | 1              | 0          | ['pension scheme', 'cycle to work scheme'] | (['Excel'], 'SKILL')                                                                                                                                                                                               |                                                                         |                              |                                                         |
+| 2      | 1             | 3              | 1          |                                            | (['Promote good practice of material sustainability (reuse and or recycle)', 'sustainability (reuse and or recycle) initiatives to reduce waste and', 'initiatives to reduce waste and save costs'], 'MULTISKILL') | Promote good practice of material sustainability (reuse and or recycle) | 0.97                         | ('promote sustainability', '469e..', 0.71)              |
+|        |               |                |            |                                            |                                                                                                                                                                                                                    | sustainability (reuse and or recycle) initiatives to reduce waste and   | 1                            | ('analyse new recycling opportunities', '89f5..', 0.77) |
+|        |               |                |            |                                            |                                                                                                                                                                                                                    | initiatives to reduce waste and save costs                              | 0.77                         | ('managing waste', '73a9..', 0.79)                      |
 
 ## 🖊️ Methodology
 
@@ -117,14 +117,14 @@ from dap_prinz_green_jobs.pipeline.green_measures.skills.green_skill_classifier 
 green_skills_classifier = GreenSkillClassifier()
 green_skills_classifier.load_esco_data()
 green_skills_classifier.load(
-    model_file="s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib"
+    model_file="s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20231129.joblib"
 )
 
 pred_green_skill = green_skills_classifier.predict(
     ["Excel skills", "Heat pump installation skills"]
 )
 
->>> [('not_green', 1.0, ('carry out sample analysis', '82423b5c-486f-42e7-b00e-7358757a8de5', 0.23)), ('green', 0.72, ('heat pump installation', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.91))]
+>>> [('not_green', 1.0, ('ACE achieving competitive excellence', '82fea746-853f-4f1b-8ab7-55de8619cccd', 0.34)), ('green', 0.76, ('heat pump installation', '00735755-adc6-4ea0-b034-b8caff339c9f', 0.91))]
 
 ```
 
@@ -137,12 +137,12 @@ The most recently saved model `s3://prinz-green-jobs/outputs/models/green_skill_
 ```
               precision    recall  f1-score   support
 
-       green       0.90      0.88      0.89       175
-   not_green       0.92      0.93      0.92       254
+       green       0.88      0.87      0.88       175
+   not_green       0.91      0.92      0.92       254
 
-    accuracy                           0.91       429
-   macro avg       0.91      0.90      0.91       429
-weighted avg       0.91      0.91      0.91       429
+    accuracy                           0.90       429
+   macro avg       0.90      0.89      0.90       429
+weighted avg       0.90      0.90      0.90       429
 
 ```
 
