@@ -2,10 +2,11 @@
 
 This directory contains scripts that rely on access to Nesta's database of job ads.
 
-The directory is split into two sections:
+The directory is split into three areas:
 
 1. `ojo_sample/` - scripts that generate a sample of job ads from the database.
-2. `extract_green_measures.py` - A script that extract green measures at the skill-, occupations- and industries-level from a sample of job ads.
+2. `extract_green_measures.py` - A script that extract green measures at the skill-, occupations- and industries-level from a (small to medium sized) sample of job ads.
+3. `flows/` - scripts to run the green measures on a very large sample of job adverts. See [the flows README](flows/README.md) for guidance on this.
 
 ## 🔧 Extract Green Measures
 

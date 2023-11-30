@@ -1,4 +1,7 @@
 """
+Run the industry measures for the large sample of job adverts.
+
+python -i dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_industry_measures.py
 
 """
 
@@ -63,7 +66,7 @@ if __name__ == "__main__":
     if not production:
         ojo_jobs_data = ojo_jobs_data[:test_n]
 
-    date_stamp = "20231127"  # str(date.today().date()).replace("-", "")
+    date_stamp = str(date.today().date()).replace("-", "")
     folder_name = f"outputs/data/ojo_application/extracted_green_measures/{date_stamp}/"
 
     inds_output_folder = f"outputs/data/green_industries_lists/{date_stamp}"
