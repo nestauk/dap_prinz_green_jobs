@@ -32,7 +32,7 @@ job_adverts = [
 
 # We will load the green taxonomy embeddings from S3 since they have already been calculated
 taxonomy_skills_embeddings_dict = sm.get_green_taxonomy_embeddings(
-    output_path="outputs/data/green_skill_lists/green_esco_embeddings_20230815.json", load=True)
+    output_path="outputs/data/green_skill_lists/green_esco_embeddings_20231129.json", load=True)
 
 green_skills = sm.get_measures(job_adverts)
 
@@ -132,16 +132,16 @@ As you can see, the closest green ESCO skill will always be outputted, even if t
 
 ### 🥇 Green Skills Classifier Results
 
-The most recently saved model `s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib` has the following test metrics:
+The most recently saved model `s3://prinz-green-jobs/outputs/models/green_skill_classifier/green_skill_classifier_20231129.joblib` has the following test metrics:
 
 ```
               precision    recall  f1-score   support
 
-       green       0.90      0.86      0.88       175
-   not_green       0.91      0.94      0.92       254
+       green       0.90      0.88      0.89       175
+   not_green       0.92      0.93      0.92       254
 
     accuracy                           0.91       429
-   macro avg       0.91      0.90      0.90       429
+   macro avg       0.91      0.90      0.91       429
 weighted avg       0.91      0.91      0.91       429
 
 ```
@@ -149,7 +149,6 @@ weighted avg       0.91      0.91      0.91       429
 ## 💾 Datasets used & green measures
 
 - `greenSkillsCollection_en.csv`: A dataset of ESCO's green skills as downloaded on the 24th April 2023. This is stored on S3 [here](`s3://prinz-green-jobs/inputs/data/green_skill_lists/esco/greenSkillsCollection_en.csv`).
-- `esco_data_formatted.csv`: The formatted version of ESCO's full skills taxonomy as downloaded from July 2022. This was formatted by running [this script from the ojd_daps_skills repo](https://github.com/nestauk/ojd_daps_skills/blob/dev/ojd_daps_skills/pipeline/skill_ner_mapping/esco_formatting.py).
 - `Occupations_for_all_green_topics.csv`: The O\*NET green topics per occupation dataset downloaded from [here](https://www.onetonline.org/search/green_topics/) on 07/07/23. The report describing this data can be found [here](https://www.onetcenter.org/reports/Green_Topics.html).
 
 Green measures based of the skills in job adverts are as follows:
