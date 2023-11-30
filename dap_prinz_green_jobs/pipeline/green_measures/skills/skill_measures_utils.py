@@ -64,7 +64,7 @@ class SkillMeasures(object):
     def __init__(
         self,
         config_name="extract_green_skills_esco",
-        green_skills_classifier_model_file_name="outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib",
+        green_skills_classifier_model_file_name="outputs/models/green_skill_classifier/green_skill_classifier_20231129.joblib",
     ):
         self.config = get_yaml_config(
             PROJECT_DIR / f"dap_prinz_green_jobs/config/{config_name}.yaml"

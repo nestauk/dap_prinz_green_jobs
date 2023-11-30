@@ -10,8 +10,10 @@ def get_green_skills_taxonomy() -> pd.DataFrame:
     Returns:
         pd.DataFrame: ESCO's green skills taxonomy
     """
+
     return load_s3_data(
-        BUCKET_NAME, "outputs/data/green_skill_lists/green_esco_data_formatted.csv"
+        BUCKET_NAME,
+        "outputs/data/green_skill_lists/green_esco_data_formatted_20231129.csv",
     )
 
 
@@ -23,5 +25,6 @@ def get_green_skills_taxonomy_embeddings() -> Dict[str, List[float]]:
             and the value is a list of floats representing the embedding
     """
     return load_s3_data(
-        BUCKET_NAME, "outputs/data/green_skill_lists/green_esco_embeddings.json"
+        BUCKET_NAME,
+        "outputs/data/green_skill_lists/green_esco_embeddings_20231129.json",
     )
