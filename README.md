@@ -4,7 +4,7 @@ This repository contains the code required to measure the greeness of job advert
 
 1. **Extract** relevant information from job ads;
 2. **Map** information to UK government standards including Standard Occupation Classification (SOC) codes, Standard Industrial Classification (SIC) codes and the European Skills, Competences, Qualifications and Occupations (ESCO) Green Skills taxonomy;
-3. **Join** standards to publically available greeness datasets, such as industry-level greenhouse gas (GHG) emissions as reported by the UK's Office for National Statistics or  the U.S. Bureau of Labor Statistics's Occupational Information Network (O*NET)'s occupation-level time spent on green tasks.  
+3. **Join** standards to publically available greeness datasets, such as industry-level greenhouse gas (GHG) emissions as reported by the UK's Office for National Statistics or the U.S. Bureau of Labor Statistics's Occupational Information Network (O\*NET)'s occupation-level time spent on green tasks.
 
 At the job advert level, this can be summaried with the following visual:
 
@@ -92,7 +92,7 @@ Core to the codebase are the following directories:
 
 - `dap_prinz_green_jobs/pipeline/ojo_application`: This directory contains the code required to apply the algorithms on different samples of scraped online job adverts from the [Open Jobs Observatory (OJO)](https://www.nesta.org.uk/data-visualisation-and-interactive/open-jobs-observatory/). Code in this directory requires access to Nesta's private S3 bucket and is not available to the public.
 
-- `dap_prinz_green_jobs/analysis/`: This directory contains the analysis code that powers the [Green Jobs Explorer](https://green-jobs-19776304fc2f.herokuapp.com/occupations), our demo tool to explore and learn more about green jobs and skills.
+- `dap_prinz_green_jobs/analysis/`: This directory contains the analysis code that powers the Green Jobs Explorer (link to follow), our demo tool to explore and learn more about green jobs and skills.
 
 ## Green Jobs Explorer
 
@@ -100,7 +100,7 @@ Core to the codebase are the following directories:
   <img src="https://github.com/nestauk/dap_prinz_green_jobs/assets/46863334/4ee5d9e3-90e9-48ac-8164-273fa93f503c" />
 </p>
 
-If you would to explore the data via a front end, [we've build a demo tool for researchers](https://green-jobs-19776304fc2f.herokuapp.com/occupations) to explore and download data on green jobs and skills. 
+If you would to explore the data via a front end, we've build a demo tool for researchers (link to follow) to explore and download data on green jobs and skills.
 
 ## Setup
 
