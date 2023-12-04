@@ -16,7 +16,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures
     IndustryMeasures,
 )
 from dap_prinz_green_jobs.getters.ojo_getters import (
-    get_ojo_sample,
+    get_large_ojo_sample,
 )
 
 from toolz import partition_all
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         chunk_size = 5000
 
     print("loading datasets...")
-    ojo_jobs_data = get_ojo_sample()
+    ojo_jobs_data = get_large_ojo_sample()
 
     # The format used in SkillMeasures
     ojo_jobs_data = (

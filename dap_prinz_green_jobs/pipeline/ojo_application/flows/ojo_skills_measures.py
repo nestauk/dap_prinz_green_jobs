@@ -17,7 +17,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.skills.skill_measures_utils im
     SkillMeasures,
 )
 from dap_prinz_green_jobs.getters.ojo_getters import (
-    get_ojo_sample,
+    get_large_ojo_sample,
 )
 
 from toolz import partition_all
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         chunk_size = 10000
 
     print("loading datasets...")
-    ojo_jobs_data = get_ojo_sample()
+    ojo_jobs_data = get_large_ojo_sample()
 
     # The format used in SkillMeasures
     ojo_jobs_data = ojo_jobs_data[[id_column, job_desc_column]].to_dict(
