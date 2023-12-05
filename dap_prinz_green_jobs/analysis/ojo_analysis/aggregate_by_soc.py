@@ -60,3 +60,23 @@ if __name__ == "__main__":
         occ_aggregated_df,
         f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_{today}.csv",
     )
+
+    # Group by occupation and ITL
+    for itl_col in ["itl_3_code", "itl_2_code", "itl_1_code"]:
+        df = (
+            all_green_measures_df.groupby(["SOC_2020_name", itl_col])
+            .aggregate(
+                {
+                    "PROP_GREEN": ["mean"],
+                    "job_id": ["count"],
+                }
+            )
+            .reset_index()
+        )
+        df.columns = df.columns.levels[0]
+        df.columns = ["SOC_2020_name", itl_col, "mean_PROP_GREEN", "num_job_ads"]
+        save_to_s3(
+            BUCKET_NAME,
+            df,
+            f"outputs/data/ojo_application/extracted_green_measures/analysis/prop_green_skills_per_occ_{itl_col}_{today}.csv",
+        )
