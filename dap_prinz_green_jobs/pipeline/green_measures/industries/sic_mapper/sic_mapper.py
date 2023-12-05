@@ -29,6 +29,7 @@ import numpy as np
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import pipeline
+import torch
 
 from dap_prinz_green_jobs import PROJECT_DIR, BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data, load_json_dict
@@ -38,6 +39,8 @@ from dap_prinz_green_jobs.getters.industry_getters import load_sic
 from dap_prinz_green_jobs.utils.bert_vectorizer import BertVectorizer
 import dap_prinz_green_jobs.utils.text_cleaning as tc
 import dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapper_utils as su
+
+from toolz import partition_all
 
 
 class SicMapper(object):
@@ -69,8 +72,7 @@ class SicMapper(object):
     """
 
     def __init__(
-        self,
-        config_name: str = "base",
+        self, config_name: str = "base", use_gpu: bool = False, chunk_size: int = 100
     ):
         # Set variables from the config file
         if ".yaml" not in config_name:
@@ -82,6 +84,8 @@ class SicMapper(object):
             self.config = yaml.load(f, Loader=yaml.FullLoader)
         self.config_path = config_path
         self.verbose = self.config["industries"]["verbose"]
+        self.use_gpu = use_gpu
+        self.chunk_size = chunk_size
 
         if self.verbose:
             logger.setLevel("INFO")
@@ -176,11 +180,16 @@ class SicMapper(object):
         """
         logger.info("Loading relevant models, tokenizers and datasets.")
         # things you need to load
-        model = AutoModelForSequenceClassification.from_pretrained(self.model_path)
         tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-        self.company_description_classifier = pipeline(
-            "text-classification", model=model, tokenizer=tokenizer
+
+        device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
+        model = AutoModelForSequenceClassification.from_pretrained(self.model_path).to(
+            device
         )
+        self.company_description_classifier = pipeline(
+            "text-classification", model=model, tokenizer=tokenizer, device=device
+        )
+
         self.sic_company_desc_dict = self._fetch_data(self.sic_comp_desc_path)
         # load your SIC company description embeddings to put in a FAISS index
         sic_embeds = self._fetch_data(self.sic_comp_desc_embeds_path)
@@ -234,7 +243,7 @@ class SicMapper(object):
         return preprocessed_job_adverts
 
     def extract_company_descriptions(
-        self, preprocessed_job_adverts: List[Dict[str, str]]
+        self, preprocessed_job_adverts: List[Dict[str, str]], chunk_size=100
     ) -> List[Dict[str, str]]:
         """
         Extracts the company description from a list of job adverts.
@@ -248,17 +257,53 @@ class SicMapper(object):
         logger.info(
             f"Extracting company descriptions from {len(preprocessed_job_adverts)} job adverts..."
         )
-        company_descriptions = []
-        for job_advert in tqdm(preprocessed_job_adverts):
-            company_description = ""
+
+        # Get all the individual sentences per job advert
+        job_ad_sents = {}
+        for job_advert in preprocessed_job_adverts:
+            sents = []
             for sentence in job_advert[f"{self.job_description_key}_sentences"]:
                 if (
                     10 < len(sentence) < 300
                 ):  # Only predict on reasonable length sentences
-                    pred = self.company_description_classifier(sentence)[0]
-                    if pred["label"] == "LABEL_1":
-                        company_description += f"{sentence}. "
+                    sents.append(sentence)
+            job_ad_sents[job_advert[self.job_id_key]] = sents
 
+        # Get the unique sentences
+        all_sents = [v for s in job_ad_sents.values() for v in s]
+        logger.info(f"{len(all_sents)} sentences...")
+        all_sents = list(set(all_sents))
+        logger.info(
+            f"...deduplicated to {len(all_sents)} unique sentences for processing ..."
+        )
+
+        # Predict whether a sentence is a company description
+        sent_is_company = set()
+        if self.use_gpu:
+            preds = self.company_description_classifier(
+                all_sents, batch_size=chunk_size
+            )
+            for pred, sentence in zip(preds, all_sents):
+                if pred["label"] == "LABEL_1":
+                    sent_is_company.add(sentence)
+        else:
+            all_sents_chunks = list(partition_all(chunk_size, all_sents))
+            for sents_chunk in all_sents_chunks:
+                preds = self.company_description_classifier(list(sents_chunk))
+                for pred, sentence in zip(preds, sents_chunk):
+                    if pred["label"] == "LABEL_1":
+                        sent_is_company.add(sentence)
+
+        # Join all the information together
+        company_descriptions = []
+        for job_advert in preprocessed_job_adverts:
+            company_description = ""
+            job_advert_id = job_advert[self.job_id_key]
+            # Retrieve the sentences for this job advert
+            job_sents = job_ad_sents[job_advert_id]
+            for sent in job_sents:
+                if sent in sent_is_company:
+                    company_description += sent
             company_description_clean = su.clean_company_description(
                 company_description
             )
@@ -382,6 +427,7 @@ class SicMapper(object):
         Returns:
             List[int]: The predicted SIC code(s) associated to a job advert or list of job adverts.
         """
+
         if isinstance(job_adverts, dict):
             job_adverts = [job_adverts]
 
@@ -420,6 +466,7 @@ class SicMapper(object):
             ]
 
             preprocessed_job_adverts = self.preprocess_job_adverts(job_adverts)
+
             preprocessed_job_adverts_comp_desc = self.extract_company_descriptions(
                 preprocessed_job_adverts
             )

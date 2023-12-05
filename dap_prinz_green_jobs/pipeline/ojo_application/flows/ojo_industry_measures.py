@@ -20,22 +20,21 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
 )
 
 from toolz import partition_all
-
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
 
 from argparse import ArgumentParser
 from datetime import datetime as date
-
 import os
-import numpy as np
+import time
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--production", action="store_true", default=False)
     parser.add_argument("--job_desc_column", default="description", type=str)
     parser.add_argument("--id_column", default="id", type=str)
-    parser.add_argument("--test_n", default=100, type=int)
+    parser.add_argument("--test_n", default=1000, type=int)
 
     args = parser.parse_args()
     production = args.production
@@ -44,7 +43,7 @@ if __name__ == "__main__":
     job_desc_column = args.job_desc_column
 
     if not production:
-        chunk_size = 20
+        chunk_size = 1000
     else:
         chunk_size = 5000
 
@@ -71,11 +70,14 @@ if __name__ == "__main__":
 
     inds_output_folder = f"outputs/data/green_industries_lists/{date_stamp}"
 
-    im = IndustryMeasures()
+    im = IndustryMeasures(
+        use_gpu=False, chunk_size=100
+    )  # use_gpu = True, chunk_size = 1000
     im.load()
 
     job_desc_chunks = list(partition_all(chunk_size, ojo_jobs_data))
 
+    t0 = time.time()
     for i, job_desc_chunk in tqdm(enumerate(job_desc_chunks)):
         ind_green_measures_dict = im.get_measures(job_desc_chunk)
 
@@ -111,3 +113,5 @@ if __name__ == "__main__":
             f"ojo_large_sample_industry_green_measures_production_{production}.json",
         ),
     )
+
+    print(f"Time taken: {time.time() - t0}")
