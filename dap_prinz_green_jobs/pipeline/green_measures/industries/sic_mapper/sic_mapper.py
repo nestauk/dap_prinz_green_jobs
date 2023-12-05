@@ -303,7 +303,7 @@ class SicMapper(object):
             job_sents = job_ad_sents[job_advert_id]
             for sent in job_sents:
                 if sent in sent_is_company:
-                    company_description += sent
+                    company_description += f"{sent}. "
             company_description_clean = su.clean_company_description(
                 company_description
             )
