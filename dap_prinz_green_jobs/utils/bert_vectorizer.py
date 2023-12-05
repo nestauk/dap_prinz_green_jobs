@@ -24,7 +24,7 @@ def get_embeddings(
         dict: The sentence (key) and the embedding (value)
     """
 
-    bert_model = BertVectorizer(verbose=True, multi_process=True).fit()
+    bert_model = BertVectorizer(verbose=True, multi_process=False).fit()
 
     embeddings = []
     for batch_texts in tqdm(list_chunks(sent_list, chunk_size)):
