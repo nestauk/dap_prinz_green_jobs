@@ -215,12 +215,8 @@ def get_mixed_ojo_skills_sample() -> pd.DataFrame:
     )
 
 
-## ditto but for the final large sample of jobs per soc4 code per itl2 code
-
-
 def get_large_ojo_sample() -> pd.DataFrame:
-    """Gets ojo sample data from s3 filtered by random sample
-        of jobs per soc4 code per itl2 code
+    """Gets large random ojo sample data from s3
 
     Returns:
         pd.Dataframe: ojo sample data
@@ -232,8 +228,7 @@ def get_large_ojo_sample() -> pd.DataFrame:
 
 
 def get_large_ojo_job_title_sample() -> pd.DataFrame:
-    """Gets ojo job title sample data from s3 filtered by random sample
-        of jobs per soc4 code per itl2 code
+    """Gets large random ojo job title sample data from s3
 
     Returns:
         pd.Dataframe: ojo sample data
@@ -245,8 +240,7 @@ def get_large_ojo_job_title_sample() -> pd.DataFrame:
 
 
 def get_large_ojo_location_sample() -> pd.DataFrame:
-    """Gets ojo job locations sample data from s3 filtered by random sample
-        of jobs per soc4 code per itl2 code
+    """Gets large random ojo locations sample data from s3
 
     Returns:
         pd.Dataframe: ojo sample data
@@ -258,8 +252,7 @@ def get_large_ojo_location_sample() -> pd.DataFrame:
 
 
 def get_large_ojo_salaries_sample() -> pd.DataFrame:
-    """Gets ojo job salaries sample data from s3 filtered by random sample
-        of jobs per soc4 code per itl2 code
+    """Gets large random ojo salaries sample data from s3
 
     Returns:
         pd.Dataframe: ojo sample data
@@ -271,8 +264,8 @@ def get_large_ojo_salaries_sample() -> pd.DataFrame:
 
 
 def get_large_ojo_skills_sample() -> pd.DataFrame:
-    """Gets ojo skills sample from s3 filtered by random sample
-        of jobs per soc4 code per itl2 code
+    """Gets large random ojo skills sample data from s3
+
     NOTE: they're skills from SkillsExtractor, not any developments from the project
 
 
