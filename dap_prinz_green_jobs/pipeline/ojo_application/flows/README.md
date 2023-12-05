@@ -34,9 +34,6 @@ This was run on EC2 and took about 11 days.
 Installing faiss on the EC2 machine was hard, here is a log of what was done, although it's unclear which bit made it work:
 
 ```
-conda install -c pytorch/label/nightly faiss-cpu
-pip install mkl
-# I don't think the above worked, so I tried
-conda install -c conda-forge faiss-cpu
-# But I think in a previous try I did this without the previous step and it didn't work.
+conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl
+pip install faiss-cpu
 ```

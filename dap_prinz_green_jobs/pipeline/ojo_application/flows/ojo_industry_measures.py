@@ -1,7 +1,7 @@
 """
 Run the industry measures for the large sample of job adverts.
 
-python -i dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_industry_measures.py
+python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_industry_measures.py
 
 """
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     im = IndustryMeasures(
         use_gpu=False, chunk_size=100
-    )  # use_gpu = True, chunk_size = 1000
+    )  # for use in a EC2 instance set these to: use_gpu = True, chunk_size = 1000
     im.load()
 
     job_desc_chunks = list(partition_all(chunk_size, ojo_jobs_data))

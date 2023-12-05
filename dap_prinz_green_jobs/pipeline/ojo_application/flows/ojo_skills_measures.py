@@ -1,7 +1,7 @@
 """
 Run the skills measures for the large sample of job adverts.
 
-python -i dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_skills_measures.py
+python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_skills_measures.py
 
 
 """

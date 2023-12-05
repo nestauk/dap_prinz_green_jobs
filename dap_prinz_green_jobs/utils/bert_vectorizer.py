@@ -2,6 +2,7 @@ from sentence_transformers import SentenceTransformer
 import time
 from dap_prinz_green_jobs import logger
 import numpy as np
+import torch
 
 from dap_prinz_green_jobs.utils.processing import list_chunks
 
@@ -60,7 +61,8 @@ class BertVectorizer:
             logger.setLevel(logging.ERROR)
 
     def fit(self, *_):
-        self.bert_model = SentenceTransformer(self.bert_model_name)
+        device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
+        self.bert_model = SentenceTransformer(self.bert_model_name, device=device)
         self.bert_model.max_seq_length = 512
         return self
 
