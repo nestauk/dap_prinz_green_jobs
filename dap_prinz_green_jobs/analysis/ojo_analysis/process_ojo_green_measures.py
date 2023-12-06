@@ -5,10 +5,7 @@ Load the green measures from a sample of OJO data and process it into a form nee
 from dap_prinz_green_jobs import BUCKET_NAME, logger
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
-from dap_prinz_green_jobs.getters.ojo_getters import (
-    get_mixed_ojo_location_sample,
-    get_mixed_ojo_salaries_sample,
-)
+from dap_prinz_green_jobs.getters.occupation_getters import load_soc_descriptions
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import (
     OccupationMeasures,
 )
@@ -19,6 +16,7 @@ import altair as alt
 from tqdm import tqdm
 
 import os
+from typing import List, Tuple, Dict, Union
 
 
 # clean up skills
@@ -33,7 +31,7 @@ def merge_ents(ents):
 
 
 # function to clean SOC names
-def clean_soc_name(soc_name):
+def clean_soc_name(soc_name: Union[str, None]) -> Union[str, None]:
     if soc_name:
         return soc_name.replace("n.e.c.", "").strip()
     else:
@@ -41,8 +39,12 @@ def clean_soc_name(soc_name):
 
 
 def load_ojo_green_measures(
-    production, config, skills_date_stamp, occ_date_stamp, ind_date_stamp
-):
+    production: str,
+    config: str,
+    skills_date_stamp: str,
+    occ_date_stamp: str,
+    ind_date_stamp: str,
+) -> tuple:
     green_skills_outputs = load_s3_data(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{skills_date_stamp}/ojo_sample_skills_green_measures_production_{production}_{config}.json",
@@ -81,12 +83,15 @@ def load_ojo_green_measures(
 
 
 def merge_green_measures(
-    skill_measures_df,
-    occs_measures_df,
-    inds_measures_df,
-    soc_name_dict,
-    job_id_col="job_id",
-):
+    skill_measures_df: pd.DataFrame,
+    occs_measures_df: pd.DataFrame,
+    inds_measures_df: pd.DataFrame,
+    soc_name_dict: dict,
+    job_id_col: str = "job_id",
+) -> pd.DataFrame:
+    """
+    Merge all 3 green measures into one dataframe where each row is a job advert.
+    """
     soc_2020_6_dict = soc_name_dict["soc_2020_6"]
     soc_2020_4_dict = soc_name_dict["soc_2020_4"]
 
@@ -152,8 +157,11 @@ def merge_green_measures(
     return all_green_measures_df
 
 
-def add_salaries(all_green_measures_df, job_id_col="job_id"):
-    salary_information = get_mixed_ojo_salaries_sample()
+def add_salaries(
+    salary_information: pd.DataFrame,
+    all_green_measures_df: pd.DataFrame,
+    job_id_col: str = "job_id",
+) -> pd.DataFrame:
     salary_information[job_id_col] = salary_information.id.astype(str)
 
     # add salary
@@ -163,8 +171,11 @@ def add_salaries(all_green_measures_df, job_id_col="job_id"):
     return all_green_measures_df
 
 
-def add_locations(all_green_measures_df, job_id_col="job_id"):
-    locations_information = get_mixed_ojo_location_sample()
+def add_locations(
+    locations_information: pd.DataFrame,
+    all_green_measures_df: pd.DataFrame,
+    job_id_col: str = "job_id",
+) -> pd.DataFrame:
     locations_information[job_id_col] = locations_information.id.astype(str)
 
     # add locations
@@ -177,7 +188,7 @@ def add_locations(all_green_measures_df, job_id_col="job_id"):
     return all_green_measures_df
 
 
-def add_sic_info(all_green_measures_df):
+def add_sic_info(all_green_measures_df: pd.DataFrame) -> pd.DataFrame:
     sic_data = load_sic()
     sic_names = dict(
         zip(sic_data["Division"].tolist(), sic_data["Description"].tolist())
@@ -194,12 +205,10 @@ def add_sic_info(all_green_measures_df):
     return all_green_measures_df
 
 
-def get_soc_info():
+def get_soc_info() -> dict:
     # we need soc descriptions as well - they have descriptions for 6 digit sic codes
-    soc_descriptions = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/extendedsoc2020structureanddescriptionsexcel121023.xlsx",
-        sheet_name="Extended SOC descriptions MG1-9",
-    )
+    soc_descriptions = load_soc_descriptions()
+
     soc_descriptions.columns = [
         i.lower().strip().replace(" ", "_").replace("-", "")
         for i in soc_descriptions.iloc[0].values
@@ -226,7 +235,7 @@ def get_soc_info():
     return soc_descriptions_dict
 
 
-def add_green_topics(all_green_measures_df):
+def add_green_topics(all_green_measures_df: pd.DataFrame) -> pd.DataFrame:
     om = OccupationMeasures()
     om.load()
 
@@ -241,10 +250,19 @@ def add_green_topics(all_green_measures_df):
     return all_green_measures_df
 
 
-def add_additional_metadata(all_green_measures_df, job_id_col="job_id"):
-    all_green_measures_df = add_salaries(all_green_measures_df, job_id_col=job_id_col)
+def add_additional_metadata(
+    all_green_measures_df: pd.DataFrame,
+    salary_information: pd.DataFrame,
+    locations_information: pd.DataFrame,
+    job_id_col: str = "job_id",
+) -> tuple:
+    all_green_measures_df = add_salaries(
+        salary_information, all_green_measures_df, job_id_col=job_id_col
+    )
 
-    all_green_measures_df = add_locations(all_green_measures_df, job_id_col=job_id_col)
+    all_green_measures_df = add_locations(
+        locations_information, all_green_measures_df, job_id_col=job_id_col
+    )
 
     all_green_measures_df = add_sic_info(all_green_measures_df)
 
@@ -256,8 +274,10 @@ def add_additional_metadata(all_green_measures_df, job_id_col="job_id"):
 
 
 def filter_large_occs(
-    all_green_measures_df, min_num_job_ads=50, occ_col="SOC_2020_name"
-):
+    all_green_measures_df: pd.DataFrame,
+    min_num_job_ads: int = 50,
+    occ_col: str = "SOC_2020_name",
+) -> pd.DataFrame:
     # get occupations for which we have over 50 job adverts for
     representative_occs = (
         all_green_measures_df.groupby(occ_col)
@@ -278,7 +298,9 @@ def filter_large_occs(
     return filtered_df
 
 
-def create_green_skills_df(all_green_measures_df, occ_col="SOC_2020_name"):
+def create_green_skills_df(
+    all_green_measures_df: pd.DataFrame, occ_col: str = "SOC_2020_name"
+) -> pd.DataFrame:
     all_green_measures_df["ENTS_GREEN_ENTS"] = all_green_measures_df.apply(
         lambda x: x["ENTS"] + x["GREEN_ENTS"], axis=1
     )
@@ -326,7 +348,16 @@ def create_green_skills_df(all_green_measures_df, occ_col="SOC_2020_name"):
     return green_skills_df
 
 
-def create_skill_df(skill_measures_df, job_id_col="job_id"):
+def create_skill_df(
+    skill_measures_df: pd.DataFrame,
+    job_id_col: str = "job_id",
+    skill_match_thresh: float = 0.7,
+) -> pd.DataFrame:
+    """
+    Process the skills measures dataframe where each row is a job advert, into a format
+    where each row is a skill and there is information about which job advert it was found in,
+    whether it is green or not, and which esco skill it maps to.
+    """
     full_skills_outputs = load_s3_data(
         BUCKET_NAME,
         f"outputs/data/green_skill_lists/20230914/full_esco_skill_mappings.json",
@@ -340,7 +371,6 @@ def create_skill_df(skill_measures_df, job_id_col="job_id"):
     )
     ents_explode = ents_explode.explode("skill_label").reset_index(drop=True)
 
-    skill_match_thresh = 0.7
     extracted_full_skill = []
     extracted_full_skill_id = []
     for skill_label in tqdm(ents_explode["skill_label"]):
@@ -419,7 +449,9 @@ def create_skill_df(skill_measures_df, job_id_col="job_id"):
     return green_skills_df
 
 
-def create_agg_measures_per_occ(all_green_measures_df, occ_col="SOC_2020_name"):
+def create_agg_measures_per_occ(
+    all_green_measures_df: pd.DataFrame, occ_col: str = "SOC_2020_name"
+) -> pd.DataFrame:
     # generate a dataframe with summed green measures per occupation
 
     all_green_measures_df_ents = all_green_measures_df[
@@ -471,12 +503,12 @@ def create_agg_measures_per_occ(all_green_measures_df, occ_col="SOC_2020_name"):
 
 
 def create_agg_data(
-    all_green_measures_df,
-    green_skills_df,
-    soc_descriptions_dict=None,
-    agg_col="SOC_2020_EXT",
-    job_id_col="job_id",
-):
+    all_green_measures_df: pd.DataFrame,
+    green_skills_df: pd.DataFrame,
+    soc_descriptions_dict: Union[dict, None] = None,
+    agg_col: str = "SOC_2020_EXT",
+    job_id_col: str = "job_id",
+) -> pd.DataFrame:
     """
     Much like create_agg_occ_measures but more generic to aggregate by any column
     """
@@ -680,7 +712,9 @@ def create_agg_data(
     return aggregated_data
 
 
-def categorical_assign(value, all_values, rev=False):
+def categorical_assign(
+    value, all_values: pd.Series, rev: bool = False
+) -> Union[str, None]:
     q1 = all_values.quantile(0.33)
     q2 = all_values.quantile(0.66)
 
@@ -701,7 +735,7 @@ def categorical_assign(value, all_values, rev=False):
         return None
 
 
-def get_one_score(occ, ind, skill):
+def get_one_score(occ: str, ind: str, skill: str) -> Union[str, None]:
     score_dict = {"high": 2, "mid": 1, "low": 0}
     if occ in score_dict:
         if ind in score_dict:
@@ -725,7 +759,12 @@ def get_one_score(occ, ind, skill):
         return None
 
 
-def get_overall_greenness(occ_aggregated_df):
+def get_overall_greenness(occ_aggregated_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Find where in the distribution of green measures for all occupations this
+    occupation sits, for each of the 3 measures plus a combined score.
+    e.g. data scientists are in the highest 1/3 of all industry greenness measures.
+    """
     occ_aggregated_df["occ_greenness"] = occ_aggregated_df["occ_timeshare"].apply(
         lambda x: categorical_assign(x, occ_aggregated_df["occ_timeshare"])
     )

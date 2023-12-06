@@ -1,41 +1,78 @@
-from dap_prinz_green_jobs.analysis.ojo_analysis.process_ojo_green_measures import *
+"""
+Create a dataset of green measures aggregated by region.
+
+Run with:
+python dap_prinz_green_jobs/analysis/ojo_analysis/aggregate_by_region.py
+"""
+
+import dap_prinz_green_jobs.analysis.ojo_analysis.process_ojo_green_measures as pg
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3
-from dap_prinz_green_jobs import BUCKET_NAME
+from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR
+from dap_prinz_green_jobs.getters.ojo_getters import (
+    get_mixed_ojo_location_sample,
+    get_mixed_ojo_salaries_sample,
+    get_large_ojo_location_sample,
+    get_large_ojo_salaries_sample,
+)
 
 from datetime import datetime
+import yaml
+import os
 
 if __name__ == "__main__":
-    job_id_col = "job_id"
-    production = "True"
-    config = "base"
-    skills_date_stamp = "20230914"
-    occ_date_stamp = "20231002"
-    ind_date_stamp = "20231013"
+    config_path = os.path.join(
+        PROJECT_DIR, "dap_prinz_green_jobs/config/ojo_analysis.yaml"
+    )
+    with open(config_path, "r") as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
+
+    job_id_col = config["job_id_col"]
+    production = config["production"]
+    config_name = config["config"]
+    skills_date_stamp = config["skills_date_stamp"]
+    occ_date_stamp = config["occ_date_stamp"]
+    ind_date_stamp = config["ind_date_stamp"]
+    data_type = config["data_type"]
+    skill_match_thresh = config["skill_match_thresh"]
 
     (
         skill_measures_df,
         occs_measures_df,
         inds_measures_df,
         soc_name_dict,
-    ) = load_ojo_green_measures(
-        production, config, skills_date_stamp, occ_date_stamp, ind_date_stamp
+    ) = pg.load_ojo_green_measures(
+        production, config_name, skills_date_stamp, occ_date_stamp, ind_date_stamp
     )
 
-    all_green_measures_df = merge_green_measures(
+    all_green_measures_df = pg.merge_green_measures(
         skill_measures_df, occs_measures_df, inds_measures_df, soc_name_dict
     )
 
     # Add some additional data
+    if data_type == "mixed":
+        salary_information = get_mixed_ojo_salaries_sample()
+        locations_information = get_mixed_ojo_location_sample()
+    elif data_type == "large":
+        salary_information = get_large_ojo_location_sample()
+        locations_information = get_large_ojo_location_sample()
+    else:
+        print("set data_type in config to mixed or large")
 
-    all_green_measures_df = add_salaries(all_green_measures_df, job_id_col=job_id_col)
-    all_green_measures_df = add_locations(all_green_measures_df, job_id_col=job_id_col)
-    all_green_measures_df = add_sic_info(all_green_measures_df)
+    all_green_measures_df = pg.add_salaries(
+        salary_information, all_green_measures_df, job_id_col=job_id_col
+    )
+    all_green_measures_df = pg.add_locations(
+        locations_information, all_green_measures_df, job_id_col=job_id_col
+    )
+    all_green_measures_df = pg.add_sic_info(all_green_measures_df)
 
-    all_skills_df = create_skill_df(skill_measures_df)
+    all_skills_df = pg.create_skill_df(
+        skill_measures_df, skill_match_thresh=skill_match_thresh
+    )
 
     agg_itl_by = "itl_3_code"  # itl_2_code or itl_3_code
 
-    itl_aggregated_data = create_agg_data(
+    itl_aggregated_data = pg.create_agg_data(
         all_green_measures_df,
         all_skills_df,
         soc_descriptions_dict=None,
@@ -58,14 +95,14 @@ if __name__ == "__main__":
     itl_aggregated_data["occ_greenness"] = itl_aggregated_data[
         "average_occ_green_timeshare"
     ].apply(
-        lambda x: categorical_assign(
+        lambda x: pg.categorical_assign(
             x, itl_aggregated_data["average_occ_green_timeshare"]
         )
     )
     itl_aggregated_data["ind_greenness"] = itl_aggregated_data[
         "average_ind_perunit_ghg"
     ].apply(
-        lambda x: categorical_assign(
+        lambda x: pg.categorical_assign(
             x, itl_aggregated_data["average_ind_perunit_ghg"], rev=True
         )
     )
@@ -73,13 +110,13 @@ if __name__ == "__main__":
     itl_aggregated_data["skills_greenness"] = itl_aggregated_data[
         "average_prop_green_skills"
     ].apply(
-        lambda x: categorical_assign(
+        lambda x: pg.categorical_assign(
             x, itl_aggregated_data["average_prop_green_skills"]
         )
     )
 
     itl_aggregated_data["greenness_score"] = itl_aggregated_data.apply(
-        lambda x: get_one_score(
+        lambda x: pg.get_one_score(
             x["occ_greenness"], x["ind_greenness"], x["skills_greenness"]
         ),
         axis=1,
