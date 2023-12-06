@@ -19,6 +19,19 @@ def load_job_title_soc() -> pd.DataFrame():
     return jobtitle_soc_data
 
 
+def load_soc_descriptions() -> pd.DataFrame():
+    """
+    Load the dataset which gives descriptions for the SOC 6-digit codes
+    """
+
+    soc_descriptions = pd.read_excel(
+        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/extendedsoc2020structureanddescriptionsexcel121023.xlsx",
+        sheet_name="Extended SOC descriptions MG1-9",
+    )
+
+    return soc_descriptions
+
+
 def load_green_gla_soc() -> pd.DataFrame():
     """
     Load the greater london authority dataset which gives green measures from SOC codes
