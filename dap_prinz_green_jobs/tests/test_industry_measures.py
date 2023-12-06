@@ -1,9 +1,5 @@
 import pytest
 
-from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import (
-    IndustryMeasures,
-)
-
 from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures_utils import (
     get_ghg_sic,
     clean_total_emissions_dict,
@@ -14,6 +10,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.industries.sic_mapper.sic_mapp
     clean_sic,
 )
 
+import os
 
 job_ads = [
     {
@@ -67,7 +64,15 @@ def test_clean_unit_emissions_dict():
     assert clean_unit_emissions_dict({"10.2-3": 10}) == {"102": 10, "103": 10}
 
 
+IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+
+
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work in Github Actions.")
 def test_industry_measures():
+    from dap_prinz_green_jobs.pipeline.green_measures.industries.industries_measures import (
+        IndustryMeasures,
+    )
+
     im = IndustryMeasures()
     im.load()
 

@@ -215,30 +215,64 @@ def get_mixed_ojo_skills_sample() -> pd.DataFrame:
     )
 
 
-def get_extracted_skill_embeddings() -> Dict[str, List[float]]:
-    """
-    Gets the extracted skill embeddings (output from get_ojo_skills_sample) from s3
-        the extracted skills are from the job sample output from
-
+def get_large_ojo_sample() -> pd.DataFrame:
+    """Gets large random ojo sample data from s3
 
     Returns:
-        dictionary of extracted skill embeddings where the key is the extracted skill
-        and the value is a list of floats representing the embedding
+        pd.Dataframe: ojo sample data
     """
     return load_s3_data(
         BUCKET_NAME,
-        "outputs/data/green_skill_lists/extracted_skills_embeddings.json",
+        "outputs/data/ojo_application/deduplicated_sample/large_ojo_sample.parquet",
     )
 
 
-def get_mapped_green_skills() -> List[Dict[str, list]]:
-    """Loads mapped green skills (output from get_ojo_skills_sample) from
-        s3 from random ojo sample
+def get_large_ojo_job_title_sample() -> pd.DataFrame:
+    """Gets large random ojo job title sample data from s3
 
     Returns:
-        A list of dictionaries where there is a job_id key and
-        a list of mapped green skills based on gm.skill_threshold value
+        pd.Dataframe: ojo sample data
     """
     return load_s3_data(
-        BUCKET_NAME, "outputs/data/green_skills/20230526_all_matched_skills.json"
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/large_job_title_data_sample.parquet",
+    )
+
+
+def get_large_ojo_location_sample() -> pd.DataFrame:
+    """Gets large random ojo locations sample data from s3
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/large_locations_data_sample.parquet",
+    )
+
+
+def get_large_ojo_salaries_sample() -> pd.DataFrame:
+    """Gets large random ojo salaries sample data from s3
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/large_salaries_data_sample.parquet",
+    )
+
+
+def get_large_ojo_skills_sample() -> pd.DataFrame:
+    """Gets large random ojo skills sample data from s3
+
+    NOTE: they're skills from SkillsExtractor, not any developments from the project
+
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/large_skills_data_sample.parquet",
     )
