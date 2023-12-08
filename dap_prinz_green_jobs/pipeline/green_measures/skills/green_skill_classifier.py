@@ -230,7 +230,7 @@ class GreenSkillClassifier(object):
         logger.info("Downloading ESCO green taxonomy embeddings")
         self.taxonomy_skills_embeddings_dict = load_s3_data(
             BUCKET_NAME,
-            "outputs/data/green_skill_lists/green_esco_embeddings_20230815.json",
+            "outputs/data/green_skill_lists/green_esco_embeddings_20231129.json",
         )
 
         logger.info("Downloading ESCO green taxonomy")

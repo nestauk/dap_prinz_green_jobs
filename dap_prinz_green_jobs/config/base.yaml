@@ -20,8 +20,8 @@ skills:
   load_taxonomy_embeddings: True # If False it doesn't matter what green_tax_embedding_path is
   skills_output: "outputs/data/green_skill_lists/20230914/skills_data_ojo_mixed.json" # Set if load_skills is True
   skill_embeddings_output: "outputs/data/green_skill_lists/20230914/extracted_skills_embeddings.json" # Set if load_skills_embeddings is True
-  green_tax_embedding_path: "outputs/data/green_skill_lists/green_esco_embeddings_20230815.json" # Set if load_taxonomy_embeddings is True
-  green_skills_classifier_model_file_name: "outputs/models/green_skill_classifier/green_skill_classifier_20230906.joblib"
+  green_tax_embedding_path: "outputs/data/green_skill_lists/green_esco_embeddings_20231129.json" # Set if load_taxonomy_embeddings is True
+  green_skills_classifier_model_file_name: "outputs/models/green_skill_classifier/green_skill_classifier_20231129.joblib"
 occupations:
   local: False
   embeddings_output_dir: "outputs/data/green_occupations/soc_matching/"

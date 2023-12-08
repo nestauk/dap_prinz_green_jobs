@@ -88,16 +88,20 @@ class IndustryMeasures(object):
         self,
         closest_distance_threshold: float = 0.5,
         majority_sic_threshold: float = 0.3,
+        use_gpu: bool = False,
+        chunk_size: int = 100,
     ):
         self.closest_distance_threshold = (closest_distance_threshold,)
         self.majority_sic_threshold = majority_sic_threshold
+        self.use_gpu = use_gpu
+        self.chunk_size = chunk_size
 
     def load(self):
         """
         Method to load necessary SIC mapper class and
             Industry-level greenness datasets.
         """
-        self.sm = SicMapper()
+        self.sm = SicMapper(use_gpu=self.use_gpu, chunk_size=self.chunk_size)
         self.sm.load()
 
         # can tune the thresholds here
@@ -139,6 +143,7 @@ class IndustryMeasures(object):
             Dict[str, float]: Industry-level green measures
                 for a given job advert or list of job adverts.
         """
+
         sic_codes = self.sm.get_sic_codes(job_adverts)
 
         industry_measures_dict = {}

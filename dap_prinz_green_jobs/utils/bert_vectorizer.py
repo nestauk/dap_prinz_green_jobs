@@ -2,6 +2,7 @@ from sentence_transformers import SentenceTransformer
 import time
 from dap_prinz_green_jobs import logger
 import numpy as np
+import torch
 
 from dap_prinz_green_jobs.utils.processing import list_chunks
 
@@ -23,7 +24,7 @@ def get_embeddings(
         dict: The sentence (key) and the embedding (value)
     """
 
-    bert_model = BertVectorizer(verbose=True, multi_process=True).fit()
+    bert_model = BertVectorizer(verbose=True, multi_process=False).fit()
 
     embeddings = []
     for batch_texts in tqdm(list_chunks(sent_list, chunk_size)):
@@ -60,7 +61,8 @@ class BertVectorizer:
             logger.setLevel(logging.ERROR)
 
     def fit(self, *_):
-        self.bert_model = SentenceTransformer(self.bert_model_name)
+        device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
+        self.bert_model = SentenceTransformer(self.bert_model_name, device=device)
         self.bert_model.max_seq_length = 512
         return self
 
