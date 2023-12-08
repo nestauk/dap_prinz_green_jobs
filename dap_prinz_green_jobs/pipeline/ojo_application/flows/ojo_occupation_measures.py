@@ -24,6 +24,8 @@ from dap_prinz_green_jobs.getters.data_getters import (
     load_s3_data,
 )
 
+import pandas as pd
+
 if __name__ == "__main__":
     production = True
     job_title_column = "job_title_raw"
@@ -150,3 +152,16 @@ if __name__ == "__main__":
             f"ojo_large_sample_occupation_green_measures_production_{str(production).lower()}.json",
         ),
     )
+
+    # make parquet file and save to s3
+    occs_measures_df = (
+        pd.DataFrame.from_dict(all_green_occupation_measures_dict, orient="index")
+        .reset_index()
+        .rename(columns={"index": "job_id"})
+    )
+
+    occs_df_path = os.path.join(
+        folder_name,
+        f"ojo_large_sample_occupation_green_measures_production_{str(production).lower()}.parquet",
+    )
+    occs_measures_df.to_parquet(occs_df_path)

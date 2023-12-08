@@ -162,3 +162,14 @@ if __name__ == "__main__":
             f"ojo_large_sample_skills_green_measures_production_{production}.json",
         ),
     )
+
+    skill_measures_df = (
+        pd.DataFrame.from_dict(all_prop_green_skills, orient="index")
+        .reset_index()
+        .rename(columns={"index": "job_id"})
+    )
+    skills_df_path = os.path.join(
+        folder_name,
+        f"ojo_large_sample_skills_green_measures_production_{production}.parquet",
+    )
+    skill_measures_df.to_parquet(skills_df_path)

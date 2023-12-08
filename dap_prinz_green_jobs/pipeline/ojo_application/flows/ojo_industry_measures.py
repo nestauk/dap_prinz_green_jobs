@@ -115,3 +115,15 @@ if __name__ == "__main__":
     )
 
     print(f"Time taken: {time.time() - t0}")
+
+    inds_measures_df = (
+        pd.DataFrame.from_dict(all_ind_green_measures_dict, orient="index")
+        .reset_index()
+        .rename(columns={"index": "job_id"})
+    )
+
+    inds_df_path = os.path.join(
+        folder_name,
+        f"ojo_large_sample_industry_green_measures_production_{production}.parquet",
+    )
+    inds_measures_df.to_parquet(inds_df_path)
