@@ -24,6 +24,8 @@ class CustomJsonEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, numpy.ndarray):
             return obj.tolist()
+        elif isinstance(obj, set):
+            return list(obj)
         return super(CustomJsonEncoder, self).default(obj)
 
 
@@ -158,15 +160,15 @@ def load_s3_data(bucket_name, file_name):
         )
 
 
-def get_s3_data_paths(s3, bucket_name, root, file_types=["*.jsonl"]):
+def get_s3_data_paths(bucket_name, root, file_types=["*.jsonl"]):
     """
     Get all paths to particular file types in a S3 root location
 
-    s3: S3 boto3 resource
     bucket_name: The S3 bucket name
     root: The root folder to look for files in
     file_types: List of file types to look for, or one
     """
+    s3 = get_s3_resource()
     if isinstance(file_types, str):
         file_types = [file_types]
 

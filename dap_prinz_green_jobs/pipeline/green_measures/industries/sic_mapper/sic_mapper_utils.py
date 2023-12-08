@@ -75,6 +75,17 @@ bad_phrases = [
     "Fixed Term",
 ]
 
+sentence_replacement_rules = {
+    r"\b(?:"
+    + "|".join(map(re.escape, bad_phrases))
+    + r")\b": "",  # Remove bad phrases if at the beginning of the description
+    r"£\d{1,3}(,\d{3})*": "",  # Convert "salaries" to spaces
+    # Convert numbers (including , and .) to spaces
+    r"\d{1,3}(,\d{3})*(\.\d+)?": "",
+    r"[^\w\s,.]": "",  # Remove punctuation that isn't a comma
+    r"\s+": " ",  # Convert multiple spaces to single spaces
+}
+
 
 def clean_sic(sic_name: str) -> str:
     """Cleans the SIC code.
@@ -145,7 +156,7 @@ def clean_company_name(
 
 
 def clean_company_description(
-    description: str, bad_phrases: List[str] = bad_phrases
+    description: str, sentence_replacement_rules=sentence_replacement_rules
 ) -> str:
     """Minimal cleaning of company description.
 
@@ -155,16 +166,6 @@ def clean_company_description(
     Returns:
         str: The cleaned company description
     """
-    sentence_replacement_rules = {
-        r"\b(?:"
-        + "|".join(map(re.escape, bad_phrases))
-        + r")\b": "",  # Remove bad phrases if at the beginning of the description
-        r"£\d{1,3}(,\d{3})*": "",  # Convert "salaries" to spaces
-        # Convert numbers (including , and .) to spaces
-        r"\d{1,3}(,\d{3})*(\.\d+)?": "",
-        r"[^\w\s,.]": "",  # Remove punctuation that isn't a comma
-        r"\s+": " ",  # Convert multiple spaces to single spaces
-    }
 
     # Initialize clean_description with the original description
     clean_description = description
