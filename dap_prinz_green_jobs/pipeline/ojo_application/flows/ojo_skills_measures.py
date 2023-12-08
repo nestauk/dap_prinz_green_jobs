@@ -168,8 +168,10 @@ if __name__ == "__main__":
         .reset_index()
         .rename(columns={"index": "job_id"})
     )
+    # save as csv because of invalid parquet schema
     skills_df_path = os.path.join(
+        BUCKET_NAME,
         folder_name,
-        f"ojo_large_sample_skills_green_measures_production_{production}.parquet",
+        f"ojo_large_sample_skills_green_measures_production_{production}.csv",
     )
-    skill_measures_df.to_parquet(skills_df_path)
+    skill_measures_df.to_parquet(f"s3://{skills_df_path}", index=False)

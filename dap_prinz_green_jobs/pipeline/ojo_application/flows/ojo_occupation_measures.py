@@ -161,7 +161,8 @@ if __name__ == "__main__":
     )
 
     occs_df_path = os.path.join(
+        BUCKET_NAME,
         folder_name,
-        f"ojo_large_sample_occupation_green_measures_production_{str(production).lower()}.parquet",
+        f"ojo_large_sample_occupation_green_measures_production_{str(production).lower()}.csv",
     )
-    occs_measures_df.to_parquet(occs_df_path)
+    occs_measures_df.to_csv(f"s3://{occs_df_path}", index=False)

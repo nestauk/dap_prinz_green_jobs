@@ -123,7 +123,8 @@ if __name__ == "__main__":
     )
 
     inds_df_path = os.path.join(
+        BUCKET_NAME,
         folder_name,
-        f"ojo_large_sample_industry_green_measures_production_{production}.parquet",
+        f"ojo_large_sample_industry_green_measures_production_{production}.csv",
     )
-    inds_measures_df.to_parquet(inds_df_path)
+    inds_measures_df.to_csv(f"s3://{inds_df_path}", index=False)
