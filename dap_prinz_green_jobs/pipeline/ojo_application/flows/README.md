@@ -20,7 +20,7 @@ python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_skills_measures.p
 
 ```
 
-This was run locally and took about 6h.
+This was run on EC2 and took around 78 hours.
 
 ## Industry measures
 
@@ -29,7 +29,7 @@ python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_industry_measures
 
 ```
 
-This was run on EC2 and took about 11 days.
+This was run on EC2 and took about 27 hours.
 
 Installing faiss on the EC2 machine was hard, here is a log of what was done, although it's unclear which bit made it work:
 
