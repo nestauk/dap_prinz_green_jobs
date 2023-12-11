@@ -1,8 +1,8 @@
 job_id_col: "job_id"
 production: "True"
 config: "base"
-skills_date_stamp: "20230914"
-occ_date_stamp: "20231002"
-ind_date_stamp: "20231013"
+skills_date_stamp: "20231204"
+occ_date_stamp: "20231127"
+ind_date_stamp: "20231205"
 data_type: "mixed"
 skill_match_thresh: 0.7
