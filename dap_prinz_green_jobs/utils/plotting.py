@@ -5,6 +5,8 @@ Functions to make altair graphs look nice
 import altair as alt
 import pandas as pd
 
+GREEN_MEASURES_COLORS = ["#1a9641", "#d8b365", "#8c510a"]  # green  # neutral  # brown
+
 NESTA_COLOURS = [
     #    "#0000FF",
     "#FDB633",
