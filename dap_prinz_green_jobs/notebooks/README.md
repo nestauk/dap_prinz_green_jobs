@@ -18,6 +18,10 @@ This notebook contains high-level analysis of industries, occupations and skills
 
 The `regional_comparison.ipynb` notebook contains code to create a chloropleth of regional comparisons of the greenness measures.
 
+### 2x2 Typologies
+
+The `2x2_typologies.ipynb` notebook contains code to create a 2x2 typology of greenness measures for the comparisons flow of the Green Jobs Explorer.
+
 ### Sampling Analysis
 
 This notebook contains high-level analysis of different OJO samples.

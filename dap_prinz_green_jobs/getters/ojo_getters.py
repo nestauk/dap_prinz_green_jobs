@@ -2,7 +2,7 @@
 Getters for data related to OJO job adverts
 """
 import pandas as pd
-from dap_prinz_green_jobs import BUCKET_NAME
+from dap_prinz_green_jobs import BUCKET_NAME, analysis_config
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 
 from typing import Dict, List

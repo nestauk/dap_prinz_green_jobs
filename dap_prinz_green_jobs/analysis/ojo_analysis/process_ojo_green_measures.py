@@ -2,7 +2,7 @@
 Load the green measures from a sample of OJO data and process it into a form needed to create analysis from
 """
 
-from dap_prinz_green_jobs import BUCKET_NAME, logger
+from dap_prinz_green_jobs import BUCKET_NAME, logger, analysis_config
 from dap_prinz_green_jobs.getters.data_getters import load_s3_data
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
 from dap_prinz_green_jobs.getters.occupation_getters import load_soc_descriptions
@@ -17,10 +17,19 @@ from tqdm import tqdm
 
 import os
 from typing import List, Tuple, Dict, Union
+import ast
 
 
 # clean up skills
 def merge_ents(ents):
+    """Merge entities.
+
+    Args:
+        ents (_type_): Entity list.
+
+    Returns:
+        Merged entities.
+    """
     if not isinstance(ents, list):
         return None
 
@@ -30,56 +39,153 @@ def merge_ents(ents):
         return ents[0] + [ents[1]]
 
 
-# function to clean SOC names
 def clean_soc_name(soc_name: Union[str, None]) -> Union[str, None]:
+    """Cleans SOC name to:
+        - replace n.e.c. with nothing
+        - strip whitespace
+
+    Args:
+        soc_name (Union[str, None]): SOC name
+
+    Returns:
+        Union[str, None]: Cleaned SOC name
+    """
     if soc_name:
         return soc_name.replace("n.e.c.", "").strip()
     else:
         return None
 
 
+def process_soc_columns(
+    occs_measures_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    The SOC column is originally a string of a dictionary of SOC details,
+    format this and move the information into separate columns
+    """
+
+    # "SOC" is read as a string, but "{... 'name': nan}" causes issues with literal_eval
+    occs_measures_df["SOC"] = occs_measures_df["SOC"].apply(
+        lambda x: ast.literal_eval(x.replace("'name': nan", "'name': 'None'"))
+        if pd.notnull(x)
+        else None
+    )
+
+    # Separate out the SOC columns
+    for soc_columns in ["SOC_2020_EXT", "SOC_2020", "SOC_2010", "name"]:
+        occs_measures_df[soc_columns] = occs_measures_df["SOC"].apply(
+            lambda x: x[soc_columns] if (x and x != "None") else None
+        )
+
+    occs_measures_df["GREEN TIMESHARE"] = occs_measures_df["GREEN TIMESHARE"].apply(
+        lambda x: float(x) if x != "" else np.nan
+    )
+
+    return occs_measures_df
+
+
+def process_ind_columns(
+    green_inds_outputs: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Format the industry columns
+    """
+    green_inds_outputs = green_inds_outputs[
+        green_inds_outputs["INDUSTRY GHG PER UNIT EMISSIONS"] != ":"
+    ].reset_index(drop=True)
+    green_inds_outputs["INDUSTRY TOTAL GHG EMISSIONS"] = green_inds_outputs[
+        "INDUSTRY TOTAL GHG EMISSIONS"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+    green_inds_outputs["INDUSTRY GHG PER UNIT EMISSIONS"] = green_inds_outputs[
+        "INDUSTRY GHG PER UNIT EMISSIONS"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+
+    green_inds_outputs["INDUSTRY PROP HOURS GREEN TASKS"] = green_inds_outputs[
+        "INDUSTRY PROP HOURS GREEN TASKS"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+    green_inds_outputs["INDUSTRY GHG EMISSIONS PER EMPLOYEE"] = green_inds_outputs[
+        "INDUSTRY GHG EMISSIONS PER EMPLOYEE"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+    green_inds_outputs[
+        "INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE"
+    ] = green_inds_outputs["INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE"].apply(
+        lambda x: float(x) if x != "" else np.nan
+    )
+
+    return green_inds_outputs
+
+
 def load_ojo_green_measures(
-    production: str,
-    config: str,
-    skills_date_stamp: str,
-    occ_date_stamp: str,
-    ind_date_stamp: str,
-) -> tuple:
+    analysis_config: Dict[str, str] = analysis_config
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]:
+    """Loads and cleans the green measures for skills, occupations and industries.
+
+    Args:
+        analysis_config (Dict[str, str], optional): Analysis config dictionary. Defaults to analysis_config.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]: Tuple of dataframes for skills, occupations and industries green measures and a dictionary of soc codes and names.
+    """
     green_skills_outputs = load_s3_data(
         BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{skills_date_stamp}/ojo_sample_skills_green_measures_production_{production}_{config}.json",
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/ojo_large_sample_skills_green_measures_production_{analysis_config['production']}.csv",
     )
+    green_skills_outputs["GREEN_ENTS"] = green_skills_outputs["GREEN_ENTS"].apply(
+        safe_literal_eval
+    )
+    green_skills_outputs["ENTS"] = green_skills_outputs["ENTS"].apply(safe_literal_eval)
 
     green_occs_outputs = load_s3_data(
         BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{occ_date_stamp}/ojo_sample_occupation_green_measures_production_{production}_{config}.json",
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/ojo_large_sample_occupation_green_measures_production_{analysis_config['production'].lower()}.csv",
     )
+    green_occs_outputs = process_soc_columns(green_occs_outputs)
+
     soc_name_dict = load_s3_data(
         BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/20231110/soc_name_dict.json",  # TO CHANGE TO THE SAME DATESTAMP as occ_date_stamp
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/soc_name_dict.json",
     )
     green_inds_outputs = load_s3_data(
         BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{ind_date_stamp}/ojo_sample_industry_green_measures_production_{production}_{config}.json",
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['ind_date_stamp']}/ojo_large_sample_industry_green_measures_production_{analysis_config['production']}.csv",
     )
 
-    skill_measures_df = (
-        pd.DataFrame.from_dict(green_skills_outputs, orient="index")
-        .reset_index()
-        .rename(columns={"index": "job_id"})
-    )
-    occs_measures_df = (
-        pd.DataFrame.from_dict(green_occs_outputs, orient="index")
-        .reset_index()
-        .rename(columns={"index": "job_id"})
-    )
-    inds_measures_df = (
-        pd.DataFrame.from_dict(green_inds_outputs, orient="index")
-        .reset_index()
-        .rename(columns={"index": "job_id"})
-    )
+    green_inds_outputs = process_ind_columns(green_inds_outputs)
 
-    return skill_measures_df, occs_measures_df, inds_measures_df, soc_name_dict
+    return green_skills_outputs, green_occs_outputs, green_inds_outputs, soc_name_dict
+
+
+def safe_literal_eval(value) -> Union[None, str, int, float, list, dict]:
+    """
+    Safely evaluate an expression node or a string containing a Python literal or container display.
+    """
+    try:
+        return ast.literal_eval(value)
+    except (SyntaxError, ValueError):
+        # Handle the exception (e.g., return a default value or NaN)
+        return None
+
+
+def convert_green_ents(ents):
+    """Convert green entities.
+
+    Args:
+        ents (_type_): Entity list.
+
+    Returns:
+        _type_: Converted entities.
+    """
+
+    if isinstance(ents, list):
+        new_ents = []
+        for sublist in ents:
+            if not isinstance(sublist[0], list):
+                sublist[0] = [sublist[0]]
+            new_ents.append(sublist)
+
+        return new_ents
+    else:
+        return ents
 
 
 def merge_green_measures(
@@ -106,11 +212,7 @@ def merge_green_measures(
     all_green_measures_df["NUM_GREEN_ENTS"] = all_green_measures_df["GREEN_ENTS"].apply(
         len
     )
-    # Separate out the SOC columns
-    for soc_columns in ["SOC_2020_EXT", "SOC_2020", "SOC_2010", "name"]:
-        all_green_measures_df[soc_columns] = all_green_measures_df["SOC"].apply(
-            lambda x: x[soc_columns] if x else None
-        )
+
     all_green_measures_df.drop(columns=["SOC"], inplace=True)
 
     all_green_measures_df.rename(
@@ -162,7 +264,7 @@ def add_salaries(
     all_green_measures_df: pd.DataFrame,
     job_id_col: str = "job_id",
 ) -> pd.DataFrame:
-    salary_information[job_id_col] = salary_information.id.astype(str)
+    salary_information[job_id_col] = salary_information.id
 
     # add salary
     all_green_measures_df = pd.merge(
@@ -176,7 +278,7 @@ def add_locations(
     all_green_measures_df: pd.DataFrame,
     job_id_col: str = "job_id",
 ) -> pd.DataFrame:
-    locations_information[job_id_col] = locations_information.id.astype(str)
+    locations_information[job_id_col] = locations_information.id
 
     # add locations
     locations_information = locations_information.drop(
@@ -296,56 +398,6 @@ def filter_large_occs(
     print(f"Filtered from {len(all_green_measures_df)} rows to {len(filtered_df)}")
 
     return filtered_df
-
-
-def create_green_skills_df(
-    all_green_measures_df: pd.DataFrame, occ_col: str = "SOC_2020_name"
-) -> pd.DataFrame:
-    all_green_measures_df["ENTS_GREEN_ENTS"] = all_green_measures_df.apply(
-        lambda x: x["ENTS"] + x["GREEN_ENTS"], axis=1
-    )
-
-    green_skills_df = (
-        all_green_measures_df[["job_id", occ_col, "ENTS_GREEN_ENTS"]]
-        .explode("ENTS_GREEN_ENTS")
-        .reset_index(drop=True)
-    )
-    green_skills_df["ENTS_GREEN_ENTS"] = green_skills_df["ENTS_GREEN_ENTS"].apply(
-        merge_ents
-    )
-
-    green_skills_df["extracted_skill"] = green_skills_df["ENTS_GREEN_ENTS"].apply(
-        lambda x: x[0] if isinstance(x, list) else None
-    )
-
-    green_skills_df["green_label"] = green_skills_df["ENTS_GREEN_ENTS"].apply(
-        lambda x: x[1] if isinstance(x, list) and len(x) > 4 else "not_green"
-    )
-
-    green_skills_df["green_label_prob"] = green_skills_df["ENTS_GREEN_ENTS"].apply(
-        lambda x: x[2] if isinstance(x, list) and len(x) > 4 else None
-    )
-
-    green_skills_df["skill_label"] = green_skills_df["ENTS_GREEN_ENTS"].apply(
-        lambda x: x[3] if isinstance(x, list) and len(x) > 4 else None
-    )
-
-    green_skills_df["skill_id"] = green_skills_df["ENTS_GREEN_ENTS"].apply(
-        lambda x: x[4] if isinstance(x, list) and len(x) > 4 else None
-    )
-
-    green_skills_df = green_skills_df[green_skills_df["skill_label"] != ""]
-
-    # # # Remove the duplicate green skills per job advert
-    print(f"{len(green_skills_df)} rows deduplicated to ...")
-    green_skills_df.sort_values(by="extracted_skill", inplace=True)
-    green_skills_df.drop_duplicates(
-        subset=["job_id", "skill_label"], keep="first", inplace=True
-    )
-    green_skills_df = green_skills_df[~green_skills_df["extracted_skill"].isna()]
-    print(f"... {len(green_skills_df)} rows")
-
-    return green_skills_df
 
 
 def create_skill_df(
