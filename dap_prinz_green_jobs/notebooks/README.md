@@ -37,3 +37,4 @@ The `new_skills_analysis.ipynb` notebook contains code to create graphs that exp
 ### Violin plots
 
 The `violin_plots.ipynb` notebook contains code to create violin plots of the greenness measures for the the Green Jobs Explorer.
+
