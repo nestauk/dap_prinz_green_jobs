@@ -56,10 +56,69 @@ def clean_soc_name(soc_name: Union[str, None]) -> Union[str, None]:
         return None
 
 
+def process_soc_columns(
+    occs_measures_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    The SOC column is originally a string of a dictionary of SOC details,
+    format this and move the information into separate columns
+    """
+
+    # "SOC" is read as a string, but "{... 'name': nan}" causes issues with literal_eval
+    occs_measures_df["SOC"] = occs_measures_df["SOC"].apply(
+        lambda x: ast.literal_eval(x.replace("'name': nan", "'name': 'None'"))
+        if pd.notnull(x)
+        else None
+    )
+
+    # Separate out the SOC columns
+    for soc_columns in ["SOC_2020_EXT", "SOC_2020", "SOC_2010", "name"]:
+        occs_measures_df[soc_columns] = occs_measures_df["SOC"].apply(
+            lambda x: x[soc_columns] if (x and x != "None") else None
+        )
+
+    occs_measures_df["GREEN TIMESHARE"] = occs_measures_df["GREEN TIMESHARE"].apply(
+        lambda x: float(x) if x != "" else np.nan
+    )
+
+    return occs_measures_df
+
+
+def process_ind_columns(
+    green_inds_outputs: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Format the industry columns
+    """
+    green_inds_outputs = green_inds_outputs[
+        green_inds_outputs["INDUSTRY GHG PER UNIT EMISSIONS"] != ":"
+    ].reset_index(drop=True)
+    green_inds_outputs["INDUSTRY TOTAL GHG EMISSIONS"] = green_inds_outputs[
+        "INDUSTRY TOTAL GHG EMISSIONS"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+    green_inds_outputs["INDUSTRY GHG PER UNIT EMISSIONS"] = green_inds_outputs[
+        "INDUSTRY GHG PER UNIT EMISSIONS"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+
+    green_inds_outputs["INDUSTRY PROP HOURS GREEN TASKS"] = green_inds_outputs[
+        "INDUSTRY PROP HOURS GREEN TASKS"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+    green_inds_outputs["INDUSTRY GHG EMISSIONS PER EMPLOYEE"] = green_inds_outputs[
+        "INDUSTRY GHG EMISSIONS PER EMPLOYEE"
+    ].apply(lambda x: float(x) if x != "" else np.nan)
+    green_inds_outputs[
+        "INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE"
+    ] = green_inds_outputs["INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE"].apply(
+        lambda x: float(x) if x != "" else np.nan
+    )
+
+    return green_inds_outputs
+
+
 def load_ojo_green_measures(
     analysis_config: Dict[str, str] = analysis_config
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]:
-    """Loads the green measures for skills, occupations and industries.
+    """Loads and cleans the green measures for skills, occupations and industries.
 
     Args:
         analysis_config (Dict[str, str], optional): Analysis config dictionary. Defaults to analysis_config.
@@ -71,11 +130,17 @@ def load_ojo_green_measures(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/ojo_large_sample_skills_green_measures_production_{analysis_config['production']}.csv",
     )
+    green_skills_outputs["GREEN_ENTS"] = green_skills_outputs["GREEN_ENTS"].apply(
+        safe_literal_eval
+    )
+    green_skills_outputs["ENTS"] = green_skills_outputs["ENTS"].apply(safe_literal_eval)
 
     green_occs_outputs = load_s3_data(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/ojo_large_sample_occupation_green_measures_production_{analysis_config['production'].lower()}.csv",
     )
+    green_occs_outputs = process_soc_columns(green_occs_outputs)
+
     soc_name_dict = load_s3_data(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/soc_name_dict.json",
@@ -84,6 +149,8 @@ def load_ojo_green_measures(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['ind_date_stamp']}/ojo_large_sample_industry_green_measures_production_{analysis_config['production']}.csv",
     )
+
+    green_inds_outputs = process_ind_columns(green_inds_outputs)
 
     return green_skills_outputs, green_occs_outputs, green_inds_outputs, soc_name_dict
 
@@ -145,11 +212,7 @@ def merge_green_measures(
     all_green_measures_df["NUM_GREEN_ENTS"] = all_green_measures_df["GREEN_ENTS"].apply(
         len
     )
-    # Separate out the SOC columns
-    for soc_columns in ["SOC_2020_EXT", "SOC_2020", "SOC_2010", "name"]:
-        all_green_measures_df[soc_columns] = all_green_measures_df["SOC"].apply(
-            lambda x: x[soc_columns] if x else None
-        )
+
     all_green_measures_df.drop(columns=["SOC"], inplace=True)
 
     all_green_measures_df.rename(
@@ -201,7 +264,7 @@ def add_salaries(
     all_green_measures_df: pd.DataFrame,
     job_id_col: str = "job_id",
 ) -> pd.DataFrame:
-    salary_information[job_id_col] = salary_information.id.astype(str)
+    salary_information[job_id_col] = salary_information.id
 
     # add salary
     all_green_measures_df = pd.merge(
@@ -215,7 +278,7 @@ def add_locations(
     all_green_measures_df: pd.DataFrame,
     job_id_col: str = "job_id",
 ) -> pd.DataFrame:
-    locations_information[job_id_col] = locations_information.id.astype(str)
+    locations_information[job_id_col] = locations_information.id
 
     # add locations
     locations_information = locations_information.drop(
