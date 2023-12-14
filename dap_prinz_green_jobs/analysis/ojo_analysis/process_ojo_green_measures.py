@@ -564,6 +564,10 @@ def create_agg_data(
     """
     Much like create_agg_occ_measures but more generic to aggregate by any column
     """
+    prop_job_ads_per_itl2_all = (
+        all_green_measures_df["itl_2_name"].value_counts(normalize=True).to_dict()
+    )
+
     aggregated_data = {}
     for agg_value in tqdm(all_green_measures_df[agg_col].unique()):
         if pd.notnull(agg_value):
@@ -630,12 +634,10 @@ def create_agg_data(
                 )
 
             top_5_sics_num = (
-                filtered_data[["SIC_2_digit", "SIC_2_digit_name"]]
-                .value_counts()[0:5]
-                .to_dict()
+                filtered_data[["SIC", "SIC_name"]].value_counts()[0:5].to_dict()
             )
             top_5_sics_prop = (
-                filtered_data[["SIC_2_digit", "SIC_2_digit_name"]]
+                filtered_data[["SIC", "SIC_name"]]
                 .value_counts(normalize=True)[0:5]
                 .to_dict()
             )
@@ -673,11 +675,22 @@ def create_agg_data(
                     }
                 )
 
-            top_5_itl2 = filtered_data["itl_2_name"].value_counts()[0:5].to_dict()
+            # get the location quotient for the aggregate data, to find the top 5 regions which
+            # have above average proportions of job adverts for this aggregate (e.g. occupation)
+            prop_job_ads_per_itl2_filt = (
+                filtered_data["itl_2_name"].value_counts(normalize=True).to_dict()
+            )
 
+            agg_quotient = {
+                k: v / prop_job_ads_per_itl2_all[k]
+                for k, v in prop_job_ads_per_itl2_filt.items()
+            }
+            # scores above 1 are higher than normal
             loc_info = {
-                loc: round((num_job_ads / len(filtered_data)) * 100, 2)
-                for loc, num_job_ads in top_5_itl2.items()
+                k: round(v, 2)
+                for k, v in sorted(
+                    agg_quotient.items(), key=lambda item: item[1], reverse=True
+                )[0:5]
             }
 
             aggregated_data[agg_value] = {
@@ -701,15 +714,13 @@ def create_agg_data(
                 "top_5_green_skills": green_skill_info,
                 "top_5_not_green_skills": not_green_skill_info,
                 # Industry
-                "num_unique_SIC2": filtered_data["SIC_2_digit"].nunique(),
-                "num_null_sic2": len(
-                    filtered_data[pd.isnull(filtered_data["SIC_2_digit"])]
-                ),
-                "num_top_sic2": filtered_data["SIC_2_digit"].value_counts()[0]
-                if len(filtered_data["SIC_2_digit"].value_counts()) > 0
+                "num_unique_SIC": filtered_data["SIC"].nunique(),
+                "num_null_sic": len(filtered_data[pd.isnull(filtered_data["SIC"])]),
+                "num_top_sic": filtered_data["SIC"].value_counts()[0]
+                if len(filtered_data["SIC"].value_counts()) > 0
                 else None,
-                "num_other_sic2": sum(filtered_data["SIC_2_digit"].value_counts()[1:])
-                if len(filtered_data["SIC_2_digit"].value_counts()) > 1
+                "num_other_sic": sum(filtered_data["SIC"].value_counts()[1:])
+                if len(filtered_data["SIC"].value_counts()) > 1
                 else None,
                 "average_ind_perunit_ghg": filtered_data[
                     "INDUSTRY GHG PER UNIT EMISSIONS"
@@ -726,7 +737,7 @@ def create_agg_data(
                 "median_min_annualised_salary": filtered_data.min_annualised_salary.median(),
                 "median_max_annualised_salary": filtered_data.max_annualised_salary.median(),
                 ##location information
-                "top_5_itl2_prop": [loc_info],
+                "top_5_itl2_quotient": [loc_info],
             }
 
             if agg_col == "SOC_2020_EXT":

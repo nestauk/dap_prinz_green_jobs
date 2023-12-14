@@ -20,7 +20,6 @@ import yaml
 import os
 
 if __name__ == "__main__":
-
     job_id_col = analysis_config["job_id_col"]
     data_type = analysis_config["data_type"]
     skill_match_thresh = analysis_config["skill_match_thresh"]
@@ -44,7 +43,7 @@ if __name__ == "__main__":
         salary_information = get_mixed_ojo_salaries_sample()
         locations_information = get_mixed_ojo_location_sample()
     elif data_type == "large":
-        salary_information = get_large_ojo_location_sample()
+        salary_information = get_large_ojo_salaries_sample()
         locations_information = get_large_ojo_location_sample()
     else:
         print("set data_type in config to mixed or large")
