@@ -4,5 +4,5 @@ config: "base"
 skills_date_stamp: "20231204"
 occ_date_stamp: "20231127"
 ind_date_stamp: "20231205"
-data_type: "mixed"
+data_type: "large"
 skill_match_thresh: 0.7
