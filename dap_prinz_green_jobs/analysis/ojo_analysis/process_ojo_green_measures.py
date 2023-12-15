@@ -12,12 +12,22 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measur
 
 import pandas as pd
 import numpy as np
-import altair as alt
 from tqdm import tqdm
 
-import os
-from typing import List, Tuple, Dict, Union
+from typing import Tuple, Dict, Union
 import ast
+
+
+def get_mode(series: pd.Series) -> str:
+    """Get mode of a series.
+
+    Args:
+        series (pd.Series): Series to get mode of.
+
+    Returns:
+        str: Mode of series.
+    """
+    return series.value_counts().index[0]
 
 
 # clean up skills
