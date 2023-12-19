@@ -12,6 +12,7 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
     get_mixed_ojo_location_sample,
     get_mixed_ojo_salaries_sample,
     get_large_ojo_location_sample,
+    get_large_ojo_salaries_sample,
 )
 
 from datetime import datetime
