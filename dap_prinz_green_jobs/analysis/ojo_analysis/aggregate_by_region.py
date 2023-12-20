@@ -57,7 +57,7 @@ if __name__ == "__main__":
         skill_measures_df, full_skill_mapping, skill_match_thresh=skill_match_thresh
     )
 
-    for agg_itl_by in ["itl_2_code", "itl_3_code"]:
+    for agg_itl_by in ["itl_1_code", "itl_2_code", "itl_3_code"]:
         itl_aggregated_data = pg.create_agg_data(
             all_green_measures_df,
             all_skills_df,
