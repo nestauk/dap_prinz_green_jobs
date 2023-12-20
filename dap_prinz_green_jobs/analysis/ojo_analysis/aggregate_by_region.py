@@ -51,8 +51,10 @@ if __name__ == "__main__":
     )
     all_green_measures_df = pg.add_sic_info(all_green_measures_df)
 
+    full_skill_mapping = pg.load_full_skill_mapping(analysis_config)
+
     all_skills_df = pg.create_skill_df(
-        skill_measures_df, skill_match_thresh=skill_match_thresh
+        skill_measures_df, full_skill_mapping, skill_match_thresh=skill_match_thresh
     )
 
     for agg_itl_by in ["itl_2_code", "itl_3_code"]:

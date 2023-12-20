@@ -54,8 +54,10 @@ if __name__ == "__main__":
         all_green_measures_df, min_num_job_ads=min_num_job_ads, occ_col="SOC_2020_name"
     )
 
+    full_skill_mapping = pg.load_full_skill_mapping(analysis_config)
+
     all_skills_df = pg.create_skill_df(
-        skill_measures_df, skill_match_thresh=skill_match_thresh
+        skill_measures_df, full_skill_mapping, skill_match_thresh=skill_match_thresh
     )
 
     occ_aggregated_df = pg.create_agg_data(
@@ -66,6 +68,7 @@ if __name__ == "__main__":
     )
 
     occ_aggregated_df = pg.get_overall_greenness(occ_aggregated_df)
+    occ_aggregated_df_filter = occ_aggregated_df[occ_aggregated_df["num_job_ads"] > 50]
 
     # Save
 
@@ -74,6 +77,12 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         occ_aggregated_df,
+        f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_{today}_all.csv",
+    )
+
+    save_to_s3(
+        BUCKET_NAME,
+        occ_aggregated_df_filter,
         f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_{today}.csv",
     )
 
