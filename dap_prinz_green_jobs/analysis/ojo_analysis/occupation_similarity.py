@@ -1,11 +1,11 @@
 """
-Get counts of skills in each occupation. Useful to create occupation skill similarity measures.
+Get counts and proportions of skills in each occupation.
+Use these to create occupation skill similarity measures.
 """
 
 import dap_prinz_green_jobs.analysis.ojo_analysis.process_ojo_green_measures as pg
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
-from dap_prinz_green_jobs import BUCKET_NAME, logger, analysis_config
-from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, analysis_config
+from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger, analysis_config
 from dap_prinz_green_jobs.getters.ojo_getters import (
     get_mixed_ojo_location_sample,
     get_mixed_ojo_salaries_sample,
@@ -24,27 +24,29 @@ from tqdm import tqdm
 
 
 def find_skill_similarity(
-    occ_skills_info,
-    occ_agg_data="outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_20231220_all.csv",
-    top_n=10,
-):
+    occ_skills_info: dict,
+    esco_id_2_name: dict,
+    green_esco_id: list,
+    occ_agg_data: str = "outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_20231220_all.csv",
+    top_n: int = 10,
+) -> dict:
+    """
+    Find the most similar occupations based off skills asked for, and
+    provide some other information about these occupations in the output
+    """
     # Convert dicts to cooccurrence matrix
     skills_props_per_occ = {k: v["skill_props"] for k, v in occ_skills_info.items()}
     skills_props_per_occ_df = pd.DataFrame(skills_props_per_occ)
     skills_props_per_occ_df = skills_props_per_occ_df.T
     skills_props_per_occ_df.fillna(value=0, inplace=True)
-
     # Map column names back to their ESCO codes
     skills_props_per_occ_df.rename(columns=esco_id_2_name, inplace=True)
-
     similarities = cosine_similarity(
         np.array(skills_props_per_occ_df),
         np.array(skills_props_per_occ_df),
     )
-
     # Get extra information aboutt he occupations using the aggregated by occupation dataset
     # and find most similar occupations
-
     occ_agg = load_s3_data(
         BUCKET_NAME,
         occ_agg_data,
@@ -61,9 +63,8 @@ def find_skill_similarity(
     soc_2_greenness_score = dict(
         zip(occ_agg["SOC_2020_EXT"], occ_agg["greenness_score"])
     )
-
     soc_name_2_id = {k: v["SOC_2020_EXT"] for k, v in occ_skills_info.items()}
-
+    green_esco_id = set(green_esco_id)
     occ_most_similar = {}
     for occ_ix, occ_name in enumerate(skills_props_per_occ_df.index):
         top_sims = []
@@ -72,9 +73,13 @@ def find_skill_similarity(
             if most_sim_arg != occ_ix:
                 sim_occ_name = skills_props_per_occ_df.index[most_sim_arg]
                 if occ_skills_info[sim_occ_name]["num_skills"] > 10:
-                    popular_overlap = top_skills.intersection(
-                        set(list(occ_skills_info[sim_occ_name]["skill_counts"])[0:5])
-                    )
+                    sim_occ_skills = list(
+                        occ_skills_info[sim_occ_name]["skill_counts"]
+                    )  # Already sorted
+                    common_green_skills = [
+                        esco_id_2_name[s] for s in sim_occ_skills if s in green_esco_id
+                    ][0:5]
+                    popular_overlap = top_skills.intersection(set(sim_occ_skills[0:5]))
                     popular_overlap = [esco_id_2_name[s] for s in popular_overlap]
                     top_sims.append(
                         {
@@ -89,6 +94,7 @@ def find_skill_similarity(
                                 2,
                             ),
                             "popular_overlap": popular_overlap,
+                            "common_green_skills": common_green_skills,
                             "av_proportion_green_skills": soc_2_propgreen.get(
                                 soc_name_2_id[sim_occ_name]
                             ),  # what we use in the rest of the tool
@@ -107,9 +113,7 @@ def find_skill_similarity(
                             ),
                         }
                     )
-
         occ_most_similar[occ_name] = top_sims[0:top_n]
-
     return occ_most_similar
 
 
@@ -242,7 +246,9 @@ if __name__ == "__main__":
         f"{occ_sim_folder}/green_esco_id.json",
     )
 
-    occ_most_similar = find_skill_similarity(occ_skills_info, top_n=10)
+    occ_most_similar = find_skill_similarity(
+        occ_skills_info, esco_id_2_name, green_esco_id, top_n=10
+    )
     occ_most_similar = {pg.clean_soc_name(k): v for k, v in occ_most_similar.items()}
 
     save_to_s3(
