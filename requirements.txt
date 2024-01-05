@@ -15,3 +15,4 @@ en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_
 typing_extensions<4.6.0
 umap-learn
 geopandas
+nx_altair
