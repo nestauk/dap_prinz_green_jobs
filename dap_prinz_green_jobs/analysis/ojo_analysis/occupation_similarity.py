@@ -5,17 +5,7 @@ Use these to create occupation skill similarity measures.
 
 import dap_prinz_green_jobs.analysis.ojo_analysis.process_ojo_green_measures as pg
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
-from dap_prinz_green_jobs import BUCKET_NAME, PROJECT_DIR, logger, analysis_config
-from dap_prinz_green_jobs.getters.ojo_getters import (
-    get_mixed_ojo_location_sample,
-    get_mixed_ojo_salaries_sample,
-    get_large_ojo_location_sample,
-    get_large_ojo_salaries_sample,
-)
-
-from datetime import datetime
-import yaml
-import os
+from dap_prinz_green_jobs import BUCKET_NAME
 
 import pandas as pd
 import numpy as np
@@ -27,7 +17,7 @@ def find_skill_similarity(
     occ_skills_info: dict,
     esco_id_2_name: dict,
     green_esco_id: list,
-    occ_agg_data: str = "outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_20231220_all.csv",
+    occ_agg_df: pd.DataFrame(),
     top_n: int = 10,
 ) -> dict:
     """
@@ -45,23 +35,23 @@ def find_skill_similarity(
         np.array(skills_props_per_occ_df),
         np.array(skills_props_per_occ_df),
     )
-    # Get extra information aboutt he occupations using the aggregated by occupation dataset
+    # Get extra information about the occupations using the aggregated by occupation dataset
     # and find most similar occupations
-    occ_agg = load_s3_data(
-        BUCKET_NAME,
-        occ_agg_data,
-    )
     soc_2_propgreen = dict(
-        zip(occ_agg["SOC_2020_EXT"], occ_agg["average_prop_green_skills"])
+        zip(occ_agg_df["SOC_2020_EXT"], occ_agg_df["average_prop_green_skills"])
     )
-    soc_2num = dict(zip(occ_agg["SOC_2020_EXT"], occ_agg["num_job_ads"]))
-    soc_2_occ_greenness = dict(zip(occ_agg["SOC_2020_EXT"], occ_agg["occ_greenness"]))
-    soc_2_ind_greenness = dict(zip(occ_agg["SOC_2020_EXT"], occ_agg["ind_greenness"]))
+    soc_2num = dict(zip(occ_agg_df["SOC_2020_EXT"], occ_agg_df["num_job_ads"]))
+    soc_2_occ_greenness = dict(
+        zip(occ_agg_df["SOC_2020_EXT"], occ_agg_df["occ_greenness"])
+    )
+    soc_2_ind_greenness = dict(
+        zip(occ_agg_df["SOC_2020_EXT"], occ_agg_df["ind_greenness"])
+    )
     soc_2_skills_greenness = dict(
-        zip(occ_agg["SOC_2020_EXT"], occ_agg["skills_greenness"])
+        zip(occ_agg_df["SOC_2020_EXT"], occ_agg_df["skills_greenness"])
     )
     soc_2_greenness_score = dict(
-        zip(occ_agg["SOC_2020_EXT"], occ_agg["greenness_score"])
+        zip(occ_agg_df["SOC_2020_EXT"], occ_agg_df["greenness_score"])
     )
     soc_name_2_id = {k: v["SOC_2020_EXT"] for k, v in occ_skills_info.items()}
     green_esco_id = set(green_esco_id)
@@ -117,43 +107,10 @@ def find_skill_similarity(
     return occ_most_similar
 
 
-if __name__ == "__main__":
-    # Load and process skills data
-
-    green_skills_outputs = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/ojo_large_sample_skills_green_measures_production_{analysis_config['production']}.csv",
-    )
-
-    green_skills_outputs["GREEN_ENTS"] = green_skills_outputs["GREEN_ENTS"].apply(
-        pg.safe_literal_eval
-    )
-    green_skills_outputs["ENTS"] = green_skills_outputs["ENTS"].apply(
-        pg.safe_literal_eval
-    )
-
-    skill_match_thresh = analysis_config["skill_match_thresh"]
-    full_skill_mapping = pg.load_full_skill_mapping(analysis_config)
-    all_skills_df = pg.create_skill_df(
-        green_skills_outputs, full_skill_mapping, skill_match_thresh=skill_match_thresh
-    )
-
-    # Find which job ids correspond to which SOC
-
-    green_occs_outputs = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/ojo_large_sample_occupation_green_measures_production_{analysis_config['production'].lower()}.csv",
-    )
-    green_occs_outputs = pg.process_soc_columns(green_occs_outputs)
-
-    soc_name_dict = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/soc_name_dict.json",
-    )
-
-    id_2_occ = dict(
-        zip(green_occs_outputs["job_id"], green_occs_outputs["SOC_2020_EXT"])
-    )
+def run_occupational_similarity(
+    all_skills_df, occs_measures_df, soc_name_dict, occ_agg_df
+):
+    id_2_occ = dict(zip(occs_measures_df["job_id"], occs_measures_df["SOC_2020_EXT"]))
     soc_2020_6_dict = soc_name_dict["soc_2020_6"]
 
     # Add the SOC information for each skill
@@ -224,35 +181,9 @@ if __name__ == "__main__":
         .tolist()
     )
 
-    # Save useful information for skill similarities
-
-    today = datetime.now().strftime("%Y%m%d")
-    occ_sim_folder = f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_similarity/{today}"
-
-    # Save everything needed to calculate occupation similarity based off skills
-    save_to_s3(
-        BUCKET_NAME,
-        esco_id_2_name,
-        f"{occ_sim_folder}/esco_id_2_name.json",
-    )
-    save_to_s3(
-        BUCKET_NAME,
-        occ_skills_info,
-        f"{occ_sim_folder}/occ_skills_info.json",
-    )
-    save_to_s3(
-        BUCKET_NAME,
-        green_esco_id,
-        f"{occ_sim_folder}/green_esco_id.json",
-    )
-
     occ_most_similar = find_skill_similarity(
-        occ_skills_info, esco_id_2_name, green_esco_id, top_n=10
+        occ_skills_info, esco_id_2_name, green_esco_id, occ_agg_df, top_n=10
     )
     occ_most_similar = {pg.clean_soc_name(k): v for k, v in occ_most_similar.items()}
 
-    save_to_s3(
-        BUCKET_NAME,
-        occ_most_similar,
-        f"{occ_sim_folder}/occ_most_similar.json",
-    )
+    return esco_id_2_name, occ_skills_info, green_esco_id, occ_most_similar

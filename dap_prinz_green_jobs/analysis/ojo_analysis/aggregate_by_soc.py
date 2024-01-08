@@ -14,10 +14,16 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
     get_large_ojo_location_sample,
     get_large_ojo_salaries_sample,
 )
+from dap_prinz_green_jobs.analysis.ojo_analysis.occupation_similarity import (
+    run_occupational_similarity,
+)
 
 from datetime import datetime
+import os
 
 if __name__ == "__main__":
+    root_s3_dir = "outputs/data/ojo_application/extracted_green_measures/analysis/"
+
     job_id_col = analysis_config["job_id_col"]
     data_type = analysis_config["data_type"]
     skill_match_thresh = analysis_config["skill_match_thresh"]
@@ -77,13 +83,13 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         occ_aggregated_df,
-        f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_{today}_all.csv",
+        os.path.join(root_s3_dir, f"occupation_aggregated_data_{today}_all.csv"),
     )
 
     save_to_s3(
         BUCKET_NAME,
         occ_aggregated_df_filter,
-        f"outputs/data/ojo_application/extracted_green_measures/analysis/occupation_aggregated_data_{today}.csv",
+        os.path.join(root_s3_dir, f"occupation_aggregated_data_{today}.csv"),
     )
 
     # Group by occupation and ITL
@@ -103,5 +109,69 @@ if __name__ == "__main__":
         save_to_s3(
             BUCKET_NAME,
             df,
-            f"outputs/data/ojo_application/extracted_green_measures/analysis/prop_green_skills_per_occ_{itl_col}_{today}.csv",
+            os.path.join(
+                root_s3_dir, f"prop_green_skills_per_occ_{itl_col}_{today}.csv"
+            ),
         )
+
+    print("Run the occupational similarities (will take a while)")
+
+    (
+        esco_id_2_name,
+        occ_skills_info,
+        green_esco_id,
+        occ_most_similar,
+    ) = run_occupational_similarity(
+        all_skills_df, occs_measures_df, soc_name_dict, occ_aggregated_df
+    )
+
+    occ_sim_folder = os.path.join(root_s3_dir, f"occupation_similarity/{today}")
+
+    # Save everything needed to calculate occupation similarity based off skills
+
+    save_to_s3(
+        BUCKET_NAME,
+        esco_id_2_name,
+        f"{occ_sim_folder}/esco_id_2_name.json",
+    )
+    save_to_s3(
+        BUCKET_NAME,
+        occ_skills_info,
+        f"{occ_sim_folder}/occ_skills_info.json",
+    )
+    save_to_s3(
+        BUCKET_NAME,
+        green_esco_id,
+        f"{occ_sim_folder}/green_esco_id.json",
+    )
+    save_to_s3(
+        BUCKET_NAME,
+        occ_most_similar,
+        f"{occ_sim_folder}/occ_most_similar.json",
+    )
+
+    # Include occupational similarities in aggregated data output
+
+    most_sim_occs_by_soc_id = {}
+    for soc_name, sim_occs_list in occ_most_similar.items():
+        most_sim_occs_by_soc_id[pg.clean_soc_name(soc_name)] = [
+            {
+                "SOC_2020_EXT_name": pg.clean_soc_name(occ["SOC_2020_EXT_name"]),
+                "occ_greenness": occ["occ_greenness"],
+                "ind_greenness": occ["ind_greenness"],
+                "skills_greenness": occ["skills_greenness"],
+                "greenness_score": occ["greenness_score"],
+            }
+            for occ in sim_occs_list[0:5]
+        ]
+
+    occ_agg_extra = occ_aggregated_df_filter.copy()
+    occ_agg_extra["top_5_similar_occs"] = occ_agg_extra["clean_soc_name"].map(
+        most_sim_occs_by_soc_id
+    )
+
+    save_to_s3(
+        BUCKET_NAME,
+        occ_agg_extra,
+        os.path.join(root_s3_dir, f"occupation_aggregated_data_{today}_extra.csv"),
+    )
