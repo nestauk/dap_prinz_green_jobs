@@ -6,3 +6,9 @@ occ_date_stamp: "20231127"
 ind_date_stamp: "20231205"
 data_type: "large"
 skill_match_thresh: 0.7
+bad_coef_threshold: 0.2
+min_num_job_ads: 50
+analysis_files:
+  agg_soc_date_stamp: "20231220"
+  agg_sic_date_stamp: "20231220"
+  agg_region_date_stamp: "20231220"

@@ -3,7 +3,7 @@ Load the green measures from a sample of OJO data and process it into a form nee
 """
 
 from dap_prinz_green_jobs import BUCKET_NAME, logger, analysis_config
-from dap_prinz_green_jobs.getters.data_getters import load_s3_data
+from dap_prinz_green_jobs.getters.data_getters import load_s3_data, get_s3_data_paths
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
 from dap_prinz_green_jobs.getters.occupation_getters import load_soc_descriptions
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import (
@@ -12,12 +12,22 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measur
 
 import pandas as pd
 import numpy as np
-import altair as alt
 from tqdm import tqdm
 
-import os
-from typing import List, Tuple, Dict, Union
+from typing import Tuple, Dict, Union
 import ast
+
+
+def get_mode(series: pd.Series) -> str:
+    """Get mode of a series.
+
+    Args:
+        series (pd.Series): Series to get mode of.
+
+    Returns:
+        str: Mode of series.
+    """
+    return series.value_counts().index[0]
 
 
 # clean up skills
@@ -153,6 +163,19 @@ def load_ojo_green_measures(
     green_inds_outputs = process_ind_columns(green_inds_outputs)
 
     return green_skills_outputs, green_occs_outputs, green_inds_outputs, soc_name_dict
+
+
+def load_full_skill_mapping(analysis_config: Dict[str, str]) -> Dict[str, str]:
+    full_skill_mapping_dir = f"outputs/data/green_skill_lists/{analysis_config['skills_date_stamp']}/full_esco_skill_mappings_production_{analysis_config['production']}/"
+
+    file_names = get_s3_data_paths(
+        BUCKET_NAME, full_skill_mapping_dir, file_types=["*.json"]
+    )
+    logger.info(f"Loading full skills mappings to ESCO from {len(file_names)} S3 files")
+    full_skill_mapping = {}
+    for file_name in tqdm(file_names):
+        full_skill_mapping.update(load_s3_data(BUCKET_NAME, file_name))
+    return full_skill_mapping
 
 
 def safe_literal_eval(value) -> Union[None, str, int, float, list, dict]:
@@ -402,6 +425,7 @@ def filter_large_occs(
 
 def create_skill_df(
     skill_measures_df: pd.DataFrame,
+    full_skill_mapping: dict,
     job_id_col: str = "job_id",
     skill_match_thresh: float = 0.7,
 ) -> pd.DataFrame:
@@ -410,10 +434,6 @@ def create_skill_df(
     where each row is a skill and there is information about which job advert it was found in,
     whether it is green or not, and which esco skill it maps to.
     """
-    full_skills_outputs = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/green_skill_lists/20230914/full_esco_skill_mappings.json",
-    )
 
     ents_explode = (
         skill_measures_df[[job_id_col, "ENTS"]].explode("ENTS").reset_index(drop=True)
@@ -426,7 +446,7 @@ def create_skill_df(
     extracted_full_skill = []
     extracted_full_skill_id = []
     for skill_label in tqdm(ents_explode["skill_label"]):
-        full_skills_output = full_skills_outputs.get(skill_label)
+        full_skills_output = full_skill_mapping.get(skill_label)
         if full_skills_output and full_skills_output[2] >= skill_match_thresh:
             extracted_full_skill.append(full_skills_output[0])
             extracted_full_skill_id.append(full_skills_output[1])
