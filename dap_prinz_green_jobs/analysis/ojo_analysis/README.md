@@ -11,3 +11,7 @@ python dap_prinz_green_jobs/analysis/ojo_analysis/aggregate_by_sic.py #to aggreg
 ```
 
 Meanwhile, the `process_ojo_green_measures.py` file contains methods for analysis. These are largely used in the `notebooks/` directory to generate graphs for the Green Jobs Explorer tool.
+
+### Finding similar occupations based of skills asked for
+
+In `aggregate_by_soc.py` the similarities of occupations are also created using functions from `occupation_similarity.py`. To do this, a matrix of the proportions of all skills per occupation is created, and then each row of this matrix is compared using cosine similarity to find the closest occupations to one another based off which skills are asked for. The output `occupation_aggregated_data_{DATE}_extra.csv` contains an additional column containing the list of similar occupations.
