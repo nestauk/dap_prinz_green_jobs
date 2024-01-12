@@ -61,7 +61,7 @@ def clean_soc_name(soc_name: Union[str, None]) -> Union[str, None]:
         Union[str, None]: Cleaned SOC name
     """
     if soc_name:
-        return soc_name.replace("n.e.c.", "").strip()
+        return soc_name.replace("n.e.c.", "").replace("n.e.c", "").strip()
     else:
         return None
 
