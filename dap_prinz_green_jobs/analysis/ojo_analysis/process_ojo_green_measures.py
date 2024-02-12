@@ -315,17 +315,18 @@ def add_locations(
 
 def add_sic_info(all_green_measures_df: pd.DataFrame) -> pd.DataFrame:
     sic_data = load_sic()
+    sic_data = sic_data[sic_data["Level headings"] == "Division"]
     sic_names = dict(
         zip(sic_data["Division"].tolist(), sic_data["Description"].tolist())
     )
 
     # Add these new columns
     all_green_measures_df["SIC_2_digit"] = all_green_measures_df["SIC"].apply(
-        lambda x: str(x)[0:2] if x else None
+        lambda x: str(x)[0:2] if pd.notnull(x) else None
     )
     all_green_measures_df["SIC_2_digit_name"] = all_green_measures_df[
         "SIC_2_digit"
-    ].apply(lambda x: sic_names.get(x) if x else None)
+    ].apply(lambda x: sic_names.get(x) if pd.notnull(x) else None)
 
     return all_green_measures_df
 
