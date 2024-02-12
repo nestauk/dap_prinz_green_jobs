@@ -69,13 +69,17 @@ if __name__ == "__main__":
         # Clean up for tooltips in plotting
         itl_aggregated_data["top_3_sics_names"] = itl_aggregated_data[
             "top_5_sics"
-        ].apply(lambda x: ", ".join([s["sic_name"] for s in x[0:3]]))
+        ].apply(lambda x: ", ".join(['"' + s["sic_name"] + '"' for s in x[0:3]]))
         itl_aggregated_data["top_3_green_skills_names"] = itl_aggregated_data[
             "top_5_green_skills"
-        ].apply(lambda x: ", ".join([s["skill_name"] for s in x[0:3]]))
+        ].apply(lambda x: ", ".join(['"' + s["skill_name"] + '"' for s in x[0:3]]))
         itl_aggregated_data["top_3_socs_names"] = itl_aggregated_data[
             "top_5_socs"
-        ].apply(lambda x: ", ".join([s["soc_name"] for s in x[0:3]]))
+        ].apply(
+            lambda x: ", ".join(
+                ['"' + pg.clean_soc_name(s["soc_name"]) + '"' for s in x[0:3]]
+            )
+        )
 
         # Get the relative greenness measures across regions
         itl_aggregated_data["occ_greenness"] = itl_aggregated_data[

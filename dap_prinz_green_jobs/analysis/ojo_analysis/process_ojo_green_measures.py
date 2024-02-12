@@ -487,7 +487,8 @@ def create_skill_df(
     )
 
     green_esco_taxonomy = load_s3_data(
-        BUCKET_NAME, "outputs/data/green_skill_lists/green_esco_data_formatted.csv"
+        BUCKET_NAME,
+        "outputs/data/green_skill_lists/green_esco_data_formatted_20231129.csv",
     )
 
     full_esco_taxonomy = load_s3_data(
