@@ -1,10 +1,13 @@
 job_id_col: "job_id"
 production: "True"
 config: "base"
-skills_date_stamp: "20231204"
-occ_date_stamp: "20231127"
-ind_date_stamp: "20231205"
-data_type: "large"
+skills_date_stamp: "20240220"
+skills_file_name: "all_ojo_large_sample_skills_green_measures_production_True.csv"
+occ_date_stamp: "20240213"
+occ_file_name: "ojo_large_sample_occupation_green_measures_production_true.csv"
+ind_date_stamp: "20240216"
+ind_file_name: "ojo_large_sample_industry_green_measures_production_True.csv"
+data_type: "all"
 skill_match_thresh: 0.7
 bad_coef_threshold: 0.2
 min_num_job_ads: 50

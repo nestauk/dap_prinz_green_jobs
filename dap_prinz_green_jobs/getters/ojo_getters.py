@@ -276,3 +276,69 @@ def get_large_ojo_skills_sample() -> pd.DataFrame:
         BUCKET_NAME,
         "outputs/data/ojo_application/deduplicated_sample/large_skills_data_sample.parquet",
     )
+
+
+### All
+
+
+def get_all_ojo_sample() -> pd.DataFrame:
+    """Gets all ojo sample data from s3
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/all_ojo_sample.parquet",
+    )
+
+
+def get_all_ojo_job_title_sample() -> pd.DataFrame:
+    """Gets all ojo job title sample data from s3
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/all_job_title_data_sample.parquet",
+    )
+
+
+def get_all_ojo_location_sample() -> pd.DataFrame:
+    """Gets all ojo locations sample data from s3
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/all_locations_data_sample.parquet",
+    )
+
+
+def get_all_ojo_salaries_sample() -> pd.DataFrame:
+    """Gets all ojo salaries sample data from s3
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/all_salaries_data_sample.parquet",
+    )
+
+
+def get_all_ojo_skills_sample() -> pd.DataFrame:
+    """Gets all ojo skills sample data from s3
+
+    NOTE: they're skills from SkillsExtractor, not any developments from the project
+
+
+    Returns:
+        pd.Dataframe: ojo sample data
+    """
+    return load_s3_data(
+        BUCKET_NAME,
+        "outputs/data/ojo_application/deduplicated_sample/all_skills_data_sample.parquet",
+    )

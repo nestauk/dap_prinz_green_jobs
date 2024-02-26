@@ -13,6 +13,8 @@ from dap_prinz_green_jobs.getters.ojo_getters import (
     get_mixed_ojo_salaries_sample,
     get_large_ojo_location_sample,
     get_large_ojo_salaries_sample,
+    get_all_ojo_location_sample,
+    get_all_ojo_salaries_sample,
 )
 
 from datetime import datetime
@@ -44,8 +46,11 @@ if __name__ == "__main__":
     elif data_type == "large":
         salary_information = get_large_ojo_salaries_sample()
         locations_information = get_large_ojo_location_sample()
+    elif data_type == "all":
+        salary_information = get_all_ojo_salaries_sample()
+        locations_information = get_all_ojo_location_sample()
     else:
-        print("set data_type in config to mixed or large")
+        print("set data_type in config to mixed, large or all")
 
     all_green_measures_df, soc_descriptions_dict = pg.add_additional_metadata(
         all_green_measures_df, salary_information, locations_information
@@ -54,16 +59,16 @@ if __name__ == "__main__":
         all_green_measures_df, min_num_job_ads=min_num_job_ads, occ_col="SOC_2020_name"
     )
 
-    full_skill_mapping = pg.load_full_skill_mapping(analysis_config)
+    all_skills_df = pg.load_skills_df(analysis_config)
 
-    all_skills_df = pg.create_skill_df(
-        skill_measures_df, full_skill_mapping, skill_match_thresh=skill_match_thresh
-    )
+    green_skill_id_2_name, full_skill_id_2_name = pg.read_process_taxonomies()
 
     sic_aggregated_df = pg.create_agg_data(
         all_green_measures_df,
         all_skills_df,
-        soc_descriptions_dict,
+        soc_descriptions_dict=soc_descriptions_dict,
+        green_skill_id_2_name=green_skill_id_2_name,
+        full_skill_id_2_name=full_skill_id_2_name,
         agg_col="SIC",
     )
 
