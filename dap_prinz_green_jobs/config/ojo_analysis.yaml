@@ -12,7 +12,7 @@ skill_match_thresh: 0.7
 bad_coef_threshold: 0.2
 min_num_job_ads: 50
 analysis_files:
-  agg_soc_date_stamp: "20240112"
-  agg_sic_date_stamp: "20240112"
-  agg_region_date_stamp: "20240112"
-  occ_most_similar_date: "20240112"
+  agg_soc_date_stamp: "20240223"
+  agg_sic_date_stamp: "20240226"
+  agg_region_date_stamp: "20240226"
+  occ_most_similar_date: "20240223"

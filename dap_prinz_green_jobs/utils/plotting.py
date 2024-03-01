@@ -23,6 +23,16 @@ NESTA_COLOURS = [
     "#000000",
 ]
 
+# New brand colours
+NESTA_COLOURS_DICT = {
+    "green": "#86efad",
+    "blue": "#97d9e3",
+    "purple": "#a59bee",
+    "red": "#eb003b",
+    "yellow": "#fdb633",
+    "pink": "#f6a4b7",
+}
+
 
 def nestafont(font: str = "Century Gothic"):
     """Define Nesta fonts"""
