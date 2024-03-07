@@ -36,6 +36,22 @@ if __name__ == "__main__":
 
     occ_agg_extra_loaded["top_5_green_skills"] = new_top_5_green_skills
 
+    # Make sure all industries are in lowercase (some are all capitals)
+    def decap_inds(top_5_sics):
+        top_5_sics = ast.literal_eval(top_5_sics)
+        new_top_5_sics = []
+        for r in top_5_sics:
+            if r["sic_name"].isupper():
+                r["sic_name"] = r["sic_name"].title()
+            new_top_5_sics.append(r)
+
+        # Convert back to string
+        return str(new_top_5_sics)
+
+    occ_agg_extra_loaded["top_5_sics"] = occ_agg_extra_loaded["top_5_sics"].apply(
+        lambda x: decap_inds(x)
+    )
+
     # Format all the single quotes to be double quotes (needed for the GJE)
     # Due to the pandas saving dicts as single quotes, we need to read it in
     # with the dict columns as strings, and then change them like this.

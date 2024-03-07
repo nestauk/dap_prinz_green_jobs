@@ -175,6 +175,8 @@ def load_ojo_green_measures(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/{analysis_config['occ_file_name']}",
     )
+
+    green_occs_outputs = process_soc_columns(green_occs_outputs)
     # In the version of the SOC data we are using there is a mistake where machine learning engineers were
     # coded to '3433/04' which is 'Yoga teachers'. Luckily its an easy fix because the data wasn't incorrect
     # in the 4-digit category or the SOC 2010, so we can quickly find the ones to change to the correct SOC,
@@ -186,8 +188,6 @@ def load_ojo_green_measures(
         ),
         "SOC_2020_EXT",
     ] = "2134/99"
-
-    green_occs_outputs = process_soc_columns(green_occs_outputs)
 
     soc_name_dict = load_s3_data(
         BUCKET_NAME,
