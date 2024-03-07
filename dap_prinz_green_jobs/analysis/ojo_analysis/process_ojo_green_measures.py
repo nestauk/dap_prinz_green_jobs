@@ -175,6 +175,18 @@ def load_ojo_green_measures(
         BUCKET_NAME,
         f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/{analysis_config['occ_file_name']}",
     )
+    # In the version of the SOC data we are using there is a mistake where machine learning engineers were
+    # coded to '3433/04' which is 'Yoga teachers'. Luckily its an easy fix because the data wasn't incorrect
+    # in the 4-digit category or the SOC 2010, so we can quickly find the ones to change to the correct SOC,
+    # and the green measures are correct (since they use SOC 2010).
+    green_occs_outputs.loc[
+        (
+            (green_occs_outputs["SOC_2020_EXT"] == "3433/04")
+            & (green_occs_outputs["SOC_2020"] == "2134")
+        ),
+        "SOC_2020_EXT",
+    ] = "2134/99"
+
     green_occs_outputs = process_soc_columns(green_occs_outputs)
 
     soc_name_dict = load_s3_data(
@@ -471,7 +483,7 @@ def read_process_taxonomies():
     )
 
     full_order_dict = {0: "preferredLabel", 1: "altLabels", 2: "level_2", 3: "level_3"}
-    full_esco_taxonomy["type_sort"] = full_esco_taxonomy["type"].map(green_order_dict)
+    full_esco_taxonomy["type_sort"] = full_esco_taxonomy["type"].map(full_order_dict)
     full_esco_taxonomy.sort_values(by="type_sort", inplace=True, ascending=False)
     full_esco_taxonomy.drop_duplicates(subset=["id"], keep="first", inplace=True)
     full_skill_id_2_name = dict(
