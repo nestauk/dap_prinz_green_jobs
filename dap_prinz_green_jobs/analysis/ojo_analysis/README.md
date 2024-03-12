@@ -2,6 +2,21 @@
 
 This folder contains scripts to aggregate data at the SIC-, SOC- and region-level.
 
+### Skills formatting
+
+To aggregate the data we need to utilise all the skills per job advert and create a new dataset which has a single skill per row.
+
+This process takes a long time but is used by all the aggregation scripts, so we can first create it by running:
+
+```
+python dap_prinz_green_jobs/analysis/ojo_analysis/process_full_skills_data.py
+
+```
+
+This creates a file named `exploded_all_ojo_large_sample_skills_green_measures_production_True.csv` which will be stored in the same date stamped S3 folder as the extracted skills were.
+
+### Data aggregation
+
 To aggregate OJO data with extracted green measures (as defined in `ojo_analysis.yaml`), run the following commands:
 
 ```
@@ -11,6 +26,15 @@ python dap_prinz_green_jobs/analysis/ojo_analysis/aggregate_by_sic.py #to aggreg
 ```
 
 Meanwhile, the `process_ojo_green_measures.py` file contains methods for analysis. These are largely used in the `notebooks/` directory to generate graphs for the Green Jobs Explorer tool.
+
+Finally, some minor tweaks for the dataset the powers the Green Jobs Explorer tool are done by running:
+
+```
+python dap_prinz_green_jobs/analysis/ojo_analysis/gje_formatting.py
+
+```
+
+These are very superficial changes needed to create the website - e.g. changing single to double quotation marks.
 
 ### Finding similar occupations based of skills asked for
 

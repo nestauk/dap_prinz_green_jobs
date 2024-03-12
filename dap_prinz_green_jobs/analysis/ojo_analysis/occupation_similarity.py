@@ -108,82 +108,72 @@ def find_skill_similarity(
 
 
 def run_occupational_similarity(
-    all_skills_df, occs_measures_df, soc_name_dict, occ_agg_df
+    all_skills_df,
+    occs_measures_df,
+    soc_name_dict,
+    occ_agg_df,
+    green_skill_id_2_name,
+    full_skill_id_2_name,
 ):
-    id_2_occ = dict(zip(occs_measures_df["job_id"], occs_measures_df["SOC_2020_EXT"]))
     soc_2020_6_dict = soc_name_dict["soc_2020_6"]
-
-    # Add the SOC information for each skill
-
-    all_skills_df["SOC_2020_EXT"] = all_skills_df["job_id"].map(id_2_occ)
-    all_skills_df["SOC_2020_EXT_name"] = all_skills_df["SOC_2020_EXT"].map(
-        soc_2020_6_dict
-    )
-
     # Remove all null esco skill ids
     all_skills_df_not_null_ids = all_skills_df.dropna(
         subset=["extracted_green_skill_id", "extracted_full_skill_id"], how="all"
     )
-
-    # will take a long time
-    # Take the green esco name if its there, otherwise the full esco mapping
-    all_skills_df_not_null_ids["esco_id"] = np.where(
-        pd.notnull(all_skills_df_not_null_ids["extracted_green_skill_id"]),
-        all_skills_df_not_null_ids["extracted_green_skill_id"],
-        all_skills_df_not_null_ids["extracted_full_skill_id"],
-    )
-    all_skills_df_not_null_ids["esco_name"] = np.where(
-        pd.notnull(all_skills_df_not_null_ids["extracted_green_skill"]),
-        all_skills_df_not_null_ids.apply(
-            lambda x: x["green_skill_preferred_name"]
-            if pd.notnull(x["green_skill_preferred_name"])
-            else x["extracted_green_skill"],
-            axis=1,
-        ),
-        all_skills_df_not_null_ids.apply(
-            lambda x: x["full_skill_preferred_name"]
-            if pd.notnull(x["full_skill_preferred_name"])
-            else x["extracted_full_skill"],
-            axis=1,
-        ),
-    )
-
-    all_skills_df_not_null_ids["green_skill"] = pd.notnull(
-        all_skills_df_not_null_ids["extracted_green_skill_id"]
-    )
-
     # Per occupation get the skill counts and proportions
     occ_skills_info = {}
-    for occ_name, occ_filt_skills in tqdm(
-        all_skills_df_not_null_ids.groupby("SOC_2020_EXT_name")
+    esco_id_2_name = {}
+    green_esco_id = []
+    for occ_id, occs_measures_df_group in tqdm(
+        occs_measures_df.groupby("SOC_2020_EXT")
     ):
-        occ_skills_info[occ_name] = {
-            "skill_counts": occ_filt_skills["esco_id"].value_counts().to_dict(),
-            "skill_props": occ_filt_skills["esco_id"]
-            .value_counts(normalize=True)
-            .to_dict(),
-            "prop_green_skills": len(occ_filt_skills[occ_filt_skills["green_skill"]])
-            / len(occ_filt_skills),
-            "num_skills": len(occ_filt_skills),
-            "SOC_2020_EXT": occ_filt_skills["SOC_2020_EXT"].unique()[0],
-            "num_job_ids": occ_filt_skills["job_id"].nunique(),
-        }
-
-    esco_id_2_name = dict(
-        zip(
-            all_skills_df_not_null_ids["esco_id"],
-            all_skills_df_not_null_ids["esco_name"],
+        occ_name = soc_2020_6_dict.get(occ_id)
+        job_ids = set(occs_measures_df_group["job_id"].unique().tolist())
+        occ_skills = all_skills_df_not_null_ids[
+            all_skills_df_not_null_ids["job_id"].isin(job_ids)
+        ]
+        occ_skills.reset_index(inplace=True)
+        # will take a long time
+        # Take the green esco name if its there, otherwise the full esco mapping
+        occ_skills["esco_id"] = np.where(
+            pd.notnull(occ_skills["extracted_green_skill_id"]),
+            occ_skills["extracted_green_skill_id"],
+            occ_skills["extracted_full_skill_id"],
         )
-    )
-    green_esco_id = (
-        all_skills_df_not_null_ids[all_skills_df_not_null_ids["green_skill"]]["esco_id"]
-        .unique()
-        .tolist()
-    )
 
+        def get_esco_name(esco_id):
+            name = green_skill_id_2_name.get(esco_id)
+            if name:
+                return name
+            else:
+                return full_skill_id_2_name.get(esco_id)
+
+        occ_skills["esco_name"] = occ_skills["esco_id"].map(get_esco_name)
+        occ_skills["green_skill"] = pd.notnull(occ_skills["extracted_green_skill_id"])
+        occ_skills_info[occ_name] = {
+            "skill_counts": occ_skills["esco_id"].value_counts().to_dict(),
+            "skill_props": occ_skills["esco_id"].value_counts(normalize=True).to_dict(),
+            "prop_green_skills": len(occ_skills[occ_skills["green_skill"]])
+            / len(occ_skills)
+            if len(occ_skills) != 0
+            else None,
+            "num_skills": len(occ_skills),
+            "SOC_2020_EXT": occ_id,
+            "num_job_ids": occ_skills["job_id"].nunique(),
+        }
+        esco_id_2_name.update(
+            dict(
+                zip(
+                    occ_skills["esco_id"],
+                    occ_skills["esco_name"],
+                )
+            )
+        )
+        green_esco_id += (
+            occ_skills[occ_skills["green_skill"]]["esco_id"].unique().tolist()
+        )
     occ_most_similar = find_skill_similarity(
         occ_skills_info, esco_id_2_name, green_esco_id, occ_agg_df, top_n=10
     )
     occ_most_similar = {pg.clean_soc_name(k): v for k, v in occ_most_similar.items()}
-
     return esco_id_2_name, occ_skills_info, green_esco_id, occ_most_similar
