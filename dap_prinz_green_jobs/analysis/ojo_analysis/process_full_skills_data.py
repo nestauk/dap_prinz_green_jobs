@@ -9,7 +9,6 @@ from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,
 )
 from dap_prinz_green_jobs.getters.industry_getters import load_sic
-from dap_prinz_green_jobs.getters.occupation_getters import load_soc_descriptions
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measures_utils import (
     OccupationMeasures,
 )

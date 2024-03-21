@@ -24,7 +24,7 @@ skills:
   green_skills_classifier_model_file_name: "outputs/models/green_skill_classifier/green_skill_classifier_20231129.joblib"
 occupations:
   local: False
-  embeddings_output_dir: "outputs/data/green_occupations/soc_matching/"
+  embeddings_output_dir: "outputs/data/green_occupations/soc_matching/flow/"
   batch_size: 500
   match_top_n: 10
   sim_threshold: 0.67

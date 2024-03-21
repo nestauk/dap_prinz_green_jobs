@@ -80,6 +80,11 @@ if __name__ == "__main__":
         columns=["occ_topics", "green_topics_lists"], inplace=True
     )
 
+    occ_agg_extra_loaded.sort_values(
+        by="average_prop_green_skills", ascending=False, inplace=True
+    )
+    occ_agg_extra_loaded.reset_index(inplace=True)
+
     # We will save a new file, since these changes could cause problems
     # when the dataset is used for plotting.
     save_to_s3(

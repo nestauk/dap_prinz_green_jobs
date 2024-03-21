@@ -46,9 +46,9 @@ The following table gives the results of using the SOCMapper function on the job
 
 | Input job title                      | SOC 2020 EXT code | SOC 2020 sub-unit group                   | SOC 2020 unit group                          | SOC 2010 code | SOC data job title   |
 | ------------------------------------ | ----------------- | ----------------------------------------- | -------------------------------------------- | ------------- | -------------------- |
-| data scientist                       | 2433/02           | Data scientists                           | Actuaries, economists and statisticians      | 2425          | data scientist       |
-| Assistant nurse                      | 6131/99           | Nursing auxiliaries and assistants n.e.c. | Nursing auxiliaries and assistants           | 6141          | assistant nurse      |
-| Senior financial consultant - London | 2422/02           | Financial advisors and planners           | Finance and investment analysts and advisers | 3534          | financial consultant |
+| data scientist                       | 2433/04           | Statistical data scientists               | Actuaries, economists and statisticians      | 2425          | Data scientist       |
+| Assistant nurse                      | 6131/99           | Nursing auxiliaries and assistants n.e.c. | Nursing auxiliaries and assistants           | 6141          | Assistant nurse      |
+| Senior financial consultant - London | 2422/02           | Financial advisors and planners           | Finance and investment analysts and advisers | 3534          | Financial consultant |
 
 ## 🖊️ Methodology
 
@@ -76,7 +76,7 @@ these would be cleaned to
 
 | SOC 2010 | SOC 2020 | SOC 2020 Ext Code | INDEXOCC           | ADD       | IND         | INDEXOCC NATURAL WORD ORDER | SOC 2020 UNIT GROUP DESCRIPTIONS                   | SUB-UNIT GROUP DESCRIPTIONS                               |
 | -------- | -------- | ----------------- | ------------------ | --------- | ----------- | --------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
-| 2425     | 2433     | 2433/02           | Scientist, data    |           |             | data scientist              | Actuaries, economists and statisticians            | Data scientists                                           |
+| 2425     | 2433     | 2433/04           | Scientist, data    |           |             | Data scientist              | Actuaries, economists and statisticians            | Statistical data scientists                               |
 | 2136     | 2134     | 2134/99           | Analyst, data      | computing |             | data analyst                | Programmers and software development professionals | Programmers and software development professionals n.e.c. |
 | 3539     | 3544     | 3544/00           | Analyst, data      |           |             | data analyst                | Data analysts                                      | Data analysts                                             |
 | 2136     | 2134     | 2134/03           | Developer, analyst |           |             | analyst developer           | Programmers and software development professionals | Software developers                                       |
@@ -87,7 +87,7 @@ these would be cleaned to
 We can combine the `INDEXOCC NATURAL WORD ORDER`, `ADD` and `IND` columns to create unique job titles. The dictionary of unique job titles to SOC information would be:
 
 ```
-{"data scientist": ("2433/02", "2433", "2425"), "data analyst computing": ("2134/99", "2134", "2136"), "data analyst": ("3544/00", "3544", "3539"), "analyst developer": ("2134/03", "2134", "2136"), "meter assembler": ("8149/00", "8149", "8139"), "motor assembler electric": ("8141/00", "8141", "8131"), "motor assembler engineering": ("8142/02", "8142", "8132")}
+{"data scientist": ("2433/04", "2433", "2425"), "data analyst computing": ("2134/99", "2134", "2136"), "data analyst": ("3544/00", "3544", "3539"), "analyst developer": ("2134/03", "2134", "2136"), "meter assembler": ("8149/00", "8149", "8139"), "motor assembler electric": ("8141/00", "8141", "8131"), "motor assembler engineering": ("8142/02", "8142", "8132")}
 ```
 
 **Step 3:** We embed these unique ONS job titles and the input job title using the `all-MiniLM-L6-v2` Sentence Tranformers pretrained model.
@@ -108,7 +108,7 @@ With the default values, the final matches for each inputted job title would be:
 
 |                              | ONS job title matched to | SOC     | SOC description                                 |
 | ---------------------------- | ------------------------ | ------- | ----------------------------------------------- |
-| Data Scientist               | data scientist           | 2433/02 | Data scientists                                 |
+| Data Scientist               | data scientist           | 2433/04 | Statistical data scientists                     |
 | Electric motor assembler     | motor assembler electric | 8141/00 | Assemblers (electrical and electronic products) |
 | Data visualisation developer | None                     | None    | None                                            |
 
@@ -137,8 +137,7 @@ unique_job_titles = ["Data Scientist", "Nurse", "Key Stage 4 teacher", "Pharmaci
 job_title_2_match = om.precalculate_soc_mapper(unique_job_titles)
 
 om.get_green_measure_for_job_title("Data Scientist")
->>> {'GREEN CATEGORY': 'Green New & Emerging', 'GREEN/NOT GREEN': 'Green', 'GREEN TIMESHARE': 12.5, 'GREEN TOPICS': 39, 'SOC': {'SOC_2020_EXT': '2433/02', 'SOC_2020': '2433', 'SOC_2010': '2425', 'name': ['Environmental consultants ', 'Economists', 'Data scientists', 'Statisticians ', 'Mathematicians ']}}
-
+>>> {'GREEN CATEGORY': 'Green New & Emerging', 'GREEN/NOT GREEN': 'Green', 'GREEN TIMESHARE': 12.5, 'GREEN TOPICS': 39, 'SOC': {'SOC_2020_EXT': '2433/04', 'SOC_2020': '2433', 'SOC_2010': '2425', 'name': ['Environmental professionals', 'Economists', 'Statistical data scientists', 'Mathematicians ', 'Statisticians ']}}
 ```
 
 or
@@ -146,15 +145,15 @@ or
 ```
 
 om.get_measures(job_adverts= [{'description': 'We are looking for a sales ...', 'job_title': 'Data Scientist'}], job_title_key='job_title')
->>> [{'GREEN CATEGORY': 'Green New & Emerging', 'GREEN/NOT GREEN': 'Green', 'GREEN TIMESHARE': 12.5, 'GREEN TOPICS': 39, 'SOC': {'SOC_2020_EXT': '2433/02', 'SOC_2020': '2433', 'SOC_2010': '2425', 'name': ['Data scientists', 'Economists', 'Statisticians ', 'Environmental scientists', 'Mathematicians ']}}]
+>>> [{'GREEN CATEGORY': 'Green New & Emerging', 'GREEN/NOT GREEN': 'Green', 'GREEN TIMESHARE': 12.5, 'GREEN TOPICS': 39, 'SOC': {'SOC_2020_EXT': '2433/04', 'SOC_2020': '2433', 'SOC_2010': '2425', 'name': ['Environmental professionals', 'Economists', 'Statistical data scientists', 'Mathematicians ', 'Statisticians ']}}]
 
 ```
 
 If needed, you could then retrieve the SOC name from the SOC codes as follows:
 
 ```
-om.soc_mapper.soc_2020_6_dict['2433/02']
->> 'Data scientists'
+om.soc_mapper.soc_2020_6_dict['2433/04']
+>> 'Statistical data scientists'
 
 om.soc_mapper.soc_2020_4_dict['2433']
 >> 'Actuaries, economists and statisticians'
@@ -162,7 +161,7 @@ om.soc_mapper.soc_2020_4_dict['2433']
 
 ## 💾 Datasets used & green measures
 
-- `indexsocextv5updated.xlsx`: A dataset of the SOC codes for each job title can be found on the ONS website [here](https://www.ons.gov.uk/methodology/classificationsandstandards/standardoccupationalclassificationsoc/standardoccupationalclassificationsocextensionproject). A download of the "SOC 2020 6-digit index (2.7 MB xlsx)" downloaded as of 25/04/23 was uploaded to S3 (`s3://prinz-green-jobs/inputs/data/occupation_data/ons/indexsocextv5updated.xlsx`).
+- `soc2020volume2thecodingindexexcel22022024.xlsx`: A dataset of the SOC codes for each job title can be found on the ONS website [here](https://www.ons.gov.uk/methodology/classificationsandstandards/standardoccupationalclassificationsoc/standardoccupationalclassificationsocextensionproject). A download of the "SOC2020 Volume 2 the coding index (excel)\_ 22-02-24 (4.0 MB xlsx)" downloaded as of 13/03/24 was uploaded to S3 (`s3://prinz-green-jobs/inputs/data/occupation_data/ons/soc2020volume2thecodingindexexcel22022024.xlsx`).
 - `Summary of green occupations (Nov 2021).xlsx`: The Greater London Authority have mapped the [ONET green occupations codes](https://www.onetcenter.org/green/skills.html) to UK SOC. This data is available to download [here](https://data.london.gov.uk/dataset/identifying-green-occupations-in-london?_gl=1%2a8t5yr7%2a_ga%2aNzIwMzA5OTAwLjE2ODE5NzgzODk.%2a_ga_PY4SWZN1RJ%2aMTY4MjQzNTQxNS4xLjAuMTY4MjQzNTQyMC41NS4wLjA.) and a description about its creation is [here](https://www.london.gov.uk/business-and-economy-publications/identifying-green-occupations-london#useful-links). A download of the "Summary of green occupations (Nov 2021).xlsx" downloaded as of 25/04/23 was uploaded to S3 (`s3://prinz-green-jobs/inputs/data/occupation_data/gla/Summary of green occupations (Nov 2021).xlsx`).
 - `greentimesharesoc.xlsx`: A dataset of the green time shares for each SOC code. The data is available to download [here](https://www.ons.gov.uk/economy/environmentalaccounts/datasets/estimatedtimespentongreentasksbyoccupationcode) with methodology [here](https://www.ons.gov.uk/economy/environmentalaccounts/articles/developingamethodformeasuringtimespentongreentasks/march2022). A download of it was downloaded on 23/05/23 and uploaded to S3 [here](s3://prinz-green-jobs/inputs/data/occupation_data/ons/greentimesharesoc.xlsx).
 - `Occupations_for_all_green_topics.csv`: The O\*NET green topics per occupation dataset downloaded from [here](https://www.onetonline.org/search/green_topics/) on 07/07/23. The report describing this data can be found [here](https://www.onetcenter.org/reports/Green_Topics.html).

@@ -11,9 +11,9 @@ def load_job_title_soc() -> pd.DataFrame():
     """
 
     jobtitle_soc_data = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/indexsocextv5updated.xlsx",
-        sheet_name="SOC 2020 6 Digit Index",
-        converters={"SOC 2020 Ext Code": str, "SOC 2020": str, "SOC 2010": str},
+        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/soc2020volume2thecodingindexexcel22022024.xlsx",
+        sheet_name="SOC2020 coding index",
+        converters={"SOC 2020 ext": str, "SOC 2020": str, "SOC 2010": str},
     )
 
     return jobtitle_soc_data
@@ -25,8 +25,8 @@ def load_soc_descriptions() -> pd.DataFrame():
     """
 
     soc_descriptions = pd.read_excel(
-        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/extendedsoc2020structureanddescriptionsexcel121023.xlsx",
-        sheet_name="Extended SOC descriptions MG1-9",
+        "s3://prinz-green-jobs/inputs/data/occupation_data/ons/extendedsoc2020structureanddescriptionsexcel220224.xlsx",
+        sheet_name="Extended SOC descriptions",
     )
 
     return soc_descriptions

@@ -7,9 +7,12 @@ def process_job_title_soc(jobtitle_soc_data: pd.DataFrame()) -> pd.DataFrame():
     # Rename columns
     jobtitle_soc_data = jobtitle_soc_data.rename(
         columns={
-            "SOC 2020 Ext Code": "SOC_2020_EXT",
+            "SOC 2020 ext": "SOC_2020_EXT",
             "SOC 2020": "SOC_2020",
             "SOC 2010": "SOC_2010",
+            "INDEXOCC - natural word order": "INDEXOCC NATURAL WORD ORDER",
+            "SOC 2020 ext SUG title": "SUB-UNIT GROUP DESCRIPTIONS",
+            "SOC2020 unit group title": "SOC 2020 UNIT GROUP DESCRIPTIONS",
         }
     )
 
