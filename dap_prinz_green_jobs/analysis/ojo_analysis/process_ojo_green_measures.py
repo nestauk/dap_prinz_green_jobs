@@ -742,7 +742,6 @@ def create_agg_data(
 
                 aggregated_data[agg_value].update(
                     {
-                        "SOC_2020_EXT": agg_value,
                         "SOC_2020_EXT_name": SOC_2020_EXT_name,
                         "clean_soc_name": soc_name_cleaned,
                         "soc_description": soc_desc,
@@ -767,30 +766,35 @@ def create_agg_data(
 
 
 def categorical_assign(
-    value, all_values: pd.Series, rev: bool = False
+    value, all_values: pd.Series, rev: bool = False, zero_zone: float = -0.1
 ) -> Union[str, None]:
-    q1 = all_values.quantile(0.33)
-    q2 = all_values.quantile(0.66)
+    all_values_no_zero = all_values[all_values > zero_zone]
+    lower_fence = all_values_no_zero.min()
+    upper_fence = all_values_no_zero.quantile(0.99)
+    interval_width = (upper_fence - lower_fence) / 3
 
     if pd.notnull(value):
-        if value <= q1:
-            if rev:
-                return "high"
+        if value > zero_zone:
+            if value <= interval_width:
+                if rev:
+                    return "high"
+                else:
+                    return "low"
+            elif value <= interval_width * 2:
+                return "mid"
             else:
-                return "low"
-        elif value <= q2:
-            return "mid"
+                if rev:
+                    return "low"
+                else:
+                    return "high"
         else:
-            if rev:
-                return "low"
-            else:
-                return "high"
+            return "zero"
     else:
         return None
 
 
 def get_one_score(occ: str, ind: str, skill: str) -> Union[str, None]:
-    score_dict = {"high": 2, "mid": 1, "low": 0}
+    score_dict = {"high": 2, "mid": 1, "low": 0, "zero": 0}
     if occ in score_dict:
         if ind in score_dict:
             score = score_dict[occ] + score_dict[ind] + score_dict[skill]
@@ -820,7 +824,7 @@ def get_overall_greenness(occ_aggregated_df: pd.DataFrame) -> pd.DataFrame:
     e.g. data scientists are in the highest 1/3 of all industry greenness measures.
     """
     occ_aggregated_df["occ_greenness"] = occ_aggregated_df["occ_timeshare"].apply(
-        lambda x: categorical_assign(x, occ_aggregated_df["occ_timeshare"])
+        lambda x: categorical_assign(x, occ_aggregated_df["occ_timeshare"], zero_zone=0)
     )
     occ_aggregated_df["ind_greenness"] = occ_aggregated_df[
         "average_ind_perunit_ghg"
@@ -833,7 +837,9 @@ def get_overall_greenness(occ_aggregated_df: pd.DataFrame) -> pd.DataFrame:
     occ_aggregated_df["skills_greenness"] = occ_aggregated_df[
         "average_prop_green_skills"
     ].apply(
-        lambda x: categorical_assign(x, occ_aggregated_df["average_prop_green_skills"])
+        lambda x: categorical_assign(
+            x, occ_aggregated_df["average_prop_green_skills"], zero_zone=0.001
+        )
     )
 
     occ_aggregated_df["greenness_score"] = occ_aggregated_df.apply(
