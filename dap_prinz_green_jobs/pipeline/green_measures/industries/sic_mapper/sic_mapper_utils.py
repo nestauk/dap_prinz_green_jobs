@@ -14,13 +14,6 @@ hard_coded_sics = {
     "SaintGobain": "231",
 }
 
-sic_data = load_sic()
-sic_to_section = {
-    str(k).strip(): v.strip()
-    for k, v in dict(
-        zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
-    ).items()
-}
 # Found using the most common words in CH data
 company_stopwords = set(
     [
@@ -85,6 +78,17 @@ sentence_replacement_rules = {
     r"[^\w\s,.]": "",  # Remove punctuation that isn't a comma
     r"\s+": " ",  # Convert multiple spaces to single spaces
 }
+
+
+def get_sic_to_section():
+    sic_data = load_sic()
+    sic_to_section = {
+        str(k).strip(): v.strip()
+        for k, v in dict(
+            zip(sic_data["Most disaggregated level"], sic_data["SECTION"])
+        ).items()
+    }
+    return sic_to_section
 
 
 def clean_sic(sic_name: str) -> str:
@@ -194,7 +198,7 @@ def convert_indx_to_sic(
 
 
 def add_sic_section(
-    sic_codes: List[str], sic_section_dict: Dict[str, str] = sic_to_section
+    sic_codes: List[str], sic_section_dict: Dict[str, str]
 ) -> List[str]:
     """Adds the SIC section to the SIC code.
 
@@ -222,7 +226,9 @@ def add_sic_section(
     return sic_codes
 
 
-def find_majority_sic(input_list: List[str], length: int) -> Dict[str, int]:
+def find_majority_sic(
+    input_list: List[str], length: int, sic_section_dict: Dict[str, str]
+) -> Dict[str, int]:
     """Finds the majority SIC code.
 
     Args:
@@ -235,7 +241,7 @@ def find_majority_sic(input_list: List[str], length: int) -> Dict[str, int]:
     if not input_list or length <= 0:
         return {}
 
-    input_sics_sections = add_sic_section(input_list)
+    input_sics_sections = add_sic_section(input_list, sic_section_dict)
 
     subelement_count = {}
 
