@@ -7,6 +7,7 @@ from dap_prinz_green_jobs import BUCKET_NAME, analysis_config
 
 import os
 import ast
+import re
 
 import pandas as pd
 
@@ -55,6 +56,13 @@ if __name__ == "__main__":
     # Format all the single quotes to be double quotes (needed for the GJE)
     # Due to the pandas saving dicts as single quotes, we need to read it in
     # with the dict columns as strings, and then change them like this.
+    def clean_quotes(phrase):
+        phrase = str(phrase)
+        phrase = re.sub(
+            r"s\' ([a-zA-Z])", r"s \1", phrase
+        )  # "other builders\' carpentry" (this messes the data up a bit, so just remove)
+        phrase = phrase.replace("'", '"')  # Replace all other single quotes with double
+        return phrase
 
     for col_name in [
         "top_5_socs",
@@ -64,8 +72,8 @@ if __name__ == "__main__":
         "top_5_itl2_quotient",
         "top_5_similar_occs",
     ]:
-        occ_agg_extra_loaded[col_name] = occ_agg_extra_loaded[col_name].str.replace(
-            "'", '"'
+        occ_agg_extra_loaded[col_name] = occ_agg_extra_loaded[col_name].apply(
+            clean_quotes
         )
 
     # Remove betting shop managers as they have a quirk which means many of them
