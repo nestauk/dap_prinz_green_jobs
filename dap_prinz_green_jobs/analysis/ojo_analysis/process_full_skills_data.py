@@ -118,10 +118,13 @@ def create_skill_df(
         "extracted_green_skill_id"
     ].map(green_skill_id_2_name)
     green_skills_df.drop(columns=["ENTS", "GREEN_ENTS"], inplace=True)
+
     return green_skills_df
 
 
 if __name__ == "__main__":
+    no_h_and_s = True
+
     logger.info("Loading skills data")
     skill_measures_df = load_s3_data(
         BUCKET_NAME,
@@ -147,12 +150,36 @@ if __name__ == "__main__":
             green_skill_id_2_name,
             full_skill_id_2_name,
         )
+        if no_h_and_s:
+            # Convert all h&s skills to not be green
+            mask = (
+                green_skills_df_chunk["green_skill_preferred_name"]
+                == "health and safety regulations"
+            )
+            green_skills_df_chunk.loc[
+                mask, "extracted_full_skill"
+            ] = green_skills_df_chunk[mask]["extracted_green_skill"]
+            green_skills_df_chunk.loc[
+                mask, "extracted_full_skill_id"
+            ] = green_skills_df_chunk[mask]["extracted_green_skill_id"]
+            green_skills_df_chunk.loc[
+                mask, "full_skill_preferred_name"
+            ] = green_skills_df_chunk[mask]["green_skill_preferred_name"]
+            # Set to not be green
+            green_skills_df_chunk.loc[mask, "extracted_green_skill"] = None
+            green_skills_df_chunk.loc[mask, "extracted_green_skill_id"] = None
+            green_skills_df_chunk.loc[mask, "green_skill_preferred_name"] = None
         all_green_skills_df = pd.concat([all_green_skills_df, green_skills_df_chunk])
+
+    if no_h_and_s:
+        file_name_suffix = f"nohs_{analysis_config['skills_file_name']}"
+    else:
+        file_name_suffix = analysis_config["skills_file_name"]
 
     save_to_s3(
         BUCKET_NAME,
         all_green_skills_df,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_{analysis_config['skills_file_name']}",
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_{file_name_suffix}",
     )
 
     # all_green_skills_df is 5.2 GB, but we don't always need all the columns, so just leave the ones needed for process_ojo_green_measures.py
@@ -164,5 +191,5 @@ if __name__ == "__main__":
     save_to_s3(
         BUCKET_NAME,
         all_green_skills_df_essential,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_essential_{analysis_config['skills_file_name']}",
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_essential_{file_name_suffix}",
     )

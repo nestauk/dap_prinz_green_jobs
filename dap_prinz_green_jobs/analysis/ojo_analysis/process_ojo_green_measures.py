@@ -208,7 +208,7 @@ def load_ojo_green_measures(
 def load_skills_df(analysis_config: Dict[str, str]) -> pd.DataFrame:
     all_skills_df = load_s3_data(
         BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_essential_{analysis_config['skills_file_name']}",
+        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_essential_nohs_{analysis_config['skills_file_name']}",
     )
 
     return all_skills_df
@@ -686,7 +686,6 @@ def create_agg_data(
 
             aggregated_data[agg_value] = {
                 # General
-                agg_col: agg_value,
                 "num_job_ads": len(filtered_data),
                 "prop_job_ads": len(filtered_data) / len(all_green_measures_df),
                 # Occupations
@@ -761,7 +760,9 @@ def create_agg_data(
 
     aggregated_data = pd.DataFrame(aggregated_data).T
     aggregated_data = aggregated_data.reset_index()
-    aggregated_data.rename(columns={"index": agg_col}, inplace=True)
+    aggregated_data.rename(
+        columns={"index": agg_col}, inplace=True
+    )  # Important since this isn't added elsewhere
     return aggregated_data
 
 
