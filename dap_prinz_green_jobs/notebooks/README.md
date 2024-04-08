@@ -6,13 +6,7 @@ The notebooks in this directory largely analyse results for the three measures o
 
 The below notebooks contain high-level analysis of the green measures. They also contain a a notebook that analyses both a random sample of 1000000 of job adverts and a weighted sample of 1000000 of job adverts as defined in `dap_prinz_green_jobs/pipeline/ojo_application/sample_ojo.py`.
 
-### Between Measures Analysis
-
-The `between_measures_analysis.ipynb` notebook contains analysis of green measures **between** industries, occupations and skills.
-
-### Measures Analysis
-
-This notebook contains high-level analysis of industries, occupations and skills green measures.
+The `high_level_analysis.ipynb` notebook contains high-level analysis of the data in the green measures, for example how many unique SOC codes are found and the distribution of the number of job adverts for each SOC code.
 
 ### Sampling Analysis
 
@@ -108,7 +102,7 @@ By default Altair puts the dropdown selector box to the bottom left of the plot,
 form.vega-bindings {
       position: absolute;
       left: 0px;
-      top: -10px;
+      top: 50px;
     }
 
 ```
