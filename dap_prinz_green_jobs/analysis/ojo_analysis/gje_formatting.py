@@ -56,11 +56,15 @@ if __name__ == "__main__":
     # Format all the single quotes to be double quotes (needed for the GJE)
     # Due to the pandas saving dicts as single quotes, we need to read it in
     # with the dict columns as strings, and then change them like this.
+
     def clean_quotes(phrase):
         phrase = str(phrase)
         phrase = re.sub(
             r"s\' ([a-zA-Z])", r"s \1", phrase
         )  # "other builders\' carpentry" (this messes the data up a bit, so just remove)
+        phrase = re.sub(
+            r"([a-zA-Z])\'s", r"\1s", phrase
+        )  # "style a dog\'s coat" (this messes the data up a bit, so just remove)
         phrase = phrase.replace("'", '"')  # Replace all other single quotes with double
         return phrase
 
