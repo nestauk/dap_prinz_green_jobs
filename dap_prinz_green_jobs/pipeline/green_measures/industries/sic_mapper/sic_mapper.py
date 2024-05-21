@@ -213,6 +213,8 @@ class SicMapper(object):
         # based on evaluation, we have hard coded for some companies
         self.hard_coded_sics = su.hard_coded_sics
 
+        self.sic_section_dict = su.get_sic_to_section()
+
     def preprocess_job_adverts(
         self, job_adverts: List[Dict[str, str]]
     ) -> List[Dict[str, str]]:
@@ -393,7 +395,8 @@ class SicMapper(object):
 
             # find the majority sic at sic levels 2-,3- and 4-
             top_candidate_sics = [
-                su.find_majority_sic(top_sics, lvl) for lvl in self.sic_levels
+                su.find_majority_sic(top_sics, lvl, self.sic_section_dict)
+                for lvl in self.sic_levels
             ]
             all_maj_sics = {k: v for d in top_candidate_sics for k, v in d.items()}
             sic_method = "majority SIC"

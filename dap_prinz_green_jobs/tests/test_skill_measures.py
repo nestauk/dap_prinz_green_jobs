@@ -41,7 +41,9 @@ def test_split_up_skill_entities():
 
 
 def test_skills_measures():
-    sm = SkillMeasures(config_name="extract_green_skills_esco")
+    sm = SkillMeasures(
+        config_name="extract_green_skills_esco", initialise_gs_classifier=False
+    )
 
     ents_per_job = {
         "123": [(["communication"], "SKILL"), (["Excel"], "SKILL")],

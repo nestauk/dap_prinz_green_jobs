@@ -65,6 +65,7 @@ class SkillMeasures(object):
         self,
         config_name="extract_green_skills_esco",
         green_skills_classifier_model_file_name="outputs/models/green_skill_classifier/green_skill_classifier_20231129.joblib",
+        initialise_gs_classifier=True,
     ):
         self.config = get_yaml_config(
             PROJECT_DIR / f"dap_prinz_green_jobs/config/{config_name}.yaml"
@@ -78,7 +79,8 @@ class SkillMeasures(object):
             "s3://", BUCKET_NAME, green_skills_classifier_model_file_name
         )
 
-        self.green_skills_classifier = GreenSkillClassifier()
+        if initialise_gs_classifier:
+            self.green_skills_classifier = GreenSkillClassifier()
 
     def initiate_extract_skills(self, local=True, verbose=True):
         """
