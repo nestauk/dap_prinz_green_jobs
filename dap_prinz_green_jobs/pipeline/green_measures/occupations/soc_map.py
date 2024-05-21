@@ -103,8 +103,8 @@ class SOCMapper(object):
 
     def __init__(
         self,
-        local: bool = True,
-        embeddings_output_dir: str = "outputs/data/green_occupations/soc_matching/",
+        local: bool = False,
+        embeddings_output_dir: str = config["occupations"]["embeddings_output_dir"],
         batch_size: int = 500,
         match_top_n: int = 10,
         sim_threshold: float = 0.67,

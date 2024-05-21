@@ -18,7 +18,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_data_p
 from dap_prinz_green_jobs.getters.data_getters import save_to_s3, load_s3_data
 from dap_prinz_green_jobs.pipeline.green_measures.occupations.soc_map import SOCMapper
 
-from dap_prinz_green_jobs import logger, BUCKET_NAME
+from dap_prinz_green_jobs import logger, BUCKET_NAME, config
 
 
 def clean_job_title(job_title: str) -> str:
@@ -142,7 +142,7 @@ class OccupationMeasures(object):
     def load(
         self,
         local=False,
-        embeddings_output_dir="outputs/data/green_occupations/soc_matching/",
+        embeddings_output_dir=config["occupations"]["embeddings_output_dir"],
         batch_size=500,
         match_top_n=10,
         sim_threshold=0.67,

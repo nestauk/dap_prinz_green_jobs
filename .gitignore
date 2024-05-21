@@ -4,6 +4,10 @@
 *.lock
 
 *.jsonl
+*.csv
+*.html
+*.png
+*.txt
 
 # Proposed convention
 scratch*

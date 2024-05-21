@@ -25,12 +25,13 @@ NESTA_COLOURS = [
 
 # New brand colours
 NESTA_COLOURS_DICT = {
-    "green": "#86efad",
-    "blue": "#97d9e3",
-    "purple": "#a59bee",
-    "red": "#eb003b",
-    "yellow": "#fdb633",
-    "pink": "#f6a4b7",
+    "green": "#18A48C",
+    "aqua": "#97D9E3",
+    "blue": "#0000FF",
+    "purple": "#9A1BBE",
+    "red": "#EB003B",
+    "yellow": "#FDB633",
+    "pink": "#F6A4B7",
 }
 
 

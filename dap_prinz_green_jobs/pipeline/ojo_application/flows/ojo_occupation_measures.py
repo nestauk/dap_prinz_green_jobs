@@ -16,7 +16,7 @@ from dap_prinz_green_jobs.pipeline.green_measures.occupations.occupations_measur
 )
 from dap_prinz_green_jobs import config, BUCKET_NAME
 from dap_prinz_green_jobs.getters.ojo_getters import (
-    get_large_ojo_job_title_sample,
+    get_all_ojo_job_title_sample,
 )
 from dap_prinz_green_jobs.getters.data_getters import (
     save_to_s3,
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     om = OccupationMeasures()
     om.load(
         local=config["occupations"]["local"],
-        embeddings_output_dir=config["occupations"]["embeddings_output_dir"] + "flow/",
+        embeddings_output_dir=config["occupations"]["embeddings_output_dir"],
         batch_size=config["occupations"]["batch_size"],
         match_top_n=config["occupations"]["match_top_n"],
         sim_threshold=config["occupations"]["sim_threshold"],
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         chunk_size = 10000
 
     print("loading datasets...")
-    ojo_jobs_data = get_large_ojo_job_title_sample()
+    ojo_jobs_data = get_all_ojo_job_title_sample()
 
     # The format used in OccupationMeasures
     ojo_jobs_data = ojo_jobs_data[[id_column, job_title_column]].to_dict(
