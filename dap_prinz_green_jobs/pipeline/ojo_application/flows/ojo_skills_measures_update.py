@@ -78,7 +78,7 @@ if __name__ == "__main__":
     if not production:
         chunk_size = 20
     else:
-        chunk_size = 10000
+        chunk_size = 50000
 
     print("loading datasets...")
 
@@ -151,16 +151,12 @@ if __name__ == "__main__":
     job_desc_chunks = list(partition_all(chunk_size, ojo_jobs_data))
 
     print(
-        f"Finding skills information for {chunk_size} job adverts in {len(job_desc_chunks)} batches."
+        f"Finding skills information for {chunk_size} job adverts in {len(job_desc_chunks)} batches - a total of {len(ojo_jobs_data)} job adverts"
     )
 
     for i, job_desc_chunk in tqdm(enumerate(job_desc_chunks)):
         skills_output = os.path.join(
             skills_output_folder, f"predicted_skills_production_{production}/{i}.json"
-        )
-        skill_embeddings_output = os.path.join(
-            skills_output_folder,
-            f"extracted_skills_embeddings_production_{production}/{i}.json",
         )
 
         # Where to output the mappings of skills to all of ESCO (not just green)
@@ -175,7 +171,7 @@ if __name__ == "__main__":
             load_skills=load_skills,
             job_text_key=config["job_adverts"]["job_text_key"],
             job_id_key=config["job_adverts"]["job_id_key"],
-            skill_embeddings_output_path=skill_embeddings_output,
+            skill_embeddings_output_path=None,
             load_skills_embeddings=load_skills_embeddings,
             skill_mappings_output_path=skill_mappings_output_path,
         )
