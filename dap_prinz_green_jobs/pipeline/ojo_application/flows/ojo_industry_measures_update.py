@@ -180,7 +180,11 @@ if __name__ == "__main__":
 
     # Join with the existing green industry measures
 
+    inds_measures_df["INDUSTRY GHG PER UNIT EMISSIONS"] = inds_measures_df[
+        "INDUSTRY GHG PER UNIT EMISSIONS"
+    ].astype(str)
     inds_measures_pl = pl.from_pandas(inds_measures_df)
+
     all_inds_measures_df = pl.concat(
         [green_ind_existing_data, inds_measures_pl], how="vertical_relaxed"
     )

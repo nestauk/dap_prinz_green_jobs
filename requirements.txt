@@ -16,3 +16,4 @@ typing_extensions<4.6.0
 umap-learn
 geopandas
 nx_altair
+polars-lts-cpu==1.5.0
