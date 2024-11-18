@@ -100,7 +100,7 @@ if __name__ == "__main__":
         f"There are {len(new_ojo_descriptions)} job adverts without existing green industry measures (of which there are {len(existing_ids)})"
     )
 
-    # The format used in SkillMeasures
+    # The format used in IndustryMeasures
     ojo_jobs_data = (
         new_ojo_descriptions[[id_column, job_desc_column]]
         .rename(
