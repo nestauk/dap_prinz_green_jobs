@@ -119,33 +119,32 @@ def process_ind_columns(
     """
     Format the industry columns
     """
+    green_inds_outputs = green_inds_outputs.fillna(value=np.nan)
     green_inds_outputs = green_inds_outputs[
         green_inds_outputs["INDUSTRY GHG PER UNIT EMISSIONS"] != ":"
     ].reset_index(drop=True)
     green_inds_outputs["INDUSTRY TOTAL GHG EMISSIONS"] = green_inds_outputs[
         "INDUSTRY TOTAL GHG EMISSIONS"
-    ].apply(lambda x: float(x) if x != "" else np.nan)
+    ].apply(lambda x: float(x) if ((x != "") & (x != None)) else np.nan)
     green_inds_outputs["INDUSTRY GHG PER UNIT EMISSIONS"] = green_inds_outputs[
         "INDUSTRY GHG PER UNIT EMISSIONS"
-    ].apply(lambda x: float(x) if x != "" else np.nan)
-
+    ].apply(lambda x: float(x) if ((x != "") & (x != None) & (x != "None")) else np.nan)
     green_inds_outputs["INDUSTRY PROP HOURS GREEN TASKS"] = green_inds_outputs[
         "INDUSTRY PROP HOURS GREEN TASKS"
-    ].apply(lambda x: float(x) if x != "" else np.nan)
+    ].apply(lambda x: float(x) if ((x != "") & (x != None)) else np.nan)
     green_inds_outputs["INDUSTRY GHG EMISSIONS PER EMPLOYEE"] = green_inds_outputs[
         "INDUSTRY GHG EMISSIONS PER EMPLOYEE"
-    ].apply(lambda x: float(x) if x != "" else np.nan)
+    ].apply(lambda x: float(x) if ((x != "") & (x != None)) else np.nan)
     green_inds_outputs[
         "INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE"
     ] = green_inds_outputs["INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE"].apply(
-        lambda x: float(x) if x != "" else np.nan
+        lambda x: float(x) if ((x != "") & (x != None)) else np.nan
     )
-
     # Clean SIC name (remove 'nec')
     green_inds_outputs["SIC_name"] = green_inds_outputs["SIC_name"].apply(
         clean_sic_name
     )
-
+    green_inds_outputs["job_id"] = green_inds_outputs["job_id"].astype("int64")
     return green_inds_outputs
 
 
@@ -563,12 +562,8 @@ def create_agg_data(
     )
 
     aggregated_data = {}
-    for agg_value in tqdm(all_green_measures_df[agg_col].unique()):
+    for agg_value, filtered_data in tqdm(all_green_measures_df.groupby(agg_col)):
         if pd.notnull(agg_value):
-            filtered_data = all_green_measures_df[
-                all_green_measures_df[agg_col] == agg_value
-            ]
-
             filtered_skills = green_skills_df[
                 green_skills_df[job_id_col].isin(
                     set(filtered_data[job_id_col].tolist())
@@ -752,6 +747,32 @@ def create_agg_data(
                         else None,
                     }
                 )
+            if agg_col == "SIC":
+                SIC_name = (
+                    filtered_data["SIC_name"].mode()[0]
+                    if len(filtered_data["SIC_name"].mode()) != 0
+                    else None
+                )
+                SIC_2_digit_name = (
+                    filtered_data["SIC_2_digit_name"].mode()[0]
+                    if len(filtered_data["SIC_2_digit_name"].mode()) != 0
+                    else None
+                )
+                aggregated_data[agg_value].update(
+                    {
+                        "SIC_name": SIC_name,
+                        "SIC_2_digit_name": SIC_2_digit_name,
+                    }
+                )
+
+            if agg_col in ["itl_1_code", "itl_2_code", "itl_3_code"]:
+                name_column = agg_col.replace("_code", "_name")
+                itl_name = (
+                    filtered_data[name_column].mode()[0]
+                    if len(filtered_data[name_column].mode()) != 0
+                    else None
+                )
+                aggregated_data[agg_value].update({name_column: itl_name})
 
             if "green_topics_lists" in filtered_data:
                 aggregated_data[agg_value].update(

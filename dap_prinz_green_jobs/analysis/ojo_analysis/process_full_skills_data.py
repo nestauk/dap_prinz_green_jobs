@@ -1,5 +1,34 @@
 """
-These functions used to be in process_ojo_green_measures, but since they take so long, we pull out to be run as a one off
+These functions used to be in process_ojo_green_measures, but since they take so long, we pull out to be run as a one off.
+
+We want a dataframe where every row is a skill entity, and it says which job advert it came from and whether its green or not, and the esco ID.
+
+
+'outputs/data/ojo_application/extracted_green_measures/20240220/all_ojo_large_sample_skills_green_measures_production_True.csv'
+
+Looks like:
+
+>>> skill_measures_df.columns
+['job_id', 'NUM_ORIG_ENTS', 'NUM_SPLIT_ENTS', 'ENTS', 'GREEN_ENTS', 'PROP_GREEN', 'BENEFITS']
+
+
+
+>>> skill_measures_df[0].to_dicts()
+[{'job_id': 42782671,
+'NUM_ORIG_ENTS': 28,
+'NUM_SPLIT_ENTS': 28,
+'ENTS': '[[[\'can-do positive attitude\'], \'SKILL\'], ..., [[\'Experience and accreditation of an industry recognised project management qualification\'], \'EXPERIENCE\']]',
+'GREEN_ENTS': '[]',
+'PROP_GREEN': 0.0,
+'BENEFITS': "['Directors C-Level contacts', '25 days holiday', 'Quarterly Socials']"}
+]
+
+
+We want two outputs:
+1. dataframe where each row is a job ad and it says the num entities and prop green skills
+2. dataframe where every row is a green skill found in a job advert and the green esco ID. (we have this equivalent not-green data from ojo run)
+
+
 """
 
 from dap_prinz_green_jobs import BUCKET_NAME, logger, analysis_config
@@ -18,12 +47,41 @@ from dap_prinz_green_jobs.analysis.ojo_analysis.process_ojo_green_measures impor
 )
 
 import pandas as pd
+import polars as pl
 import numpy as np
 from tqdm import tqdm
 
 from typing import Tuple, Dict, Union
 import ast
 import re
+from collections import defaultdict
+
+#####################
+
+latest_all_skills_date_stamp = "20241118"
+
+latest_all_skills_df_path = f"s3://prinz-green-jobs/outputs/data/ojo_application/extracted_green_measures/{latest_all_skills_date_stamp}/ojo_all_skills_green_measures_production_True.parquet"
+
+ojo_dedupe_date = "20241114"
+
+ojo_dedupe_file = f"s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/{ojo_dedupe_date}/latest_update_{ojo_dedupe_date}_skills.parquet"
+
+#####################
+
+import s3fs
+
+
+def write_polars_s3(df, destination):
+    fs = s3fs.S3FileSystem()
+    # write parquet
+    if ".csv" in destination:
+        with fs.open(destination, mode="wb") as f:
+            df.write_csv(f)
+    elif ".parquet" in destination:
+        with fs.open(destination, mode="wb") as f:
+            df.write_parquet(f)
+    else:
+        print("destination should be a '.csv' or '.parquet'")
 
 
 def safe_literal_eval(value) -> Union[None, str, int, float, list, dict]:
@@ -37,103 +95,45 @@ def safe_literal_eval(value) -> Union[None, str, int, float, list, dict]:
         return None
 
 
-def load_full_skill_mapping(analysis_config: Dict[str, str]) -> Dict[str, str]:
-    full_skill_mapping_dir = f"outputs/data/green_skill_lists/{analysis_config['skills_date_stamp']}/full_esco_skill_mappings_production_{analysis_config['production']}/"
-    file_names = get_s3_data_paths(
-        BUCKET_NAME, full_skill_mapping_dir, file_types=["*.json"]
-    )
-    logger.info(f"Loading full skills mappings to ESCO from {len(file_names)} S3 files")
-    full_skill_mapping = {}
-    for file_name in tqdm(file_names):
-        full_skill_mapping.update(load_s3_data(BUCKET_NAME, file_name))
-    return full_skill_mapping
-
-
-def create_skill_df(
-    skill_measures_data: pd.DataFrame,
-    full_skill_mapping: dict,
-    green_skill_id_2_name,
-    full_skill_id_2_name,
-    job_id_col: str = "job_id",
-    skill_match_thresh: float = 0.7,
-) -> pd.DataFrame:
+def fix_new_green_list_structure(green_ents):
     """
-    Process the skills measures dataframe where each row is a job advert, into a format
-    where each row is a skill and there is information about which job advert it was found in,
-    whether it is green or not, and which esco skill it maps to.
+    The newest GREEN_ENTS data is contained within an extra set of brackets, so remove these
     """
-    skill_measures_data["GREEN_ENTS"] = skill_measures_data["GREEN_ENTS"].apply(
-        safe_literal_eval
-    )
-    skill_measures_data["ENTS"] = skill_measures_data["ENTS"].apply(safe_literal_eval)
-    ents_explode = (
-        skill_measures_data[[job_id_col, "ENTS"]].explode("ENTS").reset_index(drop=True)
-    )
-    ents_explode["skill_label"] = ents_explode["ENTS"].apply(
-        lambda x: x[0] if x else []
-    )
-    ents_explode = ents_explode.explode("skill_label").reset_index(drop=True)
-    extracted_full_skill = []
-    extracted_full_skill_id = []
-    for skill_label in tqdm(ents_explode["skill_label"]):
-        full_skills_output = full_skill_mapping.get(skill_label)
-        if full_skills_output and full_skills_output[2] >= skill_match_thresh:
-            extracted_full_skill.append(full_skills_output[0])
-            extracted_full_skill_id.append(full_skills_output[1])
-        else:
-            extracted_full_skill.append(None)
-            extracted_full_skill_id.append(None)
-    ents_explode["extracted_full_skill"] = extracted_full_skill
-    ents_explode["extracted_full_skill_id"] = extracted_full_skill_id
-    green_ents_explode = (
-        skill_measures_data[[job_id_col, "GREEN_ENTS"]]
-        .explode("GREEN_ENTS")
-        .reset_index(drop=True)
-    )
-    green_ents_explode["skill_label"] = green_ents_explode["GREEN_ENTS"].apply(
-        lambda x: x[0] if isinstance(x, list) else None
-    )
-    green_ents_explode["extracted_green_skill"] = green_ents_explode[
-        "GREEN_ENTS"
-    ].apply(lambda x: x[1][2][0] if isinstance(x, list) else None)
-    green_ents_explode["extracted_green_skill_id"] = green_ents_explode[
-        "GREEN_ENTS"
-    ].apply(lambda x: x[1][2][1] if isinstance(x, list) else None)
-    green_skills_df = pd.concat([ents_explode, green_ents_explode])
-    green_skills_df = green_skills_df[
-        (
-            (green_skills_df["skill_label"] != "")
-            & (pd.notnull(green_skills_df["skill_label"]))
-        )
-    ]
-    # # Remove the duplicate green skills per job advert
-    green_skills_df.sort_values(by="extracted_green_skill", inplace=True)
-    green_skills_df.drop_duplicates(
-        subset=[job_id_col, "skill_label"], keep="first", inplace=True
-    )
-    green_skills_df["full_skill_preferred_name"] = green_skills_df[
-        "extracted_full_skill_id"
-    ].map(full_skill_id_2_name)
-    green_skills_df["green_skill_preferred_name"] = green_skills_df[
-        "extracted_green_skill_id"
-    ].map(green_skill_id_2_name)
-    green_skills_df.drop(columns=["ENTS", "GREEN_ENTS"], inplace=True)
-
-    return green_skills_df
+    if str(green_ents).startswith("[[["):
+        return green_ents[0]
+    else:
+        return green_ents
 
 
 if __name__ == "__main__":
-    no_h_and_s = True
-
-    logger.info("Loading skills data")
-    skill_measures_df = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/{analysis_config['skills_file_name']}",
-    )
+    logger.info("Loading the green skills extracted data")
+    skill_measures_df = pl.read_parquet(latest_all_skills_df_path)
 
     green_skill_id_2_name, full_skill_id_2_name = read_process_taxonomies()
 
-    full_skill_mapping = load_full_skill_mapping(analysis_config)
+    logger.info(
+        "Get all the skills mappings from when the skills extraction algorithm was applied in the OJO dataset"
+    )
+
+    all_skills_data = pl.read_parquet(ojo_dedupe_file)
+    num_all_skills = all_skills_data[
+        "id"
+    ].value_counts()  # How many ESCO skills per job advert
+    num_all_skills = num_all_skills.with_columns(
+        pl.col("id").cast(pl.Int64).alias("id"),
+    ).rename({"count": "num_all_skills_ojo"})
+
+    skill_measures_df = skill_measures_df.with_columns(
+        pl.col("job_id").cast(pl.Int64).alias("job_id")
+    )
+
+    # Another output
+    skill_metrics = skill_measures_df[
+        ["job_id", "PROP_GREEN", "NUM_ORIG_ENTS", "NUM_SPLIT_ENTS"]
+    ]
+    skill_metrics = skill_metrics.join(
+        num_all_skills, how="outer", left_on="job_id", right_on="id"
+    )
 
     # Process skills files in batches, otherwise it will crash
 
@@ -143,53 +143,95 @@ if __name__ == "__main__":
     )
 
     all_green_skills_df = pd.DataFrame()
+    count_green_skills = defaultdict(int)
     for skill_measures_df_chunk in tqdm(list_chunks(skill_measures_df, chunk_size)):
-        green_skills_df_chunk = create_skill_df(
-            skill_measures_df_chunk,
-            full_skill_mapping,
-            green_skill_id_2_name,
-            full_skill_id_2_name,
-        )
-        if no_h_and_s:
-            # Convert all h&s skills to not be green
-            mask = (
-                green_skills_df_chunk["green_skill_preferred_name"]
-                == "health and safety regulations"
-            )
-            green_skills_df_chunk.loc[
-                mask, "extracted_full_skill"
-            ] = green_skills_df_chunk[mask]["extracted_green_skill"]
-            green_skills_df_chunk.loc[
-                mask, "extracted_full_skill_id"
-            ] = green_skills_df_chunk[mask]["extracted_green_skill_id"]
-            green_skills_df_chunk.loc[
-                mask, "full_skill_preferred_name"
-            ] = green_skills_df_chunk[mask]["green_skill_preferred_name"]
-            # Set to not be green
-            green_skills_df_chunk.loc[mask, "extracted_green_skill"] = None
-            green_skills_df_chunk.loc[mask, "extracted_green_skill_id"] = None
-            green_skills_df_chunk.loc[mask, "green_skill_preferred_name"] = None
-        all_green_skills_df = pd.concat([all_green_skills_df, green_skills_df_chunk])
+        skill_measures_df_chunk = skill_measures_df_chunk.to_pandas()
+        skill_measures_df_chunk["GREEN_ENTS"] = skill_measures_df_chunk[
+            "GREEN_ENTS"
+        ].apply(safe_literal_eval)
+        skill_measures_df_chunk["GREEN_ENTS"] = skill_measures_df_chunk[
+            "GREEN_ENTS"
+        ].apply(lambda x: fix_new_green_list_structure(x))
 
-    if no_h_and_s:
-        file_name_suffix = f"nohs_{analysis_config['skills_file_name']}"
-    else:
-        file_name_suffix = analysis_config["skills_file_name"]
+        green_ents_explode = (
+            skill_measures_df_chunk[["job_id", "GREEN_ENTS"]]
+            .explode("GREEN_ENTS")
+            .reset_index(drop=True)
+        )
+        green_ents_explode.loc[
+            green_ents_explode["GREEN_ENTS"].str.len() == 0, "GREEN_ENTS"
+        ] = np.nan
+        green_ents_explode["skill_label"] = green_ents_explode["GREEN_ENTS"].apply(
+            lambda x: x[0] if (isinstance(x, list)) else None
+        )
+        green_ents_explode["extracted_green_skill"] = green_ents_explode[
+            "GREEN_ENTS"
+        ].apply(lambda x: x[1][2][0] if isinstance(x, list) else None)
+        green_ents_explode["extracted_green_skill_id"] = green_ents_explode[
+            "GREEN_ENTS"
+        ].apply(lambda x: x[1][2][1] if isinstance(x, list) else None)
+        green_ents_explode = green_ents_explode[
+            (
+                (green_ents_explode["skill_label"] != "")
+                & (pd.notnull(green_ents_explode["skill_label"]))
+            )
+        ]
+        # # Remove the duplicate green skills per job advert
+        green_ents_explode.sort_values(by="extracted_green_skill", inplace=True)
+        green_ents_explode.drop_duplicates(
+            subset=["job_id", "skill_label"], keep="first", inplace=True
+        )
+        green_ents_explode["green_skill_preferred_name"] = green_ents_explode[
+            "extracted_green_skill_id"
+        ].map(green_skill_id_2_name)
+        green_ents_explode.drop(columns=["GREEN_ENTS"], inplace=True)
+        # Convert all h&s skills to not be green
+        green_ents_explode = green_ents_explode[
+            green_ents_explode["green_skill_preferred_name"]
+            != "health and safety regulations"
+        ]
+        # Add number of green skills to the counter
+        for k, v in green_ents_explode["job_id"].value_counts().to_dict().items():
+            count_green_skills[k] += v
+        all_green_skills_df = pd.concat([all_green_skills_df, green_ents_explode])
+
+    skill_metrics = (
+        skill_metrics.with_columns(
+            pl.col("job_id")
+            .replace_strict(count_green_skills, default=0)
+            .alias("count_green_skills_no_hs")
+        )
+        .rename({"PROP_GREEN": "prop_green_with_hs"})
+        .drop("id")
+    )
+    # Use the green measures number of all entities (otherwise num green can be greater than total num)
+    skill_metrics = skill_metrics.with_columns(
+        pl.col("count_green_skills_no_hs")
+        .truediv(pl.col("NUM_SPLIT_ENTS"))
+        .alias("PROP_GREEN"),
+    )
+
+    # Save the counts data
+
+    save_to_s3(
+        BUCKET_NAME,
+        skill_metrics.to_pandas(),
+        f"outputs/data/ojo_application/extracted_green_measures/{latest_all_skills_date_stamp}/ojo_all_skills_green_measures_skill_metrics.parquet",
+    )
+
+    # Save the green skills data exploded
 
     save_to_s3(
         BUCKET_NAME,
         all_green_skills_df,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_{file_name_suffix}",
+        f"outputs/data/ojo_application/extracted_green_measures/{latest_all_skills_date_stamp}/ojo_all_skills_green_measures_exploded_green.parquet",
     )
 
-    # all_green_skills_df is 5.2 GB, but we don't always need all the columns, so just leave the ones needed for process_ojo_green_measures.py
+    # Save the key columns for the all skills data (helps with loading a smaller dataset in the aggregation step)
 
-    all_green_skills_df_essential = all_green_skills_df[
-        ["job_id", "extracted_full_skill_id", "extracted_green_skill_id"]
-    ]
-
-    save_to_s3(
-        BUCKET_NAME,
-        all_green_skills_df_essential,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_essential_{file_name_suffix}",
+    write_polars_s3(
+        all_skills_data[["id", "esco_id"]].rename(
+            {"id": "job_id", "esco_id": "extracted_full_skill_id"}
+        ),
+        f"s3://prinz-green-jobs/outputs/data/ojo_application/extracted_green_measures/{latest_all_skills_date_stamp}/ojo_all_skills_exploded.parquet",
     )

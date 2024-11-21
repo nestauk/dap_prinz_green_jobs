@@ -11,23 +11,27 @@ import re
 
 import pandas as pd
 
-if __name__ == "__main__":
-    root_s3_dir = "outputs/data/ojo_application/extracted_green_measures/analysis/"
 
-    # The output of aggregate_by_soc.py
+def decap_inds(top_5_sics, fix_ast=True):
+    # Uncapitalise industries so they are consistent
+    if fix_ast:
+        top_5_sics = ast.literal_eval(top_5_sics)
+    new_top_5_sics = []
+    for r in top_5_sics:
+        if r["sic_name"].isupper():
+            r["sic_name"] = r["sic_name"].title()
+        new_top_5_sics.append(r)
 
-    occ_agg_extra_loaded = load_s3_data(
-        BUCKET_NAME,
-        os.path.join(
-            root_s3_dir,
-            f"occupation_aggregated_data_{analysis_config['analysis_files']['agg_soc_date_stamp']}_extra.csv",
-        ),
-    )
+    # Convert back to string
+    return str(new_top_5_sics)
 
+
+def run_gje_formatting(occ_agg_extra_loaded, fix_ast=True):
     # Remove any green skills in the top green skills if the number of job advs they feature in is <=10
-    occ_agg_extra_loaded["top_5_green_skills"] = occ_agg_extra_loaded[
-        "top_5_green_skills"
-    ].apply(lambda x: ast.literal_eval(x) if pd.notnull(x) else [])
+    if fix_ast:
+        occ_agg_extra_loaded["top_5_green_skills"] = occ_agg_extra_loaded[
+            "top_5_green_skills"
+        ].apply(lambda x: ast.literal_eval(x) if pd.notnull(x) else [])
 
     new_top_5_green_skills = []
     for green_skills in occ_agg_extra_loaded["top_5_green_skills"].tolist():
@@ -38,19 +42,8 @@ if __name__ == "__main__":
     occ_agg_extra_loaded["top_5_green_skills"] = new_top_5_green_skills
 
     # Make sure all industries are in lowercase (some are all capitals)
-    def decap_inds(top_5_sics):
-        top_5_sics = ast.literal_eval(top_5_sics)
-        new_top_5_sics = []
-        for r in top_5_sics:
-            if r["sic_name"].isupper():
-                r["sic_name"] = r["sic_name"].title()
-            new_top_5_sics.append(r)
-
-        # Convert back to string
-        return str(new_top_5_sics)
-
     occ_agg_extra_loaded["top_5_sics"] = occ_agg_extra_loaded["top_5_sics"].apply(
-        lambda x: decap_inds(x)
+        lambda x: decap_inds(x, fix_ast=fix_ast)
     )
 
     # Format all the single quotes to be double quotes (needed for the GJE)
@@ -96,6 +89,24 @@ if __name__ == "__main__":
         by="average_prop_green_skills", ascending=False, inplace=True
     )
     occ_agg_extra_loaded.reset_index(inplace=True)
+
+    return occ_agg_extra_loaded
+
+
+if __name__ == "__main__":
+    root_s3_dir = "outputs/data/ojo_application/extracted_green_measures/analysis/"
+
+    # The output of aggregate_by_soc.py
+
+    occ_agg_extra_loaded = load_s3_data(
+        BUCKET_NAME,
+        os.path.join(
+            root_s3_dir,
+            f"occupation_aggregated_data_{analysis_config['analysis_files']['agg_soc_date_stamp']}_extra.csv",
+        ),
+    )
+
+    occ_agg_extra_loaded = run_gje_formatting(occ_agg_extra_loaded)
 
     # We will save a new file, since these changes could cause problems
     # when the dataset is used for plotting.
