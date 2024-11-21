@@ -192,6 +192,6 @@ if __name__ == "__main__":
     inds_all_df_path = os.path.join(
         BUCKET_NAME,
         folder_name,
-        f"ojo_all_industry_green_measures_production_{production}.csv",
+        f"ojo_all_industry_green_measures_production_{production}.parquet",
     )
     write_polars_s3(all_inds_measures_df, f"s3://{inds_all_df_path}")

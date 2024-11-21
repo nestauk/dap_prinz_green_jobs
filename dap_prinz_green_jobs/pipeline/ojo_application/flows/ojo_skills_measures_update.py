@@ -158,13 +158,8 @@ if __name__ == "__main__":
         skills_output = os.path.join(
             skills_output_folder, f"predicted_skills_production_{production}/{i}.json"
         )
-
-        # Where to output the mappings of skills to all of ESCO (not just green)
-        skill_mappings_output_path = os.path.join(
-            skills_output_folder,
-            f"full_esco_skill_mappings_production_{production}/{i}.json",
-        )
-
+        # Don't output the mappings of skills to all of ESCO (not just green)
+        skill_mappings_output_path = None
         prop_green_skills = sm.get_measures(
             job_desc_chunk,
             skills_output_path=skills_output,
@@ -175,7 +170,6 @@ if __name__ == "__main__":
             load_skills_embeddings=load_skills_embeddings,
             skill_mappings_output_path=skill_mappings_output_path,
         )
-
         save_to_s3(
             BUCKET_NAME,
             prop_green_skills,
@@ -214,14 +208,15 @@ if __name__ == "__main__":
         .reset_index()
         .rename(columns={"index": "job_id"})
     )
-    # save as csv because of invalid parquet schema
+
     skills_df_path = os.path.join(
         BUCKET_NAME,
         folder_name,
-        f"ojo_newest_skills_green_measures_production_{production}.csv",
+        f"ojo_newest_skills_green_measures_production_{production}.parquet",
     )
 
     skill_measures_df["ENTS"] = skill_measures_df["ENTS"].astype(str)
+    skill_measures_df["GREEN_ENTS"] = skill_measures_df["GREEN_ENTS"].astype(str)
     skill_measures_df.to_parquet(f"s3://{skills_df_path}", index=False)
 
     # Join with the existing green skills measures
@@ -248,9 +243,6 @@ if __name__ == "__main__":
     skills_all_df_path = os.path.join(
         BUCKET_NAME,
         folder_name,
-        f"ojo_all_skills_green_measures_production_{production}.csv",
+        f"ojo_all_skills_green_measures_production_{production}.parquet",
     )
     write_polars_s3(all_skills_measures_df, f"s3://{skills_all_df_path}")
-    write_polars_s3(
-        all_skills_measures_df, f"s3://{skills_all_df_path.replace('.csv', '.parquet')}"
-    )
