@@ -148,71 +148,6 @@ def process_ind_columns(
     return green_inds_outputs
 
 
-def load_ojo_green_measures(
-    analysis_config: Dict[str, str] = analysis_config
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]:
-    """Loads and cleans the green measures for skills, occupations and industries.
-
-    Args:
-        analysis_config (Dict[str, str], optional): Analysis config dictionary. Defaults to analysis_config.
-
-    Returns:
-        Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Dict[str, str]]: Tuple of dataframes for skills, occupations and industries green measures and a dictionary of soc codes and names.
-    """
-    logger.info("Loading skills data")
-    green_skills_outputs = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/{analysis_config['skills_file_name']}",
-    )
-    green_skills_outputs["GREEN_ENTS"] = green_skills_outputs["GREEN_ENTS"].apply(
-        safe_literal_eval
-    )
-    green_skills_outputs["ENTS"] = green_skills_outputs["ENTS"].apply(safe_literal_eval)
-
-    logger.info("Loading occupation data")
-    green_occs_outputs = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/{analysis_config['occ_file_name']}",
-    )
-
-    green_occs_outputs = process_soc_columns(green_occs_outputs)
-    # In the version of the SOC data we are using there is a mistake where machine learning engineers were
-    # coded to '3433/04' which is 'Yoga teachers'. Luckily its an easy fix because the data wasn't incorrect
-    # in the 4-digit category or the SOC 2010, so we can quickly find the ones to change to the correct SOC,
-    # and the green measures are correct (since they use SOC 2010).
-    green_occs_outputs.loc[
-        (
-            (green_occs_outputs["SOC_2020_EXT"] == "3433/04")
-            & (green_occs_outputs["SOC_2020"] == "2134")
-        ),
-        "SOC_2020_EXT",
-    ] = "2134/99"
-
-    soc_name_dict = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['occ_date_stamp']}/soc_name_dict.json",
-    )
-
-    logger.info("Loading industry data")
-    green_inds_outputs = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['ind_date_stamp']}/{analysis_config['ind_file_name']}",
-    )
-
-    green_inds_outputs = process_ind_columns(green_inds_outputs)
-
-    return green_skills_outputs, green_occs_outputs, green_inds_outputs, soc_name_dict
-
-
-def load_skills_df(analysis_config: Dict[str, str]) -> pd.DataFrame:
-    all_skills_df = load_s3_data(
-        BUCKET_NAME,
-        f"outputs/data/ojo_application/extracted_green_measures/{analysis_config['skills_date_stamp']}/exploded_essential_nohs_{analysis_config['skills_file_name']}",
-    )
-
-    return all_skills_df
-
-
 def safe_literal_eval(value) -> Union[None, str, int, float, list, dict]:
     """
     Safely evaluate an expression node or a string containing a Python literal or container display.
@@ -244,77 +179,6 @@ def convert_green_ents(ents):
         return new_ents
     else:
         return ents
-
-
-def merge_green_measures(
-    skill_measures_df: pd.DataFrame,
-    occs_measures_df: pd.DataFrame,
-    inds_measures_df: pd.DataFrame,
-    soc_name_dict: dict,
-    job_id_col: str = "job_id",
-) -> pd.DataFrame:
-    """
-    Merge all 3 green measures into one dataframe where each row is a job advert.
-    """
-    soc_2020_6_dict = soc_name_dict["soc_2020_6"]
-    soc_2020_4_dict = soc_name_dict["soc_2020_4"]
-
-    all_green_measures_df = pd.merge(
-        skill_measures_df, occs_measures_df, how="outer", on=job_id_col
-    )
-    all_green_measures_df = pd.merge(
-        all_green_measures_df, inds_measures_df, how="outer", on=job_id_col
-    )
-    # replace float with 0
-    all_green_measures_df = all_green_measures_df.fillna("")
-    all_green_measures_df["NUM_GREEN_ENTS"] = all_green_measures_df["GREEN_ENTS"].apply(
-        len
-    )
-
-    all_green_measures_df.drop(columns=["SOC"], inplace=True)
-
-    all_green_measures_df.rename(
-        columns={"name": "SOC_names", job_id_col: "job_id"}, inplace=True
-    )
-    all_green_measures_df["SOC_2020_name"] = all_green_measures_df["SOC_2020"].map(
-        soc_2020_4_dict
-    )
-    all_green_measures_df["SOC_2020_EXT_name"] = all_green_measures_df[
-        "SOC_2020_EXT"
-    ].map(soc_2020_6_dict)
-
-    all_green_measures_df.rename(columns={})
-    all_green_measures_df.replace("", np.nan, inplace=True)
-
-    # weird thing in industry measures. 3 times
-    all_green_measures_df = all_green_measures_df[
-        all_green_measures_df["INDUSTRY GHG PER UNIT EMISSIONS"] != ":"
-    ]
-
-    # For multiskills the format is different in ENTS - separate them out
-    # ENTS: [[['research'], 'SKILL'], [['This is a cut up', 'a cut up sentence'], 'MULTISKILL']]
-    # to [[['research'], 'SKILL'], [['This is a cut up'], 'SKILL'], [['a cut up sentence'], 'SKILL']]
-
-    def separate_multiskill_ents(entlist):
-        separate_ents = []
-        for ent in entlist:
-            if ent[1] == "MULTISKILL":
-                for sep_ent in ent[0]:
-                    separate_ents.append(
-                        [[sep_ent], "MULTISKILL"]
-                    )  # The format it is expecting
-            else:
-                separate_ents.append(ent)
-        return separate_ents
-
-    all_green_measures_df["ENTS"] = all_green_measures_df["ENTS"].apply(
-        lambda x: separate_multiskill_ents(x) if isinstance(x, list) else x
-    )
-
-    logger.info(f"There are {len(all_green_measures_df)} rows in the merged data")
-    logger.info(f"There are {all_green_measures_df['job_id'].nunique()} unique job ids")
-
-    return all_green_measures_df
 
 
 def add_salaries(
@@ -490,59 +354,6 @@ def read_process_taxonomies():
     )
 
     return green_skill_id_2_name, full_skill_id_2_name
-
-
-def create_agg_measures_per_occ(
-    all_green_measures_df: pd.DataFrame, occ_col: str = "SOC_2020_name"
-) -> pd.DataFrame:
-    # generate a dataframe with summed green measures per occupation
-
-    all_green_measures_df_ents = all_green_measures_df[
-        ~all_green_measures_df["GREEN_ENTS"].isna()
-    ]
-    all_green_measures_df_ents["GREEN_ENTS_COUNT"] = all_green_measures_df_ents[
-        "GREEN_ENTS"
-    ].apply(lambda x: len(x))
-
-    all_green_measures_df_occ = (
-        all_green_measures_df_ents.groupby(occ_col)
-        .aggregate(
-            {
-                "INDUSTRY TOTAL GHG EMISSIONS": ["mean"],
-                "INDUSTRY CARBON DIOXIDE EMISSIONS PER EMPLOYEE": ["mean"],
-                "GREEN TIMESHARE": ["mean"],
-                "GREEN_ENTS_COUNT": ["mean"],
-                "PROP_GREEN": ["mean"],
-            }
-        )
-        .reset_index()
-    )
-    all_green_measures_df_occ.columns = all_green_measures_df_occ.columns.levels[0]
-    all_green_measures_df_occ.columns = [
-        occ_col,
-        "industry_ghg_emissions_mean",
-        "industry_carbon_emissions_employee_mean",
-        "occupation_green_timeshare_mean",
-        "green_skills_count_mean",
-        "green_skill_percentage_mean",
-    ]
-
-    # pick majority occupation greenness
-    occ_green_cat = all_green_measures_df.groupby(occ_col)["GREEN CATEGORY"].agg(
-        lambda x: pd.Series.mode(x)[0]
-    )
-    # pick majority green/non-green occupation
-    occ_green_nongreen = all_green_measures_df.groupby(occ_col)["GREEN/NOT GREEN"].agg(
-        lambda x: pd.Series.mode(x)[0]
-    )
-    all_green_measures_df_occ["occ_green_non_green"] = all_green_measures_df_occ[
-        occ_col
-    ].map(occ_green_nongreen)
-    all_green_measures_df_occ["occ_green_category"] = all_green_measures_df_occ[
-        occ_col
-    ].map(occ_green_cat)
-
-    return all_green_measures_df_occ
 
 
 def create_agg_data(
