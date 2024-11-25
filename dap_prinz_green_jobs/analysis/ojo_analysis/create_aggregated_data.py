@@ -151,6 +151,7 @@ def load_combine_green_measures(job_id_col="job_id"):
 
 if __name__ == "__main__":
     today = datetime.now().strftime("%Y%m%d")
+
     root_s3_dir = f"s3://prinz-green-jobs/outputs/data/ojo_application/extracted_green_measures/analysis/{today}"
 
     job_id_col = "job_id"
@@ -172,6 +173,26 @@ if __name__ == "__main__":
     )
 
     green_skill_id_2_name, full_skill_id_2_name = pg.read_process_taxonomies()
+
+    # Add the created year
+    date_data = pd.read_parquet(
+        os.path.join(
+            analysis_config["deduplicated_data_dir"],
+            analysis_config["dedupe_key_columns_name"],
+        )
+    )
+
+    date_data["year"] = date_data["created"].dt.to_period("Y").astype(int)
+
+    all_green_measures_df = all_green_measures_df.merge(
+        date_data[["id", "year"]], how="left", left_on="job_id", right_on="id"
+    )
+    all_green_measures_df.drop(
+        columns=[
+            "id",
+        ],
+        inplace=True,
+    )
 
     # --------------------------------------
 

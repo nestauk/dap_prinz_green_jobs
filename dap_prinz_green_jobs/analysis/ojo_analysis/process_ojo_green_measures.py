@@ -353,6 +353,41 @@ def read_process_taxonomies():
         zip(full_esco_taxonomy["id"], full_esco_taxonomy["description"])
     )
 
+    # Extras (knowledge, transversal and S1, S2 etc)
+    extra_full_esco_taxonomy = load_s3_data(
+        "open-jobs-lake",
+        "escoe_extension/inputs/data/esco/skillGroups_en.csv",
+    )
+    highest_level_map = dict(
+        zip(
+            extra_full_esco_taxonomy["code"], extra_full_esco_taxonomy["preferredLabel"]
+        )
+    )
+    full_skill_id_2_name.update(highest_level_map)
+
+    transversal_name_mapper = load_s3_data(
+        "open-jobs-lake",
+        "escoe_extension/inputs/data/esco/esco_transversal_mapper.json",
+    )
+    full_skill_id_2_name.update(transversal_name_mapper)
+
+    knowledge_taxonomy = load_s3_data(
+        "open-jobs-lake",
+        "escoe_extension/inputs/data/esco/skillsHierarchy_en.csv",
+    )
+
+    knowledge_taxonomy = knowledge_taxonomy[
+        knowledge_taxonomy["Level 0 preferred term"] == "knowledge"
+    ]
+    knowledge_taxonomy["code"] = knowledge_taxonomy["Level 1 URI"].apply(
+        lambda x: "K" + str(x).split("/")[-1] if pd.notnull(x) else None
+    )
+    knowledge_mapper = dict(
+        zip(knowledge_taxonomy["code"], knowledge_taxonomy["Level 1 preferred term"])
+    )
+
+    full_skill_id_2_name.update(knowledge_mapper)
+
     return green_skill_id_2_name, full_skill_id_2_name
 
 
@@ -490,6 +525,31 @@ def create_agg_data(
                 if v >= 1
             }
 
+            # averaged green measures per year
+            yearly_data = (
+                filtered_data.groupby("year")
+                .agg(
+                    {
+                        "job_id": "nunique",
+                        "PROP_GREEN": "mean",
+                        "INDUSTRY GHG PER UNIT EMISSIONS": "mean",
+                        "GREEN TIMESHARE": "mean",
+                    }
+                )
+                .rename(
+                    columns={
+                        "job_id": "num_job_ads",
+                        "PROP_GREEN": "av_prop_green_skills",
+                        "INDUSTRY GHG PER UNIT EMISSIONS": "av_ind_perunit_ghg",
+                        "GREEN TIMESHARE": "av_occ_green_timeshare",
+                    }
+                )
+                .round(4)
+                .reset_index()
+                .to_dict(orient="records")
+            )
+            yearly_data = [y for y in yearly_data if y["year"] != 2020]
+
             aggregated_data[agg_value] = {
                 # General
                 "num_job_ads": len(filtered_data),
@@ -534,6 +594,7 @@ def create_agg_data(
                 "median_max_annualised_salary": filtered_data.max_annualised_salary.median(),
                 ##location information
                 "top_5_itl2_quotient": [loc_info],
+                "yearly_data": yearly_data,
             }
 
             if agg_col == "SOC_2020_EXT":

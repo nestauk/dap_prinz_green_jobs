@@ -12,6 +12,7 @@ ind_file_name: "ojo_all_industry_green_measures_production_True.parquet"
 deduplicated_data_dir: "s3://prinz-green-jobs/outputs/data/ojo_application/deduplicated_sample/20241114/"
 dedupe_salary_name: "latest_update_20241114_salaries.parquet"
 dedupe_location_name: "latest_update_20241114_locations.parquet"
+dedupe_key_columns_name: "latest_update_20241114_key_columns.parquet"
 data_type: "all"
 skill_match_thresh: 0.7
 bad_coef_threshold: 0.2
