@@ -182,7 +182,7 @@ if __name__ == "__main__":
         )
     )
 
-    date_data["year"] = date_data["created"].dt.to_period("Y").astype(int)
+    date_data["year"] = date_data["created"].dt.year
 
     all_green_measures_df = all_green_measures_df.merge(
         date_data[["id", "year"]], how="left", left_on="job_id", right_on="id"

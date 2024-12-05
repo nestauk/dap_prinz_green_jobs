@@ -41,3 +41,22 @@ Lots of files are outputted in the `s3://prinz-green-jobs/outputs/data/ojo_appli
 1. `occupation_aggregated_data_20241121_extra_gjeformat.csv`: The data which powers the Green Jobs Explorer website. This is the aggregated data per occupation (SOC_EXT) with occupations with less than 50 job adverts removed.
 2. `industry_aggregated_data_20241121.csv`: The data aggregated by SIC.
 3. `all_itl_aggregated_data_20241121.csv`: The data aggregated by each of ITL 1, 2 and 3.
+
+### Data for the Green Jobs Explorer download
+
+Although the data the powers the GJE is produced in `create_aggregated_data.py`, there is an additional step to create a nicely formatted xlxs dataset with information sheets about the column names etc. This is for a user to download.
+
+This is created by running:
+
+```
+python dap_prinz_green_jobs/analysis/ojo_analysis/create_open_gje_data.py
+
+```
+
+it essentially renames columns, deletes some columns and creates a data explaination sheet to go alongside it.
+
+The outputs are saved to:
+
+- `s3://nesta-open-data/green_jobs_explorer/occupation_aggregated_data_20241121_GJE.xlsx`
+- `s3://nesta-open-data/green_jobs_explorer/industry_aggregated_data_20241121_GJE.xlsx`
+- `s3://nesta-open-data/green_jobs_explorer/region_aggregated_data_20241121_GJE.xlsx`
