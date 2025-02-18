@@ -14,7 +14,9 @@ This notebook contains high-level analysis of different OJO samples.
 
 ## 🥬 Green Jobs Explorer Analysis
 
-The below notebooks create graphs that are used in the Green Jobs Explorer.
+The below notebooks create graphs and data that are used in the Green Jobs Explorer.
+
+Apart from the regional plot, the plots created here aren't directly used in the GJE, but the data is used to create them in Flourish.
 
 ### Regional Comparison
 
@@ -39,6 +41,10 @@ The `common_skills.ipynb` notebook contains code to create bar plots of the most
 ### Similar occupations plots
 
 The `Similar_occupations.ipynb` notebook contains code to create the bar plots of similar occupations for a single occupation selected from a drop down.
+
+### Temporal plots
+
+The `Temporal_change.ipynb` notebook contains code to create the dataset for analysis skill and measure changes over time.
 
 ### How to make tootlips have a maximum width.
 

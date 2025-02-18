@@ -37,3 +37,55 @@ Installing faiss on the EC2 machine was hard, here is a log of what was done, al
 conda install -c pytorch faiss-cpu=1.7.4 mkl=2021 blas=1.0=mkl
 pip install faiss-cpu
 ```
+
+# Updating the data
+
+## Occupation measures
+
+To get the occupation measures for just the newest set of job adverts, and then to merge them with pre-calculated occupation measures for older job adverts, update the file directories at the top of these scripts as needed (`green_occ_existing_data_dir` and `new_ojo_job_titles_dir`) and run:
+
+```
+python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_occupation_measures_update.py
+
+```
+
+Locally this took about 1 hour.
+
+This produces two files of interest in the `s3://prinz-green-jobs/outputs/data/ojo_application/extracted_green_measures/[DATE_RUN]/` folder:
+
+1. `ojo_newest_occupation_green_measures_production_true.parquet`: the extracted green occupation measures for the new job adverts, for `20241118` this was 1,313,447 job adverts.
+2. `ojo_all_occupation_green_measures_production_true.parquet`: a merged file of occupation measures for all the new and old job adverts, for `20241118` this was 5,967,229 job adverts.
+
+## Skills measures
+
+To get the skills measures for just the newest set of job adverts, and then to merge them with pre-calculated skills measures for older job adverts, update the file directories at the top of these scripts as needed (`green_skills_existing_data_dir` and `new_ojo_descriptions_dir`) and run:
+
+```
+python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_skills_measures_update.py
+
+```
+
+On EC2 this took around 32 hours.
+
+This produces two files of interest in the `s3://prinz-green-jobs/outputs/data/ojo_application/extracted_green_measures/[DATE_RUN]/` folder:
+
+1. `ojo_newest_skills_green_measures_production_True.parquet`: the extracted green skills measures for the new job adverts, for `20241118` this was 1,313,447 job adverts.
+2. `ojo_all_skills_green_measures_production_True.parquet`: a merged file of skills measures for all the new and old job adverts, for `20241118` this was 5,967,229 job adverts.
+
+Note: To speed this up we didn't find matches between the skills and all of the ESCO taxonomy (i.e. not just the green skills). This is something that's calculated elsewhere when the OJO data is created, so isn't needed. However, this step was included previously so marks a difference in the datasets outputted.
+
+## Industry measures
+
+To get the industry measures for just the newest set of job adverts, and then to merge them with pre-calculated industry measures for older job adverts, update the file directories at the top of these scripts as needed (`green_ind_existing_data_dir` and `new_ojo_descriptions_dir`) and run:
+
+```
+python dap_prinz_green_jobs/pipeline/ojo_application/flows/ojo_industry_measures_update.py --production
+
+```
+
+On EC2 this took 45 hours.
+
+This produces two files of interest in the `s3://prinz-green-jobs/outputs/data/ojo_application/extracted_green_measures/[DATE_RUN]/` folder:
+
+1. `ojo_newest_industry_green_measures_production_True.csv`: the extracted green industry measures for the new job adverts, for `20241115` this was 1,313,447 job adverts.
+2. `ojo_all_industry_green_measures_production_True.csv`: a merged file of industry measures for all the new and old job adverts, for `20241115` this was 5,967,229 job adverts.

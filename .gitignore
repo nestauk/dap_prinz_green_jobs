@@ -1,5 +1,6 @@
 .recipes/
 .cookiecutter/state/
+dap_prinz_green_jobs/notebooks/
 
 *.lock
 
