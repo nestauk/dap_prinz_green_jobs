@@ -56,6 +56,7 @@ The datasets will then be saved out to a datestamped folder, e.g. `s3://prinz-gr
 | -------- | ---------------- | ---------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | 20240213 | 11/12/2020       | 06/11/2023       | 4,653,782                                         | s3://prinz-green-jobs/outputs/ data/ojo_application/deduplicated_sample/ deduplicated_job_ids.csv          |
 | 20241114 | 07/11/2023       | 05/11/2024       | 1,313,447                                         | s3://prinz-green-jobs/outputs/ data/ojo_application/deduplicated_sample/ 20241114/deduplicated_job_ids.csv |
+| 20250627 | 06/11/2024       | 22/04/2025       | 178,288                                           | s3://prinz-green-jobs/outputs/ data/ojo_application/deduplicated_sample/ 20250627/deduplicated_job_ids.csv |
 
 It will also contain all the data concatenated for the most key columns for the combines, deduplicated 5,967,229 job adverts from 11/12/2020 to 05/11/2024:
 
